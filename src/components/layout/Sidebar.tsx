@@ -35,7 +35,7 @@ interface NavigationItem {
   badge?: number;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
+const Sidebar: React.FC<SidebarProps> = ({ onClose }) => {
   const dispatch = useAppDispatch();
   const { goTo, currentPath } = useNavigation();
   const { user, availableBranches, currentBranch } = useAppSelector((state) => state.auth);
