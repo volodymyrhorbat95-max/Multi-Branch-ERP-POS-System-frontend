@@ -21,6 +21,7 @@ import {
   MdLightMode,
   MdDarkMode,
   MdLogout,
+  MdClose,
 } from 'react-icons/md';
 
 interface SidebarProps {
@@ -35,7 +36,7 @@ interface NavigationItem {
   badge?: number;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ onClose }) => {
+const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
   const dispatch = useAppDispatch();
   const { goTo, currentPath } = useNavigation();
   const { user, availableBranches, currentBranch } = useAppSelector((state) => state.auth);
@@ -147,131 +148,176 @@ const Sidebar: React.FC<SidebarProps> = ({ onClose }) => {
   };
 
   return (
-    <aside
-      className="fixed inset-y-0 left-0 z-50 w-64 bg-primary-500/95 dark:bg-primary-600/95 backdrop-blur-md lg:translate-x-0 top-[60px]"
-    >
-      {/* Branch Selector (for owners) */}
-      {canAccessAllBranches && availableBranches.length > 1 && (
-        <div className="px-4 py-3 border-b border-primary-600/30 animate-fade-right duration-light-slow">
-          <div className="relative" ref={branchDropdownRef}>
+    <>
+      {/* Sidebar Container */}
+      <aside
+        className={`
+          fixed inset-y-0 left-0 z-50 w-64 bg-primary-500/95 dark:bg-primary-600/95
+          backdrop-blur-md shadow-2xl flex flex-col
+          transition-transform duration-300 ease-in-out
+          ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+          top-0 lg:top-16
+        `}
+      >
+        {/* Mobile Header with Close Button */}
+        <div className="lg:hidden flex items-center justify-between p-4 border-b border-primary-600/30 bg-primary-600/50 backdrop-blur-sm">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center backdrop-blur-sm">
+              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+              </svg>
+            </div>
+            <span className="font-bold text-white text-lg">POS Multi</span>
+          </div>
+          <button
+            onClick={onClose}
+            className="p-2 text-white/90 hover:text-white hover:bg-white/10 rounded-lg transition-all"
+            aria-label="Close menu"
+          >
+            <MdClose className="w-6 h-6" />
+          </button>
+        </div>
+
+        {/* Branch Selector (for owners) */}
+        {canAccessAllBranches && availableBranches.length > 1 && (
+          <div className="px-4 py-3 border-b border-primary-600/30 animate-fade-right duration-light-slow">
+            <div className="relative" ref={branchDropdownRef}>
+              <button
+                onClick={() => setBranchDropdownOpen(!branchDropdownOpen)}
+                className="w-full flex items-center justify-between px-3 py-2.5 text-sm bg-white/10 rounded-lg hover:bg-white/20 backdrop-blur-sm transition-all active:scale-95"
+              >
+                <span className="font-medium text-white truncate">
+                  {currentBranch?.name || 'Todas las sucursales'}
+                </span>
+                <MdKeyboardArrowDown
+                  className={`w-5 h-5 text-white/70 transition-transform duration-200 ${
+                    branchDropdownOpen ? 'rotate-180' : ''
+                  }`}
+                />
+              </button>
+
+              {branchDropdownOpen && (
+                <div className="absolute top-full left-0 right-0 mt-2 bg-primary-800/95 rounded-lg shadow-2xl border border-primary-600/30 z-20 animate-fade-down duration-fast backdrop-blur-md overflow-hidden">
+                  <button
+                    onClick={() => handleBranchChange('')}
+                    className="w-full px-4 py-2.5 text-left text-sm text-white hover:bg-white/10 transition-colors"
+                  >
+                    Todas las sucursales
+                  </button>
+                  {availableBranches.map((branch: Branch) => (
+                    <button
+                      key={branch.id}
+                      onClick={() => handleBranchChange(branch.id)}
+                      className={`w-full px-4 py-2.5 text-left text-sm transition-colors ${
+                        currentBranch?.id === branch.id
+                          ? 'bg-primary-700 text-white font-semibold'
+                          : 'text-white/90 hover:bg-white/10'
+                      }`}
+                    >
+                      {branch.name}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Navigation - Scrollable */}
+        <nav className="flex-1 px-2 py-4 overflow-y-auto scrollbar-thin scrollbar-thumb-white/20 scrollbar-track-transparent hover:scrollbar-thumb-white/30">
+          <div className="space-y-1">
+            {navigation.map((item, index) => (
+              <button
+                key={item.path}
+                onClick={() => {
+                  goTo(item.path);
+                  onClose();
+                }}
+                style={{ animationDelay: `${index * 30}ms` }}
+                className={`
+                  w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium
+                  transition-all duration-200 animate-fade-right
+                  ${isActive(item.path)
+                    ? 'bg-white/20 text-white shadow-lg backdrop-blur-sm scale-[1.02]'
+                    : 'text-white/90 hover:bg-white/10 hover:text-white hover:scale-[1.01]'}
+                  active:scale-95
+                `}
+              >
+                <span className={`transition-all ${isActive(item.path) ? 'text-white scale-110' : 'text-white/70'}`}>
+                  {item.icon}
+                </span>
+                <span className="flex-1 text-left">{item.name}</span>
+                {item.badge && item.badge > 0 && (
+                  <span className="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 text-xs font-bold text-white bg-danger-500 rounded-full animate-pulse">
+                    {item.badge > 9 ? '9+' : item.badge}
+                  </span>
+                )}
+              </button>
+            ))}
+          </div>
+        </nav>
+
+        {/* User Info - Fixed at Bottom */}
+        <div className="p-4 border-t border-primary-600/30 bg-primary-600/30 backdrop-blur-sm">
+          <div className="relative" ref={userDropdownRef}>
             <button
-              onClick={() => setBranchDropdownOpen(!branchDropdownOpen)}
-              className="w-full flex items-center justify-between px-3 py-2 text-sm bg-white/10 rounded-sm hover:bg-white/20 backdrop-blur-sm transition-colors"
+              onClick={() => setUserDropdownOpen(!userDropdownOpen)}
+              className="w-full flex items-center gap-3 p-2.5 rounded-lg hover:bg-white/10 transition-all active:scale-95"
             >
-              <span className="font-medium text-white">
-                {currentBranch?.name || 'Todas las sucursales'}
-              </span>
-              <MdKeyboardArrowDown className="w-4 h-4 text-white/70" />
+              <div className="w-10 h-10 bg-gradient-to-br from-white/30 to-white/10 rounded-full flex items-center justify-center backdrop-blur-sm ring-2 ring-white/20">
+                <span className="text-white font-bold text-sm">
+                  {user?.first_name?.[0]}{user?.last_name?.[0]}
+                </span>
+              </div>
+              <div className="flex-1 text-left min-w-0">
+                <p className="text-sm font-semibold text-white truncate">
+                  {user?.first_name} {user?.last_name}
+                </p>
+                <p className="text-xs text-white/70 truncate">
+                  {user?.role?.name}
+                </p>
+              </div>
+              <MdKeyboardArrowDown
+                className={`w-5 h-5 text-white/70 transition-transform duration-200 flex-shrink-0 ${
+                  userDropdownOpen ? 'rotate-180' : ''
+                }`}
+              />
             </button>
 
-            {branchDropdownOpen && (
-              <div className="absolute top-full left-0 right-0 mt-1 bg-primary-800/95 rounded-sm shadow-lg border border-primary-600/30 z-10 animate-fade-down duration-fast backdrop-blur-md">
+            {userDropdownOpen && (
+              <div className="absolute bottom-full left-0 right-0 mb-2 bg-primary-800/95 rounded-lg shadow-2xl border border-primary-600/30 animate-fade-up duration-fast backdrop-blur-md overflow-hidden">
                 <button
-                  onClick={() => handleBranchChange('')}
-                  className="w-full px-3 py-2 text-left text-sm text-white hover:bg-white/10 first:rounded-t-lg transition-colors"
+                  onClick={() => {
+                    dispatch(toggleTheme());
+                    setUserDropdownOpen(false);
+                  }}
+                  className="w-full px-4 py-3 text-left text-sm text-white hover:bg-white/10 flex items-center gap-3 transition-colors"
                 >
-                  Todas las sucursales
+                  {theme === 'dark' ? (
+                    <>
+                      <MdLightMode className="w-5 h-5" />
+                      <span>Modo Claro</span>
+                    </>
+                  ) : (
+                    <>
+                      <MdDarkMode className="w-5 h-5" />
+                      <span>Modo Oscuro</span>
+                    </>
+                  )}
                 </button>
-                {availableBranches.map((branch: Branch) => (
-                  <button
-                    key={branch.id}
-                    onClick={() => handleBranchChange(branch.id)}
-                    className={`w-full px-3 py-2 text-left text-sm hover:bg-white/10 last:rounded-b-lg transition-colors ${
-                      currentBranch?.id === branch.id ? 'bg-primary-700 text-white font-medium' : 'text-white/80'
-                    }`}
-                  >
-                    {branch.name}
-                  </button>
-                ))}
+                <button
+                  onClick={handleLogout}
+                  className="w-full px-4 py-3 text-left text-sm text-red-300 hover:bg-red-500/20 hover:text-red-200 flex items-center gap-3 transition-colors"
+                >
+                  <MdLogout className="w-5 h-5" />
+                  <span>Cerrar Sesión</span>
+                </button>
               </div>
             )}
           </div>
         </div>
-      )}
-
-      {/* Navigation */}
-      <nav className="flex-1 px-0 py-5 overflow-y-auto animate-fade-up duration-normal">
-        {navigation.map((item) => (
-          <button
-            key={item.path}
-            onClick={() => {
-              goTo(item.path);
-              onClose();
-            }}
-            className={`
-              w-full flex items-center gap-3 px-5 py-3 rounded-sm text-sm font-medium
-              transition-colors duration-150 animate-fade-right duration-fast
-              ${isActive(item.path)
-                ? 'bg-primary-600 text-white backdrop-blur-sm'
-                : 'text-white/90 hover:bg-white/10 hover:text-white'}
-            `}
-          >
-            <span className={isActive(item.path) ? 'text-white' : 'text-white/60'}>
-              {item.icon}
-            </span>
-            <span className="flex-1 text-left">{item.name}</span>
-            {item.badge && item.badge > 0 && (
-              <span className="inline-flex items-center justify-center w-5 h-5 text-xs font-bold text-white bg-danger-500 rounded-full">
-                {item.badge > 9 ? '9+' : item.badge}
-              </span>
-            )}
-          </button>
-        ))}
-      </nav>
-
-      {/* User Info */}
-      <div className="p-4 border-t border-primary-600/30 animate-fade-up duration-light-slow">
-        <div className="relative" ref={userDropdownRef}>
-          <button
-            onClick={() => setUserDropdownOpen(!userDropdownOpen)}
-            className="w-full flex items-center gap-3 p-2 rounded-sm hover:bg-white/10 transition-colors"
-          >
-            <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm">
-              <span className="text-white font-semibold">
-                {user?.first_name?.[0]}{user?.last_name?.[0]}
-              </span>
-            </div>
-            <div className="flex-1 text-left">
-              <p className="text-sm font-medium text-white">
-                {user?.first_name} {user?.last_name}
-              </p>
-              <p className="text-xs text-white/60">
-                {user?.role?.name}
-              </p>
-            </div>
-            <MdKeyboardArrowDown className="w-4 h-4 text-white/60" />
-          </button>
-
-          {userDropdownOpen && (
-            <div className="absolute bottom-full left-0 right-0 mb-1 bg-primary-800/95 rounded-sm shadow-lg border border-primary-600/30 animate-fade-up duration-fast backdrop-blur-md">
-              <button
-                onClick={() => dispatch(toggleTheme())}
-                className="w-full px-4 py-2 text-left text-sm text-white hover:bg-white/10 flex items-center gap-2 rounded-t-lg transition-colors"
-              >
-                {theme === 'dark' ? (
-                  <>
-                    <MdLightMode className="w-4 h-4" />
-                    Modo Claro
-                  </>
-                ) : (
-                  <>
-                    <MdDarkMode className="w-4 h-4" />
-                    Modo Oscuro
-                  </>
-                )}
-              </button>
-              <button
-                onClick={handleLogout}
-                className="w-full px-4 py-2 text-left text-sm text-red-300 hover:bg-white/10 hover:text-red-200 flex items-center gap-2 rounded-b-lg transition-colors"
-              >
-                <MdLogout className="w-4 h-4" />
-                Cerrar Sesión
-              </button>
-            </div>
-          )}
-        </div>
-      </div>
-    </aside>
+      </aside>
+    </>
   );
 };
 
