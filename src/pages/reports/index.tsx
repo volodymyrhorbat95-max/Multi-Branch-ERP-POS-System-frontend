@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
+import DailyReport from './DailyReport';
 import SalesReport from './SalesReport';
 import ProductReport from './ProductReport';
 import CashierReport from './CashierReport';
 import InventoryReport from './InventoryReport';
 
 const ReportsPage: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'sales' | 'products' | 'cashiers' | 'inventory'>('sales');
+  const [activeTab, setActiveTab] = useState<'daily' | 'sales' | 'products' | 'cashiers' | 'inventory'>('daily');
 
   return (
     <div className="p-6 space-y-6">
@@ -15,6 +16,16 @@ const ReportsPage: React.FC = () => {
 
       <div className="bg-white dark:bg-gray-800 rounded-sm shadow-md animate-fade-up duration-normal">
         <div className="flex flex-col sm:flex-row border-b border-gray-200 dark:border-gray-700">
+          <button
+            className={`px-6 py-3 text-sm font-medium transition-colors animate-fade-down duration-very-fast ${
+              activeTab === 'daily'
+                ? 'text-primary-600 dark:text-primary-400 border-b-2 border-primary-500'
+                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+            }`}
+            onClick={() => setActiveTab('daily')}
+          >
+            Reporte Diario
+          </button>
           <button
             className={`px-6 py-3 text-sm font-medium transition-colors animate-fade-down duration-fast ${
               activeTab === 'sales'
@@ -59,6 +70,7 @@ const ReportsPage: React.FC = () => {
       </div>
 
       <div className="animate-zoom-in duration-normal">
+        {activeTab === 'daily' && <DailyReport />}
         {activeTab === 'sales' && <SalesReport />}
         {activeTab === 'products' && <ProductReport />}
         {activeTab === 'cashiers' && <CashierReport />}

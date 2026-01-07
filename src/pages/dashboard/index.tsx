@@ -8,6 +8,8 @@ import DailyTrendChart from './DailyTrendChart';
 import CashDiscrepancies from './CashDiscrepancies';
 import ShrinkageSummary from './ShrinkageSummary';
 import TopProductsList from './TopProductsList';
+import PendingInvoicesAlert from './PendingInvoicesAlert';
+import BranchShiftStatus from './BranchShiftStatus';
 
 const DashboardPage: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -70,6 +72,14 @@ const DashboardPage: React.FC = () => {
             </label>
           </div>
         </div>
+      </div>
+
+      {/* Pending Invoices Alert */}
+      <PendingInvoicesAlert />
+
+      {/* Live Branch Shift Status - Today's shifts across all branches */}
+      <div className="animate-fade-up duration-fast">
+        <BranchShiftStatus />
       </div>
 
       {data && (

@@ -2,10 +2,14 @@ import React from 'react';
 import { Card, Button } from '../../components/ui';
 
 interface NoActiveSessionCardProps {
+  onOpenSession: () => void;
   onNavigateToSessions: () => void;
 }
 
-const NoActiveSessionCard: React.FC<NoActiveSessionCardProps> = ({ onNavigateToSessions }) => {
+const NoActiveSessionCard: React.FC<NoActiveSessionCardProps> = ({
+  onOpenSession,
+  onNavigateToSessions
+}) => {
   return (
     <div className="min-h-screen bg-gray-100 dark:bg-gray-900 flex items-center justify-center p-4 animate-fade-up duration-fast">
       <Card className="max-w-md w-full p-8 text-center animate-zoom-in duration-normal">
@@ -20,14 +24,24 @@ const NoActiveSessionCard: React.FC<NoActiveSessionCardProps> = ({ onNavigateToS
         <p className="text-gray-500 dark:text-gray-400 mb-6 animate-fade-up duration-light-slow">
           Debes abrir una sesión de caja antes de realizar ventas.
         </p>
-        <Button
-          variant="primary"
-          size="lg"
-          onClick={onNavigateToSessions}
-          className="animate-fade-up duration-slow"
-        >
-          Ir a Sesiones
-        </Button>
+        <div className="flex flex-col gap-3 animate-fade-up duration-slow">
+          <Button
+            variant="primary"
+            size="lg"
+            onClick={onOpenSession}
+            className="w-full"
+          >
+            Abrir Caja
+          </Button>
+          <Button
+            variant="secondary"
+            size="md"
+            onClick={onNavigateToSessions}
+            className="w-full"
+          >
+            Ver Historial de Sesiones
+          </Button>
+        </div>
       </Card>
     </div>
   );

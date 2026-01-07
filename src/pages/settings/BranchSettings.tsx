@@ -6,10 +6,13 @@ const BranchSettings: React.FC = () => {
     auto_print_receipt: true,
     require_customer: false,
     enable_discounts: true,
-    max_discount_percent: 10
+    max_discount_percent: 10,
+    tax_id: '',
+    tax_condition: '',
+    factuhoy_point_of_sale: ''
   });
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
     setSettings({
       ...settings,
@@ -85,6 +88,60 @@ const BranchSettings: React.FC = () => {
             />
           </div>
         )}
+
+        {/* Facturación Electrónica Section */}
+        <div className="pt-6 border-t border-gray-200 dark:border-gray-700 space-y-4 animate-fade-up duration-light-slow">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+            Facturación Electrónica (AFIP)
+          </h3>
+
+          <div className="flex flex-col animate-fade-right duration-normal">
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">CUIT / CUIL:</label>
+            <input
+              type="text"
+              name="tax_id"
+              value={settings.tax_id}
+              onChange={handleChange}
+              placeholder="20-12345678-9"
+              className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+            />
+          </div>
+
+          <div className="flex flex-col animate-fade-left duration-normal">
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Condición IVA:</label>
+            <select
+              name="tax_condition"
+              value={settings.tax_condition}
+              onChange={handleChange}
+              className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+            >
+              <option value="">Seleccionar...</option>
+              <option value="Responsable Inscripto">Responsable Inscripto</option>
+              <option value="Monotributista">Monotributista</option>
+              <option value="Exento">Exento</option>
+              <option value="Consumidor Final">Consumidor Final</option>
+            </select>
+          </div>
+
+          <div className="flex flex-col animate-fade-up duration-normal">
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Número de Punto de Venta (FactuHoy):
+            </label>
+            <input
+              type="number"
+              name="factuhoy_point_of_sale"
+              value={settings.factuhoy_point_of_sale}
+              onChange={handleChange}
+              min="1"
+              max="9999"
+              placeholder="Ej: 1, 2, 3..."
+              className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+            />
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+              Este número debe coincidir con el punto de venta configurado en FactuHoy para esta sucursal
+            </p>
+          </div>
+        </div>
 
         <button
           type="submit"

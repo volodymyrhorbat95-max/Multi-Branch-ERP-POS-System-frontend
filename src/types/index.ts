@@ -20,6 +20,8 @@ export interface PaginatedResponse<T> {
     total_items: number;
     total_pages: number;
   };
+  message?: string;
+  error?: string;
 }
 
 export interface ValidationError {
@@ -90,6 +92,11 @@ export interface Branch {
   address?: string;
   phone?: string;
   tax_id?: string;
+  tax_condition?: string;
+  factuhoy_point_of_sale?: number;
+  midday_closing_time?: string;
+  evening_closing_time?: string;
+  has_shift_change?: boolean;
   is_active: boolean;
   is_main: boolean;
 }
@@ -254,7 +261,15 @@ export interface SalePayment {
   payment_method_id: UUID;
   payment_method?: PaymentMethod;
   amount: Decimal;
+  // For transfers (receipt number required)
   reference_number?: string;
+  // For cards
+  card_last_four?: string;
+  card_brand?: string;
+  authorization_code?: string;
+  // For QR payments
+  qr_provider?: string;
+  qr_transaction_id?: string;
 }
 
 // Sale Types
@@ -355,9 +370,9 @@ export interface RegisterSession {
 
 export interface OpenSessionData {
   register_id: UUID;
-  opening_amount: number;
+  opening_cash: number;
   shift_type: ShiftType;
-  notes?: string;
+  opening_notes?: string;
 }
 
 export interface CloseSessionData {
@@ -389,9 +404,52 @@ export interface Alert {
 }
 
 // Report Types
+export interface ShiftReportData {
+  shift_type: ShiftType;
+  session_id: UUID;
+  opened_at: ISODateString;
+  closed_at?: ISODateString;
+  opened_by: string | null;
+  closed_by: string | null;
+  status: SessionStatus;
+  sales_count: number;
+  total_revenue: number;
+  expected_cash: number;
+  expected_card: number;
+  expected_qr: number;
+  expected_transfer: number;
+  declared_cash: number | null;
+  declared_card: number | null;
+  declared_qr: number | null;
+  declared_transfer: number | null;
+  discrepancy_cash: number | null;
+  discrepancy_card: number | null;
+  discrepancy_qr: number | null;
+  discrepancy_transfer: number | null;
+  voided_sales_count: number;
+}
+
 export interface DailyReportData {
   report_date: string;
   branch_id: UUID;
+  branch: {
+    name: string;
+    code: string;
+    midday_closing_time: string;
+    evening_closing_time: string;
+    has_shift_change: boolean;
+  } | null;
+  shifts: ShiftReportData[];
+  daily_totals: {
+    total_cash: number;
+    total_card: number;
+    total_qr: number;
+    total_transfer: number;
+    total_discrepancy_cash: number;
+    total_discrepancy_card: number;
+    total_discrepancy_qr: number;
+    total_discrepancy_transfer: number;
+  };
   sales: {
     total_count: number;
     total_revenue: number;
@@ -423,6 +481,33 @@ export interface DailyReportData {
     sales_count: number;
     revenue: number;
   }>;
+}
+
+export interface LiveBranchShiftSession {
+  session_id: UUID;
+  shift_type: ShiftType;
+  status: SessionStatus;
+  opened_at: ISODateString;
+  closed_at: ISODateString | null;
+  opened_by: string | null;
+  closed_by: string | null;
+  sales_count: number;
+  total_revenue: number;
+}
+
+export interface LiveBranchStatus {
+  branch_id: UUID;
+  branch_name: string;
+  branch_code: string;
+  midday_closing_time: string;
+  evening_closing_time: string;
+  has_shift_change: boolean;
+  sessions: LiveBranchShiftSession[];
+}
+
+export interface LiveBranchShiftStatusData {
+  date: string;
+  branches: LiveBranchStatus[];
 }
 
 export interface OwnerDashboardData {
@@ -467,27 +552,54 @@ export interface OwnerDashboardData {
 
 // Invoice Types
 export type InvoiceType = 'A' | 'B' | 'C' | 'NC_A' | 'NC_B' | 'NC_C';
-export type InvoiceStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'VOIDED';
+export type InvoiceStatus = 'PENDING' | 'ISSUED' | 'FAILED' | 'CANCELLED';
+
+export interface InvoiceTypeRecord {
+  id: UUID;
+  code: InvoiceType;
+  name: string;
+  description?: string;
+}
 
 export interface Invoice {
   id: UUID;
   sale_id: UUID;
-  branch_id: UUID;
-  customer_id?: UUID;
-  invoice_type: InvoiceType;
-  invoice_number: string;
-  point_of_sale: string;
-  invoice_date: ISODateString;
-  subtotal: Decimal;
-  tax_amount: Decimal;
-  total_amount: Decimal;
-  status: InvoiceStatus;
+  sale?: Sale;
+  invoice_type_id: UUID;
+  invoice_type?: InvoiceTypeRecord;
+  point_of_sale: number;
+  invoice_number: number;
+
+  // CAE (AFIP electronic authorization)
   cae?: string;
-  cae_expiration?: ISODateString;
-  customer_name: string;
+  cae_expiration_date?: ISODateString;
+
+  // Customer snapshot data
+  customer_name?: string;
   customer_document_type?: string;
   customer_document_number?: string;
   customer_tax_condition?: string;
+  customer_address?: string;
+
+  // Amounts
+  net_amount: Decimal;
+  tax_amount: Decimal;
+  total_amount: Decimal;
+
+  // FactuHoy integration data
+  factuhoy_id?: string;
+  factuhoy_response?: any;
+  pdf_url?: string;
+
+  // Status and error handling
+  status: InvoiceStatus;
+  error_message?: string;
+  retry_count: number;
+  last_retry_at?: ISODateString;
+  issued_at?: ISODateString;
+
+  created_at: ISODateString;
+  updated_at: ISODateString;
 }
 
 // Supplier Types

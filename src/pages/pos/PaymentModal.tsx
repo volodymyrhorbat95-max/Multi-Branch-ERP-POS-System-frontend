@@ -9,6 +9,19 @@ interface PaymentModalProps {
   onMethodChange: (method: string) => void;
   cashReceived: string;
   onCashReceivedChange: (value: string) => void;
+  // Payment reference fields
+  referenceNumber: string;
+  onReferenceNumberChange: (value: string) => void;
+  authorizationCode: string;
+  onAuthorizationCodeChange: (value: string) => void;
+  cardLastFour: string;
+  onCardLastFourChange: (value: string) => void;
+  cardBrand: string;
+  onCardBrandChange: (value: string) => void;
+  qrProvider: string;
+  onQrProviderChange: (value: string) => void;
+  qrTransactionId: string;
+  onQrTransactionIdChange: (value: string) => void;
   payments: SalePayment[];
   onRemovePayment: (index: number) => void;
   onAddPayment: () => void;
@@ -28,6 +41,18 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
   onMethodChange,
   cashReceived,
   onCashReceivedChange,
+  referenceNumber,
+  onReferenceNumberChange,
+  authorizationCode,
+  onAuthorizationCodeChange,
+  cardLastFour,
+  onCardLastFourChange,
+  cardBrand,
+  onCardBrandChange,
+  qrProvider,
+  onQrProviderChange,
+  qrTransactionId,
+  onQrTransactionIdChange,
   payments,
   onRemovePayment,
   onAddPayment,
@@ -105,6 +130,89 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
             </div>
           )}
 
+          {(selectedMethod === 'DEBIT' || selectedMethod === 'CREDIT') && (
+            <div className="space-y-3 animate-fade-up duration-light-slow">
+              <Input
+                label="Código de Autorización *"
+                type="text"
+                value={authorizationCode}
+                onChange={(e) => onAuthorizationCodeChange(e.target.value)}
+                placeholder="Ej: 123456"
+                required
+              />
+              <Input
+                label="Últimos 4 dígitos"
+                type="text"
+                maxLength={4}
+                value={cardLastFour}
+                onChange={(e) => onCardLastFourChange(e.target.value.replace(/\D/g, ''))}
+                placeholder="1234"
+              />
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Marca de Tarjeta
+                </label>
+                <select
+                  value={cardBrand}
+                  onChange={(e) => onCardBrandChange(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                >
+                  <option value="">Seleccionar...</option>
+                  <option value="VISA">Visa</option>
+                  <option value="MASTERCARD">Mastercard</option>
+                  <option value="AMEX">American Express</option>
+                  <option value="CABAL">Cabal</option>
+                  <option value="NARANJA">Naranja</option>
+                  <option value="OTRA">Otra</option>
+                </select>
+              </div>
+            </div>
+          )}
+
+          {selectedMethod === 'TRANSFER' && (
+            <div className="space-y-3 animate-fade-up duration-light-slow">
+              <Input
+                label="Número de Comprobante *"
+                type="text"
+                value={referenceNumber}
+                onChange={(e) => onReferenceNumberChange(e.target.value)}
+                placeholder="Ej: 0001-12345678"
+                required
+              />
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                Ingrese el número de comprobante de la transferencia bancaria
+              </p>
+            </div>
+          )}
+
+          {selectedMethod === 'QR' && (
+            <div className="space-y-3 animate-fade-up duration-light-slow">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Proveedor QR
+                </label>
+                <select
+                  value={qrProvider}
+                  onChange={(e) => onQrProviderChange(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                >
+                  <option value="">Seleccionar...</option>
+                  <option value="MERCADOPAGO">MercadoPago</option>
+                  <option value="MODO">Modo</option>
+                  <option value="UALA">Ualá</option>
+                  <option value="OTRO">Otro</option>
+                </select>
+              </div>
+              <Input
+                label="ID de Transacción"
+                type="text"
+                value={qrTransactionId}
+                onChange={(e) => onQrTransactionIdChange(e.target.value)}
+                placeholder="Ej: MP-123456789"
+              />
+            </div>
+          )}
+
           <Button
             variant="primary"
             fullWidth
@@ -130,10 +238,26 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
                   key={index}
                   className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-sm animate-fade-right duration-fast"
                 >
-                  <div>
+                  <div className="flex-1 min-w-0">
                     <p className="font-medium text-gray-900 dark:text-white">
                       {payment.payment_method?.name || 'Pago'}
                     </p>
+                    {payment.reference_number && (
+                      <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                        Comp: {payment.reference_number}
+                      </p>
+                    )}
+                    {payment.authorization_code && (
+                      <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                        Auth: {payment.authorization_code}
+                        {payment.card_last_four && ` - *${payment.card_last_four}`}
+                      </p>
+                    )}
+                    {payment.qr_transaction_id && (
+                      <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                        {payment.qr_provider || 'QR'}: {payment.qr_transaction_id}
+                      </p>
+                    )}
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="font-bold text-gray-900 dark:text-white">

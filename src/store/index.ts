@@ -14,6 +14,7 @@ import stockReducer from './slices/stockSlice';
 import priceReducer from './slices/priceSlice';
 import loyaltyReducer from './slices/loyaltySlice';
 import dashboardReducer from './slices/dashboardSlice';
+import invoicesReducer from './slices/invoicesSlice';
 
 export const store = configureStore({
   reducer: {
@@ -29,6 +30,7 @@ export const store = configureStore({
     price: priceReducer,
     loyalty: loyaltyReducer,
     dashboard: dashboardReducer,
+    invoices: invoicesReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

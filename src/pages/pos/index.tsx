@@ -16,12 +16,14 @@ import { quickSearchCustomers } from '../../store/slices/customersSlice';
 import { useNavigation } from '../../hooks';
 import type { Product, Customer, QuickSearchCustomer } from '../../types';
 import NoActiveSessionCard from './NoActiveSessionCard';
+import OpenSessionModal from './OpenSessionModal';
 import TopBar from './TopBar';
 import ProductsGrid from './ProductsGrid';
 import CartSection from './CartSection';
 import QuantityModal from './QuantityModal';
 import CustomerSearchModal from './CustomerSearchModal';
 import PaymentModal from './PaymentModal';
+import SaleSuccessModal from './SaleSuccessModal';
 
 // Debounce hook
 const useDebounce = <T,>(value: T, delay: number): T => {
@@ -45,7 +47,7 @@ const POSPage: React.FC = () => {
   const { goTo } = useNavigation();
 
   // Redux state
-  const { cart, payments, searchResults } = useAppSelector((state) => state.pos);
+  const { cart, payments, searchResults, lastSale } = useAppSelector((state) => state.pos);
   const { products, loading: productsLoading } = useAppSelector((state) => state.products);
   const { quickSearchResults: customerSearchResults, loading: customersLoading } = useAppSelector((state) => state.customers);
   const { currentBranch, currentSession: activeSession } = useAppSelector((state) => state.auth);
@@ -56,10 +58,20 @@ const POSPage: React.FC = () => {
   const [showCustomerModal, setShowCustomerModal] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [showQuantityModal, setShowQuantityModal] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showOpenSessionModal, setShowOpenSessionModal] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [quantity, setQuantity] = useState('1');
   const [cashReceived, setCashReceived] = useState('');
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string>('CASH');
+
+  // Payment reference fields
+  const [referenceNumber, setReferenceNumber] = useState('');
+  const [authorizationCode, setAuthorizationCode] = useState('');
+  const [cardLastFour, setCardLastFour] = useState('');
+  const [cardBrand, setCardBrand] = useState('');
+  const [qrProvider, setQrProvider] = useState('');
+  const [qrTransactionId, setQrTransactionId] = useState('');
 
   // Debounced search
   const debouncedSearch = useDebounce(searchQuery, 300);
@@ -85,6 +97,76 @@ const POSPage: React.FC = () => {
       dispatch(quickSearchCustomers(debouncedCustomerSearch));
     }
   }, [dispatch, debouncedCustomerSearch]);
+
+  // Handle barcode scanned
+  const handleBarcodeScanned = useCallback(async (barcode: string) => {
+    if (!currentBranch?.id) return;
+
+    // Search for product by barcode
+    const result = await dispatch(searchProducts({ query: barcode, branch_id: currentBranch.id }));
+
+    if (searchProducts.fulfilled.match(result)) {
+      const foundProducts = result.payload;
+
+      if (foundProducts && foundProducts.length > 0) {
+        const product = foundProducts[0];
+
+        // Check stock
+        if (product.stock_quantity && product.stock_quantity <= 0) {
+          alert(`Producto "${product.name}" sin stock`);
+          return;
+        }
+
+        // Add to cart with quantity 1
+        dispatch(addToCart({
+          product: {
+            ...product,
+            stock_quantity: product.stock_quantity || 0,
+          },
+          quantity: 1,
+        }));
+      } else {
+        alert(`Código de barras "${barcode}" no encontrado`);
+      }
+    }
+  }, [dispatch, currentBranch?.id]);
+
+  // Barcode scanner support
+  useEffect(() => {
+    let barcodeBuffer = '';
+    let lastKeyTime = Date.now();
+
+    const handleKeyPress = (e: KeyboardEvent) => {
+      // Ignore if user is typing in an input field
+      const target = e.target as HTMLElement;
+      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.tagName === 'SELECT') {
+        return;
+      }
+
+      const currentTime = Date.now();
+      const timeDiff = currentTime - lastKeyTime;
+
+      // If more than 100ms between keys, reset buffer (human typing)
+      if (timeDiff > 100) {
+        barcodeBuffer = '';
+      }
+
+      lastKeyTime = currentTime;
+
+      // Enter key indicates end of barcode scan
+      if (e.key === 'Enter' && barcodeBuffer.length > 0) {
+        e.preventDefault();
+        handleBarcodeScanned(barcodeBuffer);
+        barcodeBuffer = '';
+      } else if (e.key.length === 1) {
+        // Single character key
+        barcodeBuffer += e.key;
+      }
+    };
+
+    window.addEventListener('keypress', handleKeyPress);
+    return () => window.removeEventListener('keypress', handleKeyPress);
+  }, [handleBarcodeScanned]);
 
   // Display products - use search results if searching
   const displayProducts = useMemo(() => {
@@ -164,14 +246,61 @@ const POSPage: React.FC = () => {
 
     if (amount <= 0) return;
 
-    dispatch(addPayment({
+    // Validate required fields based on payment method
+    if (selectedPaymentMethod === 'TRANSFER' && !referenceNumber.trim()) {
+      alert('El número de comprobante es obligatorio para transferencias');
+      return;
+    }
+
+    if ((selectedPaymentMethod === 'DEBIT' || selectedPaymentMethod === 'CREDIT') && !authorizationCode.trim()) {
+      alert('El código de autorización es obligatorio para pagos con tarjeta');
+      return;
+    }
+
+    const paymentData: any = {
       payment_method_id: selectedPaymentMethod,
       amount: Math.min(amount, remainingAmount + change),
-      reference_number: selectedPaymentMethod !== 'CASH' ? `REF-${Date.now()}` : undefined,
-    }));
+    };
 
+    // Add reference fields based on payment method
+    if (selectedPaymentMethod === 'TRANSFER' && referenceNumber) {
+      paymentData.reference_number = referenceNumber;
+    }
+
+    if (selectedPaymentMethod === 'DEBIT' || selectedPaymentMethod === 'CREDIT') {
+      if (authorizationCode) paymentData.authorization_code = authorizationCode;
+      if (cardLastFour) paymentData.card_last_four = cardLastFour;
+      if (cardBrand) paymentData.card_brand = cardBrand;
+    }
+
+    if (selectedPaymentMethod === 'QR') {
+      if (qrProvider) paymentData.qr_provider = qrProvider;
+      if (qrTransactionId) paymentData.qr_transaction_id = qrTransactionId;
+    }
+
+    dispatch(addPayment(paymentData));
+
+    // Clear all payment fields
     setCashReceived('');
-  }, [dispatch, selectedPaymentMethod, cashReceived, remainingAmount, change]);
+    setReferenceNumber('');
+    setAuthorizationCode('');
+    setCardLastFour('');
+    setCardBrand('');
+    setQrProvider('');
+    setQrTransactionId('');
+  }, [
+    dispatch,
+    selectedPaymentMethod,
+    cashReceived,
+    remainingAmount,
+    change,
+    referenceNumber,
+    authorizationCode,
+    cardLastFour,
+    cardBrand,
+    qrProvider,
+    qrTransactionId
+  ]);
 
   // Complete sale
   const handleCompleteSale = useCallback(async () => {
@@ -186,6 +315,7 @@ const POSPage: React.FC = () => {
 
     if (completeSale.fulfilled.match(result)) {
       setShowPaymentModal(false);
+      setShowSuccessModal(true);
       // Sale completed successfully - cart cleared by reducer
     }
   }, [dispatch, currentBranch?.id, activeSession?.id, activeSession?.register_id, remainingAmount]);
@@ -206,7 +336,18 @@ const POSPage: React.FC = () => {
 
   // Check if session is active
   if (!activeSession) {
-    return <NoActiveSessionCard onNavigateToSessions={() => goTo('/sessions')} />;
+    return (
+      <>
+        <NoActiveSessionCard
+          onOpenSession={() => setShowOpenSessionModal(true)}
+          onNavigateToSessions={() => goTo('/sessions')}
+        />
+        <OpenSessionModal
+          isOpen={showOpenSessionModal}
+          onClose={() => setShowOpenSessionModal(false)}
+        />
+      </>
+    );
   }
 
   return (
@@ -282,6 +423,18 @@ const POSPage: React.FC = () => {
         onMethodChange={setSelectedPaymentMethod}
         cashReceived={cashReceived}
         onCashReceivedChange={setCashReceived}
+        referenceNumber={referenceNumber}
+        onReferenceNumberChange={setReferenceNumber}
+        authorizationCode={authorizationCode}
+        onAuthorizationCodeChange={setAuthorizationCode}
+        cardLastFour={cardLastFour}
+        onCardLastFourChange={setCardLastFour}
+        cardBrand={cardBrand}
+        onCardBrandChange={setCardBrand}
+        qrProvider={qrProvider}
+        onQrProviderChange={setQrProvider}
+        qrTransactionId={qrTransactionId}
+        onQrTransactionIdChange={setQrTransactionId}
         payments={payments}
         onRemovePayment={(index) => dispatch(removePayment(index))}
         onAddPayment={handleAddPayment}
@@ -292,6 +445,12 @@ const POSPage: React.FC = () => {
         change={change}
         processing={false}
         formatCurrency={formatCurrency}
+      />
+
+      <SaleSuccessModal
+        isOpen={showSuccessModal}
+        onClose={() => setShowSuccessModal(false)}
+        sale={lastSale}
       />
     </div>
   );

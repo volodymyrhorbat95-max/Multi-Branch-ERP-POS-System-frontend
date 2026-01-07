@@ -60,7 +60,8 @@ export const registerService = {
    * Open register session
    */
   openSession: (data: OpenSessionData): Promise<ApiResponse<RegisterSession>> => {
-    return post<RegisterSession>('/registers/sessions/open', data);
+    const { register_id, ...sessionData } = data;
+    return post<RegisterSession>(`/registers/${register_id}/open`, sessionData);
   },
 
   /**

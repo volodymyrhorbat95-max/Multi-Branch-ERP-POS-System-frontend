@@ -1,12 +1,12 @@
 import { get } from './client';
-import type { ApiResponse, DailyReportData, OwnerDashboardData, UUID } from '../../types';
+import type { ApiResponse, DailyReportData, LiveBranchShiftStatusData, OwnerDashboardData, UUID } from '../../types';
 
 export const reportService = {
   /**
    * Get daily report for a branch
    */
   getDailyReport: (branchId: UUID, date?: string): Promise<ApiResponse<DailyReportData>> => {
-    return get<DailyReportData>('/reports/daily', { branch_id: branchId, date });
+    return get<DailyReportData>('/reports/daily-report', { branch_id: branchId, date });
   },
 
   /**
@@ -17,6 +17,13 @@ export const reportService = {
     end_date?: string;
   }): Promise<ApiResponse<OwnerDashboardData>> => {
     return get<OwnerDashboardData>('/reports/owner-dashboard', params);
+  },
+
+  /**
+   * Get live branch shift status (today's shifts for all branches)
+   */
+  getLiveBranchShiftStatus: (): Promise<ApiResponse<LiveBranchShiftStatusData>> => {
+    return get<LiveBranchShiftStatusData>('/reports/live-branch-status');
   },
 
   /**

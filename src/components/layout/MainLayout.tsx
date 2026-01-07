@@ -24,12 +24,12 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
       <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col lg:pl-64">
         {/* Header */}
         <Header onMenuClick={() => setSidebarOpen(true)} />
 
-        {/* Page Content */}
-        <main className="flex-1 bg-gray-50 dark:bg-gray-900">
+        {/* Page Content - Add top padding for fixed header */}
+        <main className="flex-1 bg-gray-50 dark:bg-gray-900 pt-16">
           {children}
         </main>
 

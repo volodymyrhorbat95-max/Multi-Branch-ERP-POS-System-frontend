@@ -31,6 +31,15 @@ const SessionsList: React.FC<SessionsListProps> = ({ sessions }) => {
     return colors[status] || colors.CLOSED;
   };
 
+  const getShiftLabel = (shiftType: string) => {
+    const labels: { [key: string]: string } = {
+      MORNING: 'Turno Mañana',
+      AFTERNOON: 'Turno Tarde',
+      FULL_DAY: 'Día Completo'
+    };
+    return labels[shiftType] || shiftType;
+  };
+
   return (
     <div className="animate-fade-up duration-normal">
       {sessions && sessions.length > 0 ? (
@@ -41,6 +50,7 @@ const SessionsList: React.FC<SessionsListProps> = ({ sessions }) => {
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider animate-fade-right duration-very-fast">#</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider animate-fade-right duration-fast">Sucursal</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider animate-fade-right duration-normal">Turno</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider animate-fade-right duration-normal">Cajero Apertura</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider animate-fade-right duration-light-slow">Abierto</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider animate-fade-right duration-slow">Cerrado</th>
@@ -56,6 +66,11 @@ const SessionsList: React.FC<SessionsListProps> = ({ sessions }) => {
                     <tr key={session.id} className="hover:bg-gray-50 dark:hover:bg-gray-700 animate-fade-up duration-normal">
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white animate-flip-up duration-fast">{session.id}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white animate-fade-left duration-fast">{session.branch?.name}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white animate-fade-left duration-fast">
+                        <span className="px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded text-xs font-medium">
+                          {getShiftLabel(session.shift_type)}
+                        </span>
+                      </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white animate-fade-left duration-normal">
                         {session.cashier ? `${session.cashier.first_name} ${session.cashier.last_name}` : '-'}
                       </td>
