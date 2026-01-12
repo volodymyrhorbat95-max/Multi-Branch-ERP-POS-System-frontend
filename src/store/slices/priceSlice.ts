@@ -428,6 +428,78 @@ export const loadSuppliers = createAsyncThunk<
   }
 );
 
+export const bulkUpdateByMargin = createAsyncThunk<
+  { updated_count: number; products: Array<{ id: UUID; name: string; sku: string; old_price: number; new_price: number }> },
+  {
+    product_ids?: UUID[];
+    category_id?: UUID;
+    margin_percentage: number;
+    rounding_rule?: 'NONE' | 'UP' | 'DOWN' | 'NEAREST';
+    rounding_value?: number;
+  },
+  { rejectValue: string }
+>(
+  'price/bulkUpdateByMargin',
+  async (data, { dispatch, rejectWithValue }) => {
+    try {
+      dispatch(startLoading());
+      const { productService } = await import('../../services/api/product.service');
+      const response = await productService.bulkUpdateByMargin(data);
+
+      if (!response.success) {
+        throw new Error('Failed to bulk update prices');
+      }
+
+      dispatch(showToast({
+        message: `Precios actualizados: ${response.data.updated_count} productos`,
+        type: 'success',
+      }));
+      return response.data;
+    } catch (error) {
+      dispatch(showToast({ message: 'Error al actualizar precios', type: 'error' }));
+      return rejectWithValue('Error al actualizar precios');
+    } finally {
+      dispatch(stopLoading());
+    }
+  }
+);
+
+export const bulkUpdateBySupplier = createAsyncThunk<
+  { updated_count: number; products: Array<{ id: UUID; name: string; sku: string; old_price: number; new_price: number }> },
+  {
+    supplier_id: UUID;
+    margin_percentage: number;
+    rounding_rule?: 'NONE' | 'UP' | 'DOWN' | 'NEAREST';
+    rounding_value?: number;
+    update_cost_prices: boolean;
+  },
+  { rejectValue: string }
+>(
+  'price/bulkUpdateBySupplier',
+  async (data, { dispatch, rejectWithValue }) => {
+    try {
+      dispatch(startLoading());
+      const { productService } = await import('../../services/api/product.service');
+      const response = await productService.bulkUpdateBySupplier(data);
+
+      if (!response.success) {
+        throw new Error('Failed to bulk update prices');
+      }
+
+      dispatch(showToast({
+        message: `Precios actualizados: ${response.data.updated_count} productos del proveedor`,
+        type: 'success',
+      }));
+      return response.data;
+    } catch (error) {
+      dispatch(showToast({ message: 'Error al actualizar precios', type: 'error' }));
+      return rejectWithValue('Error al actualizar precios');
+    } finally {
+      dispatch(stopLoading());
+    }
+  }
+);
+
 const priceSlice = createSlice({
   name: 'price',
   initialState,
@@ -563,6 +635,16 @@ const priceSlice = createSlice({
     // Load Suppliers
     builder.addCase(loadSuppliers.fulfilled, (state, action) => {
       state.suppliers = action.payload;
+    });
+
+    // Bulk Update By Margin - no state changes needed
+    builder.addCase(bulkUpdateByMargin.fulfilled, () => {
+      // Success toast already shown in thunk
+    });
+
+    // Bulk Update By Supplier - no state changes needed
+    builder.addCase(bulkUpdateBySupplier.fulfilled, () => {
+      // Success toast already shown in thunk
     });
   },
 });

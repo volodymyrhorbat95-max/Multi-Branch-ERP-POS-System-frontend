@@ -12,6 +12,8 @@ import type {
 } from '../../types';
 import { saleService, paymentService } from '../../services/api';
 import { startLoading, stopLoading, showToast } from './uiSlice';
+import { db, LocalSale, LocalSaleItem, LocalSalePayment } from '../../services/db';
+import type { LocalSyncQueueItem } from '../../services/db';
 
 interface POSState {
   // Cart state
@@ -29,8 +31,8 @@ interface POSState {
   // Current sale being processed
   currentSale: Sale | null;
 
-  // Last completed sale (for receipt)
-  lastSale: Sale | null;
+  // Last completed sale (for receipt) - can be Sale or LocalSale (offline)
+  lastSale: Sale | LocalSale | null;
 
   // POS mode
   mode: 'sale' | 'return' | 'exchange';
@@ -153,12 +155,201 @@ export const loadPaymentMethods = createAsyncThunk<PaymentMethod[], void, { reje
   }
 );
 
+/**
+ * Create sale offline and save to IndexedDB
+ * Called when online sale creation fails or when offline
+ */
+const createOfflineSale = async (
+  saleData: {
+    branch_id: UUID;
+    register_id: UUID;
+    session_id: UUID;
+    invoice_override?: {
+      invoice_type?: 'A' | 'B' | 'C';
+      customer_cuit?: string;
+      customer_tax_condition?: string;
+      customer_address?: string;
+    };
+  },
+  cart: Cart,
+  payments: SalePayment[],
+  userId: UUID
+): Promise<LocalSale> => {
+  const localId = uuidv4();
+  const now = new Date().toISOString();
+
+  // Calculate totals
+  const subtotal = Number(cart.subtotal);
+  const discountAmount = Number(cart.discount_amount);
+  const taxAmount = Number(cart.tax_amount);
+  const total = Number(cart.total);
+
+  // Prepare local sale data matching LocalSale interface
+  const localSale: LocalSale = {
+    local_id: localId,
+    local_created_at: now,
+    branch_id: saleData.branch_id,
+    register_id: saleData.register_id,
+    session_id: saleData.session_id,
+    customer_id: cart.customer?.id,
+    subtotal,
+    discount_amount: discountAmount,
+    discount_percent: cart.discount_type === 'PERCENT' ? cart.discount_value || 0 : 0,
+    tax_amount: taxAmount,
+    total_amount: total,
+    points_earned: 0,
+    points_redeemed: 0,
+    points_redemption_value: 0,
+    credit_used: 0,
+    change_as_credit: 0,
+    status: 'COMPLETED',
+    created_by: userId,
+    invoice_override: saleData.invoice_override, // Preserve invoice override for offline sales
+    sync_status: 'PENDING',
+    items: [],
+    payments: [],
+  };
+
+  // Prepare sale items
+  const localItems: LocalSaleItem[] = cart.items.map((item) => ({
+    sale_local_id: localId,
+    product_id: item.product_id,
+    quantity: item.quantity,
+    unit_price: Number(item.unit_price),
+    discount_percent: item.discount_percent,
+    discount_amount: Number(item.discount_amount),
+    tax_rate: Number(item.tax_rate) || 0,
+    tax_amount: Number(item.tax_amount),
+    line_total: Number(item.total),
+    product_name: item.product.name,
+    product_sku: item.product.sku,
+  }));
+
+  // Prepare sale payments
+  const localPayments: LocalSalePayment[] = payments.map((p) => ({
+    sale_local_id: localId,
+    payment_method_id: p.payment_method_id,
+    amount: Number(p.amount),
+    reference_number: p.reference_number,
+    card_last_four: p.card_last_four,
+    card_brand: p.card_brand,
+    authorization_code: p.authorization_code,
+    qr_provider: p.qr_provider,
+    qr_transaction_id: p.qr_transaction_id,
+    payment_method_name: p.payment_method?.name,
+  }));
+
+  localSale.items = localItems;
+  localSale.payments = localPayments;
+
+  // Save to IndexedDB
+  await db.sales.add(localSale);
+  await db.saleItems.bulkAdd(localItems);
+  await db.salePayments.bulkAdd(localPayments);
+
+  // Create stock movements and deduct inventory for each item
+  const stockMovements: any[] = [];
+  for (const item of cart.items) {
+    const stockMovementLocalId = uuidv4();
+
+    // Get current cached stock
+    const cachedProduct = await db.products.get(item.product_id);
+    const currentStock = cachedProduct?.stock_quantity || 0;
+    const quantityBefore = currentStock;
+    const quantityAfter = Math.max(0, currentStock - item.quantity);
+
+    // Create stock movement record
+    const stockMovement = {
+      local_id: stockMovementLocalId,
+      local_created_at: now,
+      branch_id: saleData.branch_id,
+      product_id: item.product_id,
+      movement_type: 'SALE' as const,
+      quantity: item.quantity,
+      quantity_before: quantityBefore,
+      quantity_after: quantityAfter,
+      reference_type: 'SALE',
+      reference_id: localId, // Reference to offline sale's local_id
+      adjustment_reason: null,
+      related_branch_id: null,
+      performed_by: userId,
+      notes: `Offline sale - ${item.product.name}`,
+      sync_status: 'PENDING' as const,
+    };
+
+    stockMovements.push(stockMovement);
+
+    // Deduct from local cached inventory
+    if (cachedProduct) {
+      await db.products.update(item.product_id, {
+        stock_quantity: quantityAfter,
+      });
+      console.log(
+        `[POS] Stock deducted: ${item.product.name} (${quantityBefore} → ${quantityAfter})`
+      );
+    } else {
+      console.warn(
+        `[POS] Product ${item.product_id} not in cache - cannot deduct stock locally`
+      );
+    }
+
+    // Add stock movement to sync queue
+    const stockSyncItem: Omit<LocalSyncQueueItem, 'id'> = {
+      entity_type: 'STOCK_MOVEMENT',
+      entity_local_id: stockMovementLocalId,
+      operation: 'INSERT',
+      payload: stockMovement,
+      status: 'PENDING',
+      retry_count: 0,
+      local_created_at: now,
+      branch_id: saleData.branch_id,
+    };
+    await db.syncQueue.add(stockSyncItem as LocalSyncQueueItem);
+  }
+
+  // Save stock movements to IndexedDB
+  await db.stockMovements.bulkAdd(stockMovements);
+
+  // Add sale to sync queue
+  const syncQueueItem: Omit<LocalSyncQueueItem, 'id'> = {
+    entity_type: 'SALE',
+    entity_local_id: localId,
+    operation: 'INSERT',
+    payload: {
+      ...localSale,
+      items: localItems,
+      payments: localPayments,
+    },
+    status: 'PENDING',
+    retry_count: 0,
+    local_created_at: now,
+    branch_id: saleData.branch_id,
+    register_id: saleData.register_id,
+  };
+
+  await db.syncQueue.add(syncQueueItem as LocalSyncQueueItem);
+
+  console.log(
+    `[POS] Sale saved offline with local_id: ${localId}, ${stockMovements.length} stock movements created`
+  );
+
+  return localSale;
+};
+
 export const completeSale = createAsyncThunk<
-  Sale,
+  Sale | LocalSale,
   {
     branch_id: UUID;
     register_id: UUID;
     session_id: UUID;
+    user_id: UUID;
+    // Invoice override parameters
+    invoice_override?: {
+      invoice_type?: 'A' | 'B' | 'C';
+      customer_cuit?: string;
+      customer_tax_condition?: string;
+      customer_address?: string;
+    };
   },
   { rejectValue: string }
 >(
@@ -180,7 +371,9 @@ export const completeSale = createAsyncThunk<
       }
 
       const salePayload = {
-        ...saleData,
+        branch_id: saleData.branch_id,
+        register_id: saleData.register_id,
+        session_id: saleData.session_id,
         customer_id: cart.customer?.id,
         items: cart.items.map((item) => ({
           product_id: item.product_id,
@@ -200,20 +393,63 @@ export const completeSale = createAsyncThunk<
         })),
         discount_type: cart.discount_type,
         discount_value: cart.discount_value,
+        // Include invoice override data if provided
+        invoice_override: saleData.invoice_override,
       };
 
-      const response = await saleService.create(salePayload);
+      // Check if online
+      const isOnline = navigator.onLine;
 
-      if (!response.success) {
-        throw new Error(response.error || 'Failed to complete sale');
+      if (isOnline) {
+        // Try to create sale online
+        try {
+          const response = await saleService.create(salePayload);
+
+          if (!response.success) {
+            throw new Error(response.error || 'Failed to complete sale');
+          }
+
+          dispatch(showToast({
+            type: 'success',
+            message: `Venta ${response.data.sale_number} completada!`,
+          }));
+
+          return response.data;
+        } catch (error) {
+          // Network error - fallback to offline
+          console.warn('[POS] Online sale failed, falling back to offline mode', error);
+          const offlineSale = await createOfflineSale(
+            saleData,
+            cart,
+            payments,
+            saleData.user_id
+          );
+
+          dispatch(showToast({
+            type: 'warning',
+            message: 'Venta guardada en modo offline. Se sincronizará automáticamente.',
+          }));
+
+          // Return offline sale as Sale-like object for UI
+          return offlineSale as any;
+        }
+      } else {
+        // Offline mode - create sale locally
+        console.log('[POS] Offline mode detected, creating sale locally');
+        const offlineSale = await createOfflineSale(
+          saleData,
+          cart,
+          payments,
+          saleData.user_id
+        );
+
+        dispatch(showToast({
+          type: 'warning',
+          message: 'Sin conexión. Venta guardada offline.',
+        }));
+
+        return offlineSale as any;
       }
-
-      dispatch(showToast({
-        type: 'success',
-        message: `Venta ${response.data.sale_number} completada!`,
-      }));
-
-      return response.data;
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Error al procesar venta';
       dispatch(showToast({ type: 'error', message }));

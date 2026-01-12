@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '../../components/ui';
 import type { ImportPreview } from './types';
+import type { Product, UUID } from '../../types';
 
 interface PricePreviewTableProps {
   preview: ImportPreview;
@@ -10,6 +11,7 @@ interface PricePreviewTableProps {
   onToggleItem: (index: number) => void;
   onToggleAllMatched: () => void;
   onApply: () => void;
+  onManualMatch: (index: number, productId: UUID) => void;
 }
 
 export const PricePreviewTable: React.FC<PricePreviewTableProps> = ({
@@ -20,7 +22,46 @@ export const PricePreviewTable: React.FC<PricePreviewTableProps> = ({
   onToggleItem,
   onToggleAllMatched,
   onApply,
+  onManualMatch,
 }) => {
+  const [searchTerm, setSearchTerm] = useState<string>('');
+  const [searchResults, setSearchResults] = useState<Product[]>([]);
+  const [searchingForItemIndex, setSearchingForItemIndex] = useState<number | null>(null);
+  const [isSearching, setIsSearching] = useState(false);
+
+  // Search for products when user types
+  useEffect(() => {
+    if (!searchTerm || searchTerm.length < 2) {
+      setSearchResults([]);
+      return;
+    }
+
+    const searchProducts = async () => {
+      setIsSearching(true);
+      try {
+        const { productService } = await import('../../services/api/product.service');
+        const response = await productService.getAll({ search: searchTerm, limit: 10 });
+        if (response.success) {
+          setSearchResults(response.data);
+        }
+      } catch (error) {
+        console.error('Error searching products:', error);
+      } finally {
+        setIsSearching(false);
+      }
+    };
+
+    const timeoutId = setTimeout(searchProducts, 300);
+    return () => clearTimeout(timeoutId);
+  }, [searchTerm]);
+
+  const handleSelectProduct = (itemIndex: number, productId: UUID) => {
+    onManualMatch(itemIndex, productId);
+    setSearchingForItemIndex(null);
+    setSearchTerm('');
+    setSearchResults([]);
+  };
+
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('es-AR', {
       style: 'currency',
@@ -201,8 +242,57 @@ export const PricePreviewTable: React.FC<PricePreviewTableProps> = ({
                         </p>
                         <p className="text-xs text-gray-500">SKU: {item.matched_sku}</p>
                       </div>
+                    ) : searchingForItemIndex === index ? (
+                      <div className="relative">
+                        <input
+                          type="text"
+                          placeholder="Buscar producto..."
+                          value={searchTerm}
+                          onChange={(e) => setSearchTerm(e.target.value)}
+                          className="w-full px-3 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                          autoFocus
+                        />
+                        {isSearching && (
+                          <div className="absolute right-3 top-2">
+                            <div className="animate-spin h-4 w-4 border-2 border-primary-500 border-t-transparent rounded-full" />
+                          </div>
+                        )}
+                        {searchResults.length > 0 && (
+                          <div className="absolute z-10 mt-1 w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md shadow-lg max-h-60 overflow-auto">
+                            {searchResults.map((product) => (
+                              <button
+                                key={product.id}
+                                onClick={() => handleSelectProduct(index, product.id)}
+                                className="w-full px-3 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-700 border-b border-gray-200 dark:border-gray-700 last:border-b-0"
+                              >
+                                <p className="text-sm font-medium text-gray-900 dark:text-white">
+                                  {product.name}
+                                </p>
+                                <p className="text-xs text-gray-500">
+                                  SKU: {product.sku} {product.barcode && `• Código: ${product.barcode}`}
+                                </p>
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                        <button
+                          onClick={() => {
+                            setSearchingForItemIndex(null);
+                            setSearchTerm('');
+                            setSearchResults([]);
+                          }}
+                          className="mt-1 text-xs text-gray-500 hover:text-gray-700 dark:hover:text-gray-400"
+                        >
+                          Cancelar
+                        </button>
+                      </div>
                     ) : (
-                      <span className="text-sm text-gray-400">-</span>
+                      <button
+                        onClick={() => setSearchingForItemIndex(index)}
+                        className="text-sm text-primary-600 hover:text-primary-700 underline"
+                      >
+                        Asociar producto
+                      </button>
                     )}
                   </td>
                   <td className="px-4 py-3 text-right text-sm text-gray-500">

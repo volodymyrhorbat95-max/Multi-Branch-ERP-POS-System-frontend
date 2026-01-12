@@ -15,3 +15,5 @@ export { default as invoiceService } from './invoice.service';
 export { default as stockService } from './stock.service';
 export { default as priceService } from './price.service';
 export { default as loyaltyService } from './loyalty.service';
+export { default as syncService } from './sync.service';
+export { withdrawalService } from './withdrawal.service';

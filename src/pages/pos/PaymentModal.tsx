@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Modal, Input, Button } from '../../components/ui';
-import type { SalePayment } from '../../types';
+import type { SalePayment, Customer } from '../../types';
 
 interface PaymentModalProps {
   isOpen: boolean;
@@ -32,6 +32,16 @@ interface PaymentModalProps {
   change: number;
   processing: boolean;
   formatCurrency: (amount: number) => string;
+  // Invoice-related props
+  customer: Customer | null;
+  invoiceType: 'A' | 'B' | 'C' | null;
+  onInvoiceTypeChange: (type: 'A' | 'B' | 'C' | null) => void;
+  customerCuit: string;
+  onCustomerCuitChange: (value: string) => void;
+  customerTaxCondition: string;
+  onCustomerTaxConditionChange: (value: string) => void;
+  customerAddress: string;
+  onCustomerAddressChange: (value: string) => void;
 }
 
 const PaymentModal: React.FC<PaymentModalProps> = ({
@@ -63,7 +73,54 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
   change,
   processing,
   formatCurrency,
+  // Invoice props
+  customer,
+  invoiceType,
+  onInvoiceTypeChange,
+  customerCuit,
+  onCustomerCuitChange,
+  customerTaxCondition,
+  onCustomerTaxConditionChange,
+  customerAddress,
+  onCustomerAddressChange,
 }) => {
+  // Auto-detect suggested invoice type based on customer data
+  const [suggestedInvoiceType, setSuggestedInvoiceType] = useState<'A' | 'B' | 'C'>('B');
+
+  useEffect(() => {
+    if (!customer) {
+      setSuggestedInvoiceType('B'); // Consumidor Final
+      return;
+    }
+
+    // If customer has CUIT and is Responsable Inscripto -> suggest A
+    if (
+      customer.tax_condition === 'RESPONSABLE_INSCRIPTO' &&
+      customer.document_number &&
+      customer.document_number.length >= 11
+    ) {
+      setSuggestedInvoiceType('A');
+    }
+    // If customer is Monotributista -> suggest C
+    else if (customer.tax_condition === 'MONOTRIBUTO') {
+      setSuggestedInvoiceType('C');
+    }
+    // Default to B
+    else {
+      setSuggestedInvoiceType('B');
+    }
+  }, [customer]);
+
+  // Validation for Invoice Type A
+  const isInvoiceTypeAValid = () => {
+    if (invoiceType !== 'A') return true;
+    return (
+      customerCuit &&
+      customerCuit.length >= 11 &&
+      customerTaxCondition &&
+      customerAddress
+    );
+  };
   return (
     <Modal
       isOpen={isOpen}
@@ -71,12 +128,132 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
       title="Cobrar Venta"
       size="lg"
     >
-      <div className="grid grid-cols-2 gap-6">
-        {/* Left - Payment Methods */}
-        <div className="space-y-4 animate-fade-right duration-normal">
-          <h3 className="font-medium text-gray-900 dark:text-white animate-fade-down duration-fast">
-            Método de Pago
+      <div className="space-y-6">
+        {/* Invoice Type Selection */}
+        <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-sm border border-blue-200 dark:border-blue-800 animate-fade-down duration-normal">
+          <h3 className="font-medium text-gray-900 dark:text-white mb-3">
+            Tipo de Factura
           </h3>
+
+          <div className="grid grid-cols-3 gap-3 mb-3">
+            {['A', 'B', 'C'].map((type) => (
+              <button
+                key={type}
+                onClick={() => onInvoiceTypeChange(type as 'A' | 'B' | 'C')}
+                className={`
+                  p-3 rounded-sm border-2 text-center transition-all animate-zoom-in duration-fast
+                  ${invoiceType === type
+                    ? 'border-blue-500 bg-blue-100 dark:bg-blue-900/40'
+                    : 'border-gray-300 dark:border-gray-600 hover:border-blue-300'}
+                  ${suggestedInvoiceType === type && invoiceType !== type
+                    ? 'ring-2 ring-blue-400 ring-opacity-50'
+                    : ''}
+                `}
+              >
+                <span className={`font-bold text-lg ${
+                  invoiceType === type
+                    ? 'text-blue-600 dark:text-blue-400'
+                    : 'text-gray-700 dark:text-gray-300'
+                }`}>
+                  Tipo {type}
+                </span>
+                <p className="text-xs mt-1 text-gray-600 dark:text-gray-400">
+                  {type === 'A' && 'Resp. Inscripto'}
+                  {type === 'B' && 'Consumidor Final'}
+                  {type === 'C' && 'Monotributista'}
+                </p>
+                {suggestedInvoiceType === type && invoiceType !== type && (
+                  <p className="text-xs mt-1 text-blue-600 dark:text-blue-400 font-medium">
+                    Sugerido
+                  </p>
+                )}
+              </button>
+            ))}
+          </div>
+
+          {/* Invoice Type A - Additional Fields */}
+          {invoiceType === 'A' && (
+            <div className="mt-4 p-4 bg-white dark:bg-gray-800 rounded-sm border border-gray-200 dark:border-gray-700 space-y-3 animate-fade-up duration-normal">
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
+                Factura tipo A requiere datos fiscales del cliente
+              </p>
+
+              <Input
+                label="CUIT *"
+                type="text"
+                value={customerCuit}
+                onChange={(e) => {
+                  // Format CUIT as XX-XXXXXXXX-X
+                  const value = e.target.value.replace(/\D/g, '');
+                  if (value.length <= 11) {
+                    onCustomerCuitChange(value);
+                  }
+                }}
+                placeholder="20-12345678-9"
+                required
+                maxLength={13}
+              />
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Condición Fiscal *
+                </label>
+                <select
+                  value={customerTaxCondition}
+                  onChange={(e) => onCustomerTaxConditionChange(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  required
+                >
+                  <option value="">Seleccionar...</option>
+                  <option value="RESPONSABLE_INSCRIPTO">Responsable Inscripto</option>
+                  <option value="MONOTRIBUTO">Monotributista</option>
+                  <option value="EXENTO">Exento</option>
+                </select>
+              </div>
+
+              <Input
+                label="Dirección *"
+                type="text"
+                value={customerAddress}
+                onChange={(e) => onCustomerAddressChange(e.target.value)}
+                placeholder="Calle 123, Ciudad"
+                required
+              />
+
+              {!isInvoiceTypeAValid() && (
+                <div className="p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-300 dark:border-yellow-700 rounded-sm">
+                  <p className="text-sm text-yellow-800 dark:text-yellow-300">
+                    Complete todos los campos requeridos para Factura tipo A
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Customer Info Display */}
+          {customer && (
+            <div className="mt-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-sm text-sm">
+              <p className="text-gray-600 dark:text-gray-400">
+                Cliente: <span className="font-medium text-gray-900 dark:text-white">
+                  {customer.company_name || `${customer.first_name} ${customer.last_name}`}
+                </span>
+              </p>
+              {customer.document_number && (
+                <p className="text-gray-600 dark:text-gray-400">
+                  {customer.document_type}: {customer.document_number}
+                </p>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Payment Section */}
+        <div className="grid grid-cols-2 gap-6">
+          {/* Left - Payment Methods */}
+          <div className="space-y-4 animate-fade-right duration-normal">
+            <h3 className="font-medium text-gray-900 dark:text-white animate-fade-down duration-fast">
+              Método de Pago
+            </h3>
 
           <div className="grid grid-cols-2 gap-3 animate-fade-up duration-normal">
             {['CASH', 'DEBIT', 'CREDIT', 'TRANSFER', 'QR'].map((method) => (
@@ -314,12 +491,13 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
             size="lg"
             fullWidth
             onClick={onCompleteSale}
-            disabled={remainingAmount > 0 || processing}
+            disabled={remainingAmount > 0 || processing || !isInvoiceTypeAValid()}
             loading={processing}
             className="animate-fade-up duration-very-slow"
           >
             Completar Venta
           </Button>
+        </div>
         </div>
       </div>
     </Modal>

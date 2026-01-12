@@ -10,6 +10,7 @@ import {
   addPayment,
   removePayment,
   clearPayments,
+  loadPaymentMethods,
 } from '../../store/slices/posSlice';
 import { searchProducts } from '../../store/slices/productsSlice';
 import { quickSearchCustomers } from '../../store/slices/customersSlice';
@@ -17,6 +18,8 @@ import { useNavigation } from '../../hooks';
 import type { Product, Customer, QuickSearchCustomer } from '../../types';
 import NoActiveSessionCard from './NoActiveSessionCard';
 import OpenSessionModal from './OpenSessionModal';
+import CloseSessionModal from './CloseSessionModal';
+import WithdrawalModal from './WithdrawalModal';
 import TopBar from './TopBar';
 import ProductsGrid from './ProductsGrid';
 import CartSection from './CartSection';
@@ -24,6 +27,8 @@ import QuantityModal from './QuantityModal';
 import CustomerSearchModal from './CustomerSearchModal';
 import PaymentModal from './PaymentModal';
 import SaleSuccessModal from './SaleSuccessModal';
+import { withdrawalService } from '../../services/api';
+import type { CreateWithdrawalData } from '../../types';
 
 // Debounce hook
 const useDebounce = <T,>(value: T, delay: number): T => {
@@ -47,10 +52,10 @@ const POSPage: React.FC = () => {
   const { goTo } = useNavigation();
 
   // Redux state
-  const { cart, payments, searchResults, lastSale } = useAppSelector((state) => state.pos);
+  const { cart, payments, searchResults, lastSale, paymentMethods } = useAppSelector((state) => state.pos);
   const { products, loading: productsLoading } = useAppSelector((state) => state.products);
   const { quickSearchResults: customerSearchResults, loading: customersLoading } = useAppSelector((state) => state.customers);
-  const { currentBranch, currentSession: activeSession } = useAppSelector((state) => state.auth);
+  const { user, currentBranch, currentSession: activeSession } = useAppSelector((state) => state.auth);
 
   // Local state
   const [searchQuery, setSearchQuery] = useState('');
@@ -60,6 +65,8 @@ const POSPage: React.FC = () => {
   const [showQuantityModal, setShowQuantityModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [showOpenSessionModal, setShowOpenSessionModal] = useState(false);
+  const [showCloseSessionModal, setShowCloseSessionModal] = useState(false);
+  const [showWithdrawalModal, setShowWithdrawalModal] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [quantity, setQuantity] = useState('1');
   const [cashReceived, setCashReceived] = useState('');
@@ -73,16 +80,51 @@ const POSPage: React.FC = () => {
   const [qrProvider, setQrProvider] = useState('');
   const [qrTransactionId, setQrTransactionId] = useState('');
 
+  // Invoice-related fields
+  const [invoiceType, setInvoiceType] = useState<'A' | 'B' | 'C' | null>('B');
+  const [customerCuit, setCustomerCuit] = useState('');
+  const [customerTaxCondition, setCustomerTaxCondition] = useState('');
+  const [customerAddress, setCustomerAddress] = useState('');
+
+  // Auto-populate invoice fields when customer changes
+  useEffect(() => {
+    if (cart.customer) {
+      // Auto-fill CUIT if available
+      if (cart.customer.document_number) {
+        setCustomerCuit(cart.customer.document_number);
+      }
+      // Auto-fill tax condition
+      if (cart.customer.tax_condition) {
+        setCustomerTaxCondition(cart.customer.tax_condition);
+      }
+      // Auto-fill address
+      if (cart.customer.address) {
+        setCustomerAddress(cart.customer.address);
+      }
+    } else {
+      // Clear invoice fields when customer is removed
+      setCustomerCuit('');
+      setCustomerTaxCondition('');
+      setCustomerAddress('');
+      setInvoiceType('B'); // Reset to default
+    }
+  }, [cart.customer]);
+
   // Debounced search
   const debouncedSearch = useDebounce(searchQuery, 300);
   const debouncedCustomerSearch = useDebounce(customerSearch, 300);
 
-  // Load products on mount
+  // Load products and payment methods on mount
   useEffect(() => {
     if (currentBranch?.id) {
       dispatch(searchProducts({ query: '', branch_id: currentBranch.id }));
     }
   }, [dispatch, currentBranch?.id]);
+
+  // Load payment methods on mount
+  useEffect(() => {
+    dispatch(loadPaymentMethods());
+  }, [dispatch]);
 
   // Search products
   useEffect(() => {
@@ -189,6 +231,17 @@ const POSPage: React.FC = () => {
     return Math.max(0, totalPaid - Number(cart.total));
   }, [totalPaid, cart.total]);
 
+  // Map payment method codes to UUIDs
+  const paymentMethodMap = useMemo(() => {
+    const map: Record<string, string> = {};
+    paymentMethods.forEach((pm) => {
+      if (pm.code) {
+        map[pm.code] = pm.id;
+      }
+    });
+    return map;
+  }, [paymentMethods]);
+
   // Handle product click - add to cart or show quantity modal
   const handleProductClick = useCallback((product: Product) => {
     if (product.stock_quantity && product.stock_quantity <= 0) {
@@ -257,8 +310,15 @@ const POSPage: React.FC = () => {
       return;
     }
 
+    // Map payment method code to UUID
+    const paymentMethodId = paymentMethodMap[selectedPaymentMethod];
+    if (!paymentMethodId) {
+      alert(`Método de pago ${selectedPaymentMethod} no disponible`);
+      return;
+    }
+
     const paymentData: any = {
-      payment_method_id: selectedPaymentMethod,
+      payment_method_id: paymentMethodId,
       amount: Math.min(amount, remainingAmount + change),
     };
 
@@ -304,27 +364,67 @@ const POSPage: React.FC = () => {
 
   // Complete sale
   const handleCompleteSale = useCallback(async () => {
-    if (!currentBranch?.id || !activeSession?.id || !activeSession?.register_id) return;
+    if (!currentBranch?.id || !activeSession?.id || !activeSession?.register_id || !user?.id) return;
     if (remainingAmount > 0) return;
+
+    // Prepare invoice override data if user selected a specific invoice type
+    const invoiceOverride = invoiceType ? {
+      invoice_type: invoiceType,
+      customer_cuit: invoiceType === 'A' ? customerCuit : undefined,
+      customer_tax_condition: invoiceType === 'A' ? customerTaxCondition : undefined,
+      customer_address: invoiceType === 'A' ? customerAddress : undefined,
+    } : undefined;
 
     const result = await dispatch(completeSale({
       branch_id: currentBranch.id,
       register_id: activeSession.register_id,
       session_id: activeSession.id,
+      user_id: user.id,
+      invoice_override: invoiceOverride,
     }));
 
     if (completeSale.fulfilled.match(result)) {
       setShowPaymentModal(false);
       setShowSuccessModal(true);
       // Sale completed successfully - cart cleared by reducer
+
+      // Reset invoice fields for next sale
+      setInvoiceType('B');
+      setCustomerCuit('');
+      setCustomerTaxCondition('');
+      setCustomerAddress('');
     }
-  }, [dispatch, currentBranch?.id, activeSession?.id, activeSession?.register_id, remainingAmount]);
+  }, [
+    dispatch,
+    currentBranch?.id,
+    activeSession?.id,
+    activeSession?.register_id,
+    user?.id,
+    remainingAmount,
+    invoiceType,
+    customerCuit,
+    customerTaxCondition,
+    customerAddress
+  ]);
 
   // Clear all
   const handleClearCart = useCallback(() => {
     dispatch(clearCart());
     dispatch(clearPayments());
   }, [dispatch]);
+
+  // Handle withdrawal submission
+  const handleWithdrawalSubmit = useCallback(async (data: CreateWithdrawalData) => {
+    if (!activeSession?.id) return;
+
+    try {
+      await withdrawalService.create(activeSession.id, data);
+      // Could dispatch an action to refresh session data or show success message
+    } catch (error) {
+      console.error('Error creating withdrawal:', error);
+      throw error;
+    }
+  }, [activeSession?.id]);
 
   // Format currency
   const formatCurrency = (amount: number) => {
@@ -357,6 +457,28 @@ const POSPage: React.FC = () => {
         registerName={activeSession?.register?.name}
         onBack={() => goTo('/dashboard')}
       />
+
+      {/* Session Actions Toolbar */}
+      <div className="px-4 py-2 bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 flex items-center justify-end gap-2">
+        <button
+          onClick={() => setShowWithdrawalModal(true)}
+          className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center gap-2"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+          </svg>
+          Retiro de Efectivo
+        </button>
+        <button
+          onClick={() => setShowCloseSessionModal(true)}
+          className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-sm transition-colors flex items-center gap-2"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+          </svg>
+          Cerrar Caja
+        </button>
+      </div>
 
       {/* Main Content */}
       <div className="flex-1 flex overflow-hidden">
@@ -445,12 +567,35 @@ const POSPage: React.FC = () => {
         change={change}
         processing={false}
         formatCurrency={formatCurrency}
+        // Invoice props
+        customer={cart.customer || null}
+        invoiceType={invoiceType}
+        onInvoiceTypeChange={setInvoiceType}
+        customerCuit={customerCuit}
+        onCustomerCuitChange={setCustomerCuit}
+        customerTaxCondition={customerTaxCondition}
+        onCustomerTaxConditionChange={setCustomerTaxCondition}
+        customerAddress={customerAddress}
+        onCustomerAddressChange={setCustomerAddress}
       />
 
       <SaleSuccessModal
         isOpen={showSuccessModal}
         onClose={() => setShowSuccessModal(false)}
         sale={lastSale}
+      />
+
+      <CloseSessionModal
+        isOpen={showCloseSessionModal}
+        onClose={() => setShowCloseSessionModal(false)}
+        session={activeSession}
+      />
+
+      <WithdrawalModal
+        isOpen={showWithdrawalModal}
+        onClose={() => setShowWithdrawalModal(false)}
+        onSubmit={handleWithdrawalSubmit}
+        sessionId={activeSession?.id || ''}
       />
     </div>
   );

@@ -2,6 +2,7 @@ import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import type { Customer, QuickSearchCustomer, UUID } from '../../types';
 import { customerService } from '../../services/api';
 import { startLoading, stopLoading, showToast } from './uiSlice';
+import { getCachedCustomers, getCachedCustomerById } from '../../services/offline/syncService';
 
 interface CustomersState {
   customers: Customer[];
@@ -67,13 +68,31 @@ export const quickSearchCustomers = createAsyncThunk<
         return [];
       }
 
-      const response = await customerService.quickSearch(query);
+      // Check if online
+      const isOnline = navigator.onLine;
 
-      if (!response.success) {
-        throw new Error('Failed to search customers');
+      if (isOnline) {
+        // Try online search first
+        try {
+          const response = await customerService.quickSearch(query);
+
+          if (!response.success) {
+            throw new Error('Failed to search customers');
+          }
+
+          return response.data;
+        } catch (error) {
+          // Network error - fallback to offline cache
+          console.warn('[Customers] Online search failed, using cached data', error);
+          const cachedCustomers = await getCachedCustomers(query);
+          return cachedCustomers as QuickSearchCustomer[];
+        }
+      } else {
+        // Offline mode - use cached data
+        console.log('[Customers] Offline mode, using cached data');
+        const cachedCustomers = await getCachedCustomers(query);
+        return cachedCustomers as QuickSearchCustomer[];
       }
-
-      return response.data;
     } catch (error) {
       return rejectWithValue('Error searching customers');
     }
@@ -116,13 +135,38 @@ export const getCustomerById = createAsyncThunk<
   async (id, { dispatch, rejectWithValue }) => {
     try {
       dispatch(startLoading());
-      const response = await customerService.getById(id);
 
-      if (!response.success) {
-        throw new Error('Customer not found');
+      // Check if online
+      const isOnline = navigator.onLine;
+
+      if (isOnline) {
+        // Try online fetch first
+        try {
+          const response = await customerService.getById(id);
+
+          if (!response.success) {
+            throw new Error('Customer not found');
+          }
+
+          return response.data;
+        } catch (error) {
+          // Network error - fallback to offline cache
+          console.warn('[Customers] Online fetch failed, using cached data', error);
+          const cachedCustomer = await getCachedCustomerById(id);
+          if (!cachedCustomer) {
+            throw new Error('Customer not found in cache');
+          }
+          return cachedCustomer as Customer;
+        }
+      } else {
+        // Offline mode - use cached data
+        console.log('[Customers] Offline mode, using cached data');
+        const cachedCustomer = await getCachedCustomerById(id);
+        if (!cachedCustomer) {
+          throw new Error('Customer not found in cache');
+        }
+        return cachedCustomer as Customer;
       }
-
-      return response.data;
     } catch (error) {
       return rejectWithValue('Customer not found');
     } finally {

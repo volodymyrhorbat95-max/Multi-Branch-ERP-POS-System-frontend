@@ -90,15 +90,34 @@ export interface Branch {
   name: string;
   code: string;
   address?: string;
+  neighborhood?: string;
+  city?: string;
+  postal_code?: string;
   phone?: string;
-  tax_id?: string;
-  tax_condition?: string;
-  factuhoy_point_of_sale?: number;
+  email?: string;
+
+  // Operating hours
   midday_closing_time?: string;
   evening_closing_time?: string;
   has_shift_change?: boolean;
+
+  // Petty cash fund
+  petty_cash_amount?: Decimal;
+
+  // FactuHoy/AFIP
+  factuhoy_point_of_sale?: number;
+  default_invoice_type?: string;
+
+  // Hardware
+  device_type?: string;
+  printer_model?: string;
+  printer_type?: string;
+
+  // Status
   is_active: boolean;
-  is_main: boolean;
+  timezone?: string;
+  created_at?: ISODateString;
+  updated_at?: ISODateString;
 }
 
 // Category Types
@@ -127,17 +146,35 @@ export interface Product {
   category?: Category;
   unit_id?: UUID;
   unit?: UnitOfMeasure;
+
+  // Pricing
   cost_price: Decimal;
   selling_price: Decimal;
   wholesale_price?: Decimal;
+  margin_percent?: Decimal;
   tax_rate: Decimal;
   is_tax_included: boolean;
+
+  // Stock settings
+  track_stock: boolean;
+  minimum_stock: Decimal;
   is_weighable: boolean;
+  shrinkage_percent: Decimal;
+
+  // Scale integration
+  scale_plu?: number;
+  export_to_scale: boolean;
+
+  // Status
   is_active: boolean;
+  is_featured: boolean;
+
+  // Images
   thumbnail_url?: string;
   image_url?: string;
+
+  // Temporary/calculated fields
   stock_quantity?: number;
-  margin_percent?: Decimal;
 }
 
 export interface UnitOfMeasure {
@@ -152,8 +189,19 @@ export interface BranchStock {
   branch_id: UUID;
   product_id: UUID;
   quantity: Decimal;
-  min_stock: Decimal;
-  max_stock: Decimal;
+  reserved_quantity: Decimal;
+
+  // Shrinkage tracking
+  expected_shrinkage: Decimal;
+  actual_shrinkage: Decimal;
+  last_counted_at?: ISODateString;
+  last_counted_quantity?: Decimal;
+
+  // Min/max levels (these are now deprecated - use Product.minimum_stock instead)
+  min_stock?: Decimal;
+  max_stock?: Decimal;
+
+  // Relations
   product?: Product;
   branch?: Branch;
 }
@@ -341,31 +389,88 @@ export interface RegisterSession {
   register?: Register;
   branch_id: UUID;
   branch?: Branch;
-  cashier_id: UUID;
-  cashier?: User;
+  session_number: string;
   shift_type: ShiftType;
-  opening_amount: Decimal;
-  closing_amount?: Decimal;
-  status: SessionStatus;
+  business_date: string; // DATEONLY format YYYY-MM-DD
+
+  // Opening
+  opened_by: UUID;
   opened_at: ISODateString;
-  closed_at?: ISODateString;
+  opening_cash: Decimal;
+  opening_notes?: string;
+
+  // Opening denomination breakdown
+  opening_bills_1000?: number;
+  opening_bills_500?: number;
+  opening_bills_200?: number;
+  opening_bills_100?: number;
+  opening_bills_50?: number;
+  opening_bills_20?: number;
+  opening_bills_10?: number;
+  opening_coins?: Decimal;
+
+  // Closing
   closed_by?: UUID;
-  // Blind closing fields
+  closed_at?: ISODateString;
+
+  // Cashier's declared amounts (blind closing)
   declared_cash?: Decimal;
   declared_card?: Decimal;
   declared_qr?: Decimal;
   declared_transfer?: Decimal;
+
+  // Closing denomination breakdown
+  closing_bills_1000?: number;
+  closing_bills_500?: number;
+  closing_bills_200?: number;
+  closing_bills_100?: number;
+  closing_bills_50?: number;
+  closing_bills_20?: number;
+  closing_bills_10?: number;
+  closing_coins?: Decimal;
+
+  // System calculated amounts
   expected_cash?: Decimal;
   expected_card?: Decimal;
   expected_qr?: Decimal;
   expected_transfer?: Decimal;
+
+  // Discrepancies
   discrepancy_cash?: Decimal;
   discrepancy_card?: Decimal;
   discrepancy_qr?: Decimal;
   discrepancy_transfer?: Decimal;
-  total_sales?: number;
-  total_revenue?: Decimal;
-  notes?: string;
+  total_discrepancy?: Decimal;
+
+  // Status
+  status: SessionStatus;
+  closing_notes?: string;
+
+  // Reopen tracking
+  reopened_by?: UUID;
+  reopened_at?: ISODateString;
+  reopen_reason?: string;
+
+  // Sync tracking
+  local_id?: string;
+  synced_at?: ISODateString;
+
+  // Relations
+  opener?: User;
+  closer?: User;
+  reopener?: User;
+}
+
+// Denomination breakdown for cash counting
+export interface DenominationBreakdown {
+  bills_1000: number;
+  bills_500: number;
+  bills_200: number;
+  bills_100: number;
+  bills_50: number;
+  bills_20: number;
+  bills_10: number;
+  coins: number;
 }
 
 export interface OpenSessionData {
@@ -373,6 +478,7 @@ export interface OpenSessionData {
   opening_cash: number;
   shift_type: ShiftType;
   opening_notes?: string;
+  opening_denominations?: DenominationBreakdown;
 }
 
 export interface CloseSessionData {
@@ -380,13 +486,51 @@ export interface CloseSessionData {
   declared_card: number;
   declared_qr: number;
   declared_transfer: number;
-  notes?: string;
+  closing_notes?: string;
+  closing_denominations?: DenominationBreakdown;
+}
+
+// Withdrawal types
+export type WithdrawalType = 'SUPPLIER_PAYMENT' | 'EMPLOYEE_ADVANCE' | 'OPERATIONAL_EXPENSE' | 'OTHER';
+
+export interface CashWithdrawal {
+  id: UUID;
+  session_id: UUID;
+  branch_id: UUID;
+  amount: number;
+  withdrawal_type: WithdrawalType;
+  recipient_name: string;
+  reason: string;
+  receipt_number?: string;
+  created_by: UUID;
+  creator?: {
+    id: UUID;
+    first_name: string;
+    last_name: string;
+  };
+  created_at: ISODateString;
+  updated_at: ISODateString;
+}
+
+export interface CreateWithdrawalData {
+  amount: number;
+  withdrawal_type: WithdrawalType;
+  recipient_name: string;
+  reason: string;
+  receipt_number?: string;
+}
+
+export interface SessionWithdrawalsResponse {
+  withdrawals: CashWithdrawal[];
+  total: number;
+  count: number;
 }
 
 // Alert Types
 export type AlertType = 'LOW_STOCK' | 'CASH_DISCREPANCY' | 'HIGH_VOID_RATE' | 'SHRINKAGE_HIGH' |
-  'OFFLINE_BRANCH' | 'SESSION_OVERTIME' | 'LARGE_TRANSACTION' | 'SYSTEM_ERROR';
-export type AlertSeverity = 'INFO' | 'WARNING' | 'ERROR' | 'CRITICAL';
+  'OFFLINE_BRANCH' | 'SESSION_OVERTIME' | 'LARGE_TRANSACTION' | 'SYSTEM_ERROR' |
+  'LOW_PETTY_CASH' | 'REOPEN_REGISTER';
+export type AlertSeverity = 'INFO' | 'WARNING' | 'ERROR' | 'CRITICAL' | 'HIGH';
 
 export interface Alert {
   id: UUID;
@@ -615,8 +759,17 @@ export interface Supplier {
 }
 
 // Stock Movement Types
-export type MovementType = 'SALE' | 'PURCHASE' | 'TRANSFER_IN' | 'TRANSFER_OUT' |
-  'ADJUSTMENT_IN' | 'ADJUSTMENT_OUT' | 'SHRINKAGE' | 'RETURN';
+export type MovementType =
+  | 'SALE'
+  | 'RETURN'
+  | 'PURCHASE'
+  | 'TRANSFER_OUT'
+  | 'TRANSFER_IN'
+  | 'ADJUSTMENT_PLUS'
+  | 'ADJUSTMENT_MINUS'
+  | 'SHRINKAGE'
+  | 'INITIAL'
+  | 'INVENTORY_COUNT';
 
 export interface StockMovement {
   id: UUID;
@@ -626,16 +779,42 @@ export interface StockMovement {
   quantity: Decimal;
   quantity_before: Decimal;
   quantity_after: Decimal;
+
+  // Reference to source document
   reference_type?: string;
   reference_id?: UUID;
-  reason?: string;
+
+  // For adjustments and shrinkage
+  adjustment_reason?: string;
+
+  // For transfers
+  related_branch_id?: UUID;
+
+  // Tracking
+  performed_by?: UUID;
   notes?: string;
-  created_by: UUID;
+
+  // Sync
+  local_id?: string;
+  synced_at?: ISODateString;
+
+  // Timestamps
   created_at: ISODateString;
+
+  // Relations
+  product?: Product;
+  branch?: Branch;
+  related_branch?: Branch;
+  performer?: User;
 }
 
 // Shrinkage Types
-export type ShrinkageReason = 'DAMAGED' | 'EXPIRED' | 'LOST' | 'THEFT' | 'SPILLAGE' | 'PEST' | 'OTHER';
+export type ShrinkageReason =
+  | 'POWDER_LOSS'
+  | 'PORTIONING'
+  | 'SCALE_ERROR'
+  | 'SPILLAGE'
+  | 'OTHER';
 
 export interface Shrinkage {
   id: UUID;
@@ -648,6 +827,67 @@ export interface Shrinkage {
   notes?: string;
   reported_by: UUID;
   created_at: ISODateString;
+}
+
+// Stock Transfer Types
+export type StockTransferStatus =
+  | 'PENDING'
+  | 'APPROVED'
+  | 'IN_TRANSIT'
+  | 'RECEIVED'
+  | 'CANCELLED';
+
+export interface StockTransfer {
+  id: UUID;
+  transfer_number: string;
+  source_branch_id: UUID;
+  destination_branch_id: UUID;
+  status: StockTransferStatus;
+
+  // Tracking users
+  requested_by?: UUID;
+  approved_by?: UUID;
+  shipped_by?: UUID;
+  received_by?: UUID;
+
+  // Timestamps
+  requested_at: ISODateString;
+  approved_at?: ISODateString;
+  shipped_at?: ISODateString;
+  received_at?: ISODateString;
+
+  // Notes
+  notes?: string;
+
+  // Relations
+  source_branch?: Branch;
+  destination_branch?: Branch;
+  requester?: User;
+  approver?: User;
+  shipper?: User;
+  receiver?: User;
+  items?: StockTransferItem[];
+
+  // Timestamps
+  created_at?: ISODateString;
+  updated_at?: ISODateString;
+}
+
+export interface StockTransferItem {
+  id: UUID;
+  transfer_id: UUID;
+  product_id: UUID;
+  requested_quantity: Decimal;
+  shipped_quantity?: Decimal;
+  received_quantity?: Decimal;
+  notes?: string;
+
+  // Relations
+  transfer?: StockTransfer;
+  product?: Product;
+
+  // Timestamps
+  created_at?: ISODateString;
 }
 
 // Loyalty Types

@@ -11,10 +11,12 @@ import registersReducer from './slices/registersSlice';
 import alertsReducer from './slices/alertsSlice';
 import reportsReducer from './slices/reportsSlice';
 import stockReducer from './slices/stockSlice';
+import transferReducer from './slices/transferSlice';
 import priceReducer from './slices/priceSlice';
 import loyaltyReducer from './slices/loyaltySlice';
 import dashboardReducer from './slices/dashboardSlice';
 import invoicesReducer from './slices/invoicesSlice';
+import supplierReducer from './slices/supplierSlice';
 
 export const store = configureStore({
   reducer: {
@@ -27,10 +29,12 @@ export const store = configureStore({
     alerts: alertsReducer,
     reports: reportsReducer,
     stock: stockReducer,
+    transfer: transferReducer,
     price: priceReducer,
     loyalty: loyaltyReducer,
     dashboard: dashboardReducer,
     invoices: invoicesReducer,
+    supplier: supplierReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

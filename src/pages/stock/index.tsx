@@ -6,19 +6,33 @@ import {
   adjustStock,
   recordShrinkage
 } from '../../store/slices/stockSlice';
+import {
+  fetchTransfers,
+  createTransfer,
+  approveTransfer,
+  receiveTransfer,
+  cancelTransfer,
+  fetchTransferById
+} from '../../store/slices/transferSlice';
 import { Card, Button } from '../../components/ui';
 import StockInventoryList from './StockInventoryList';
 import StockMovementsList from './StockMovementsList';
 import AdjustStockModal from './AdjustStockModal';
 import ShrinkageModal from './ShrinkageModal';
+import TransfersList from './TransfersList';
+import CreateTransferModal from './CreateTransferModal';
+import TransferDetailsModal from './TransferDetailsModal';
 import type { StockItem } from '../../services/api/stock.service';
+import type { StockTransfer } from '../../types';
 
 type StockTab = 'inventory' | 'movements' | 'shrinkage' | 'transfers';
 
 const StockPage: React.FC = () => {
   const dispatch = useAppDispatch();
-  const { currentBranch, user } = useAppSelector((state) => state.auth);
+  const { currentBranch, user, availableBranches } = useAppSelector((state) => state.auth);
   const { items: stock, movements, loading } = useAppSelector((state) => state.stock);
+  const { transfers, currentTransfer, loading: transferLoading } = useAppSelector((state) => state.transfer);
+  const { products } = useAppSelector((state) => state.products);
 
   const isOwner = user?.role?.permissions?.canAccessAllBranches;
 
@@ -30,8 +44,10 @@ const StockPage: React.FC = () => {
   // Modals
   const [showAdjustModal, setShowAdjustModal] = useState(false);
   const [showShrinkageModal, setShowShrinkageModal] = useState(false);
-  // const [showTransferModal, setShowTransferModal] = useState(false);
+  const [showCreateTransferModal, setShowCreateTransferModal] = useState(false);
+  const [showTransferDetailsModal, setShowTransferDetailsModal] = useState(false);
   const [selectedItem, setSelectedItem] = useState<StockItem | null>(null);
+  const [selectedTransfer, setSelectedTransfer] = useState<StockTransfer | null>(null);
 
   // Form state
   const [adjustmentData, setAdjustmentData] = useState({
@@ -54,6 +70,13 @@ const StockPage: React.FC = () => {
     }
   }, [activeTab, currentBranch?.id]);
 
+  // Load transfers when tab changes
+  useEffect(() => {
+    if (activeTab === 'transfers') {
+      loadTransfers();
+    }
+  }, [activeTab]);
+
   const loadStock = () => {
     if (!currentBranch?.id) return;
     dispatch(fetchBranchStock({
@@ -67,6 +90,10 @@ const StockPage: React.FC = () => {
     dispatch(fetchStockMovements({
       branch_id: currentBranch.id,
     }));
+  };
+
+  const loadTransfers = () => {
+    dispatch(fetchTransfers({}));
   };
 
   // Handle stock adjustment
@@ -98,12 +125,73 @@ const StockPage: React.FC = () => {
         branch_id: currentBranch.id,
         product_id: selectedItem.product_id,
         quantity: parseFloat(adjustmentData.quantity),
-        reason: adjustmentData.reason || 'Merma por peso/polvo',
+        reason: adjustmentData.reason || 'OTHER',
       })).unwrap();
 
       setShowShrinkageModal(false);
       setAdjustmentData({ quantity: '', reason: '', type: 'adjustment' });
       loadStock();
+    } catch (error) {
+      // Error handled in slice
+    }
+  };
+
+  // Transfer handlers
+  const handleCreateTransfer = async (data: {
+    from_branch_id: string;
+    to_branch_id: string;
+    notes: string;
+    items: Array<{ product_id: string; quantity: number }>;
+  }) => {
+    try {
+      await dispatch(createTransfer(data)).unwrap();
+      setShowCreateTransferModal(false);
+      loadTransfers();
+    } catch (error) {
+      // Error handled in slice
+    }
+  };
+
+  const handleViewTransferDetails = (transfer: StockTransfer) => {
+    setSelectedTransfer(transfer);
+    setShowTransferDetailsModal(true);
+  };
+
+  const handleApproveTransfer = async (transferId: string) => {
+    try {
+      await dispatch(approveTransfer(transferId)).unwrap();
+      loadTransfers();
+      if (selectedTransfer?.id === transferId) {
+        await dispatch(fetchTransferById(transferId));
+      }
+    } catch (error) {
+      // Error handled in slice
+    }
+  };
+
+  const handleReceiveTransfer = async (
+    transferId: string,
+    items: Array<{ item_id: string; quantity_received: number }>,
+    notes?: string
+  ) => {
+    try {
+      await dispatch(receiveTransfer({ transferId, items, notes })).unwrap();
+      setShowTransferDetailsModal(false);
+      loadTransfers();
+      loadStock();
+    } catch (error) {
+      // Error handled in slice
+    }
+  };
+
+  const handleCancelTransfer = async (transferId: string, reason: string) => {
+    try {
+      await dispatch(cancelTransfer({ transferId, reason })).unwrap();
+      setShowTransferDetailsModal(false);
+      loadTransfers();
+      if (selectedTransfer?.status === 'IN_TRANSIT') {
+        loadStock();
+      }
     } catch (error) {
       // Error handled in slice
     }
@@ -222,30 +310,26 @@ const StockPage: React.FC = () => {
 
         {/* Transfers Tab */}
         {activeTab === 'transfers' && (
-          <Card className="p-6 animate-zoom-in duration-normal">
-            <div className="text-center py-8">
-              <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900/20 rounded-full mx-auto mb-4 flex items-center justify-center animate-flip-up duration-light-slow">
-                <svg className="w-8 h-8 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
-                </svg>
+          <div className="space-y-4">
+            <div className="flex justify-between items-center">
+              <div>
+                <h2 className="text-lg font-medium">Transferencias entre Sucursales</h2>
+                <p className="text-sm text-gray-500">Gestiona los traslados de mercadería</p>
               </div>
-              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2 animate-fade-up duration-normal">
-                Transferencias entre Sucursales
-              </h3>
-              <p className="text-gray-500 dark:text-gray-400 mb-6 max-w-md mx-auto animate-fade-up duration-light-slow">
-                Transfiere productos entre las diferentes sucursales de la cadena.
-              </p>
-              {isOwner && (
-                <Button
-                  variant="primary"
-                  onClick={() => {}}
-                  className="animate-fade-up duration-slow"
-                >
-                  Nueva Transferencia
-                </Button>
-              )}
+              <Button
+                variant="primary"
+                onClick={() => setShowCreateTransferModal(true)}
+              >
+                Nueva Transferencia
+              </Button>
             </div>
-          </Card>
+            <TransfersList
+              transfers={transfers}
+              loading={transferLoading}
+              onViewDetails={handleViewTransferDetails}
+              onApprove={handleApproveTransfer}
+            />
+          </div>
         )}
       </div>
 
@@ -268,6 +352,26 @@ const StockPage: React.FC = () => {
         onDataChange={setAdjustmentData}
         onSubmit={handleShrinkageAdjustment}
         loading={loading}
+      />
+
+      <CreateTransferModal
+        isOpen={showCreateTransferModal}
+        onClose={() => setShowCreateTransferModal(false)}
+        onSubmit={handleCreateTransfer}
+        loading={transferLoading}
+        branches={availableBranches}
+        products={products}
+        currentBranchId={currentBranch?.id}
+      />
+
+      <TransferDetailsModal
+        isOpen={showTransferDetailsModal}
+        onClose={() => setShowTransferDetailsModal(false)}
+        transfer={selectedTransfer}
+        onApprove={handleApproveTransfer}
+        onReceive={handleReceiveTransfer}
+        onCancel={handleCancelTransfer}
+        loading={transferLoading}
       />
     </>
   );

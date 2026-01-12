@@ -85,11 +85,11 @@ const ShrinkageModal: React.FC<ShrinkageModalProps> = ({
             className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-sm bg-white dark:bg-gray-700"
           >
             <option value="">Seleccionar razón</option>
-            <option value="Merma por polvo">Merma por polvo</option>
-            <option value="Merma por porcionado">Merma por porcionado</option>
-            <option value="Diferencia de peso">Diferencia de peso</option>
-            <option value="Producto dañado">Producto dañado</option>
-            <option value="Otro">Otro</option>
+            <option value="POWDER_LOSS">Merma por polvo</option>
+            <option value="PORTIONING">Merma por porcionado</option>
+            <option value="SCALE_ERROR">Diferencia de peso / Error de balanza</option>
+            <option value="SPILLAGE">Derrame</option>
+            <option value="OTHER">Otro</option>
           </select>
         </div>
 

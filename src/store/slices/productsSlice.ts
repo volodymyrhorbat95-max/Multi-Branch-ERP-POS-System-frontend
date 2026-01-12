@@ -2,6 +2,7 @@ import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import type { Product, Category, POSProduct, UUID } from '../../types';
 import { productService, categoryService } from '../../services/api';
 import { startLoading, stopLoading, showToast } from './uiSlice';
+import { getCachedProducts } from '../../services/offline/syncService';
 
 interface ProductsState {
   // Products list
@@ -83,13 +84,32 @@ export const loadPOSProducts = createAsyncThunk<
   async (params, { dispatch, rejectWithValue }) => {
     try {
       dispatch(startLoading());
-      const response = await productService.getForPOS(params);
 
-      if (!response.success) {
-        throw new Error('Failed to load POS products');
+      // Check if online
+      const isOnline = navigator.onLine;
+
+      if (isOnline) {
+        // Try online load first
+        try {
+          const response = await productService.getForPOS(params);
+
+          if (!response.success) {
+            throw new Error('Failed to load POS products');
+          }
+
+          return response.data;
+        } catch (error) {
+          // Network error - fallback to offline cache
+          console.warn('[Products] Online load failed, using cached data', error);
+          const cachedProducts = await getCachedProducts(params.branch_id, params.search);
+          return cachedProducts as POSProduct[];
+        }
+      } else {
+        // Offline mode - use cached data
+        console.log('[Products] Offline mode, using cached data');
+        const cachedProducts = await getCachedProducts(params.branch_id, params.search);
+        return cachedProducts as POSProduct[];
       }
-
-      return response.data;
     } catch (error) {
       return rejectWithValue('Error loading products');
     } finally {
@@ -106,16 +126,34 @@ export const searchProducts = createAsyncThunk<
   'products/searchProducts',
   async ({ branch_id, query }, { rejectWithValue }) => {
     try {
-      const response = await productService.getForPOS({
-        branch_id,
-        search: query,
-      });
+      // Check if online
+      const isOnline = navigator.onLine;
 
-      if (!response.success) {
-        throw new Error('Failed to search products');
+      if (isOnline) {
+        // Try online search first
+        try {
+          const response = await productService.getForPOS({
+            branch_id,
+            search: query,
+          });
+
+          if (!response.success) {
+            throw new Error('Failed to search products');
+          }
+
+          return response.data;
+        } catch (error) {
+          // Network error - fallback to offline cache
+          console.warn('[Products] Online search failed, using cached data', error);
+          const cachedProducts = await getCachedProducts(branch_id, query);
+          return cachedProducts as POSProduct[];
+        }
+      } else {
+        // Offline mode - use cached data
+        console.log('[Products] Offline mode, using cached data');
+        const cachedProducts = await getCachedProducts(branch_id, query);
+        return cachedProducts as POSProduct[];
       }
-
-      return response.data;
     } catch (error) {
       return rejectWithValue('Error searching products');
     }

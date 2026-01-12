@@ -72,7 +72,7 @@ const SessionsList: React.FC<SessionsListProps> = ({ sessions }) => {
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white animate-fade-left duration-normal">
-                        {session.cashier ? `${session.cashier.first_name} ${session.cashier.last_name}` : '-'}
+                        {session.opener ? `${session.opener.first_name} ${session.opener.last_name}` : '-'}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white animate-fade-left duration-light-slow">{formatDateTime(session.opened_at)}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white animate-fade-left duration-slow">

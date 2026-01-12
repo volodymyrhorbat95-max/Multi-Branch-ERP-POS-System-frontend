@@ -22,11 +22,23 @@ interface CreateSalePayload {
     payment_method_id: UUID;
     amount: number;
     reference_number?: string;
+    authorization_code?: string;
+    card_last_four?: string;
+    card_brand?: string;
+    qr_provider?: string;
+    qr_transaction_id?: string;
   }>;
   discount_type?: 'PERCENT' | 'FIXED';
   discount_value?: number;
   notes?: string;
   local_id?: string; // For offline sync
+  // Invoice override parameters (for Type A invoices)
+  invoice_override?: {
+    invoice_type?: 'A' | 'B' | 'C';
+    customer_cuit?: string;
+    customer_tax_condition?: string;
+    customer_address?: string;
+  };
 }
 
 interface SaleReceipt {

@@ -4,7 +4,9 @@ import {
   uploadPriceFile,
   loadBatchItems,
   applyPrices,
-  
+  toggleItemSelection,
+  selectAllItems,
+  matchItem,
   setCurrentBatch,
 } from '../../store/slices/priceSlice';
 import { Card } from '../../components/ui';
@@ -135,9 +137,48 @@ const PriceImportPage: React.FC = () => {
               )}
               marginPercent={marginPercent}
               roundingRule={roundingRule}
-              onToggleItem={() => {}}
-              onToggleAllMatched={() => {}}
+              onToggleItem={(index: number) => {
+                const item = batchItems[index];
+                if (item?.id) {
+                  dispatch(toggleItemSelection({
+                    itemId: item.id,
+                    selected: !item.is_selected,
+                  }));
+                }
+              }}
+              onToggleAllMatched={() => {
+                if (currentBatch?.id) {
+                  const allMatchedSelected = batchItems
+                    .filter(i => i.match_status === 'MATCHED')
+                    .every(i => i.is_selected);
+
+                  dispatch(selectAllItems({
+                    batchId: currentBatch.id,
+                    selected: !allMatchedSelected,
+                    match_status: 'MATCHED',
+                  })).then(() => {
+                    // Reload items after selection
+                    if (currentBatch?.id) {
+                      dispatch(loadBatchItems({ batchId: currentBatch.id }));
+                    }
+                  });
+                }
+              }}
               onApply={() => setShowConfirmModal(true)}
+              onManualMatch={(index: number, productId: string) => {
+                const item = batchItems[index];
+                if (item?.id) {
+                  dispatch(matchItem({
+                    itemId: item.id,
+                    productId: productId,
+                  })).then(() => {
+                    // Reload items after matching
+                    if (currentBatch?.id) {
+                      dispatch(loadBatchItems({ batchId: currentBatch.id }));
+                    }
+                  });
+                }
+              }}
             />
           </Card>
         )}

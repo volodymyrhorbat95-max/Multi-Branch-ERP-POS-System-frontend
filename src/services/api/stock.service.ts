@@ -1,5 +1,12 @@
 import { get, post } from './client';
-import type { ApiResponse, PaginatedResponse, UUID } from '../../types';
+import type {
+  ApiResponse,
+  PaginatedResponse,
+  UUID,
+  StockTransfer,
+  StockTransferItem,
+  StockTransferStatus
+} from '../../types';
 
 // Stock-related types matching database schema
 export interface StockItem {
@@ -107,6 +114,70 @@ export const stockService = {
     notes?: string;
   }): Promise<ApiResponse<StockMovement>> => {
     return post<StockMovement>('/stock/shrinkage', data);
+  },
+
+  // ===== Stock Transfers =====
+
+  /**
+   * Get all transfers with filters
+   */
+  getTransfers: (params?: {
+    from_branch_id?: UUID;
+    to_branch_id?: UUID;
+    status?: StockTransferStatus;
+    page?: number;
+    limit?: number;
+  }): Promise<PaginatedResponse<StockTransfer>> => {
+    return get<StockTransfer[]>('/stock/transfers', params) as Promise<PaginatedResponse<StockTransfer>>;
+  },
+
+  /**
+   * Get transfer by ID
+   */
+  getTransferById: (transferId: UUID): Promise<ApiResponse<StockTransfer>> => {
+    return get<StockTransfer>(`/stock/transfers/${transferId}`);
+  },
+
+  /**
+   * Create new transfer
+   */
+  createTransfer: (data: {
+    from_branch_id: UUID;
+    to_branch_id: UUID;
+    notes?: string;
+    items: Array<{
+      product_id: UUID;
+      quantity: number;
+    }>;
+  }): Promise<ApiResponse<StockTransfer>> => {
+    return post<StockTransfer>('/stock/transfers', data);
+  },
+
+  /**
+   * Approve transfer (start transit)
+   */
+  approveTransfer: (transferId: UUID): Promise<ApiResponse<StockTransfer>> => {
+    return post<StockTransfer>(`/stock/transfers/${transferId}/approve`, {});
+  },
+
+  /**
+   * Receive transfer at destination
+   */
+  receiveTransfer: (transferId: UUID, data: {
+    items: Array<{
+      item_id: UUID;
+      quantity_received: number;
+    }>;
+    notes?: string;
+  }): Promise<ApiResponse<StockTransfer>> => {
+    return post<StockTransfer>(`/stock/transfers/${transferId}/receive`, data);
+  },
+
+  /**
+   * Cancel transfer
+   */
+  cancelTransfer: (transferId: UUID, reason: string): Promise<ApiResponse<StockTransfer>> => {
+    return post<StockTransfer>(`/stock/transfers/${transferId}/cancel`, { reason });
   },
 
 };

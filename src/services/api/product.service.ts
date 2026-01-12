@@ -105,6 +105,50 @@ export const productService = {
   }): Promise<ApiResponse<Product>> => {
     return put<Product>(`/products/${productId}/prices`, data);
   },
+
+  /**
+   * Bulk update product prices by margin percentage
+   */
+  bulkUpdateByMargin: (data: {
+    product_ids?: UUID[];
+    category_id?: UUID;
+    margin_percentage: number;
+    rounding_rule?: 'NONE' | 'UP' | 'DOWN' | 'NEAREST';
+    rounding_value?: number;
+  }): Promise<ApiResponse<{
+    updated_count: number;
+    products: Array<{
+      id: UUID;
+      name: string;
+      sku: string;
+      old_price: number;
+      new_price: number;
+    }>;
+  }>> => {
+    return post('/products/bulk-update-margin', data);
+  },
+
+  /**
+   * Bulk update prices for all products from a supplier
+   */
+  bulkUpdateBySupplier: (data: {
+    supplier_id: UUID;
+    margin_percentage: number;
+    rounding_rule?: 'NONE' | 'UP' | 'DOWN' | 'NEAREST';
+    rounding_value?: number;
+    update_cost_prices: boolean;
+  }): Promise<ApiResponse<{
+    updated_count: number;
+    products: Array<{
+      id: UUID;
+      name: string;
+      sku: string;
+      old_price: number;
+      new_price: number;
+    }>;
+  }>> => {
+    return post('/products/bulk-update-supplier', data);
+  },
 };
 
 export default productService;
