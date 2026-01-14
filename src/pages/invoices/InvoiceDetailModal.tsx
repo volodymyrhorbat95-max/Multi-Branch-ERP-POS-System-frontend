@@ -1,4 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { useAppDispatch } from '../../store/hooks';
+import { retryInvoice } from '../../store/slices/invoicesSlice';
 import { Modal, Button } from '../../components/ui';
 import type { Invoice } from '../../types';
 
@@ -13,6 +15,8 @@ const InvoiceDetailModal: React.FC<InvoiceDetailModalProps> = ({
   isOpen,
   onClose,
 }) => {
+  const dispatch = useAppDispatch();
+  const [retrying, setRetrying] = useState(false);
   const formatCurrency = (amount: number | string) => {
     return new Intl.NumberFormat('es-AR', {
       style: 'currency',
@@ -46,6 +50,18 @@ const InvoiceDetailModal: React.FC<InvoiceDetailModalProps> = ({
   const handlePrintPDF = () => {
     if (invoice.pdf_url) {
       window.open(invoice.pdf_url, '_blank');
+    }
+  };
+
+  const handleRetry = async () => {
+    setRetrying(true);
+    try {
+      await dispatch(retryInvoice(invoice.id)).unwrap();
+      // Invoice state will be updated by Redux, modal will reflect changes
+    } catch (error) {
+      // Error already handled by thunk with toast
+    } finally {
+      setRetrying(false);
     }
   };
 
@@ -219,9 +235,27 @@ const InvoiceDetailModal: React.FC<InvoiceDetailModalProps> = ({
 
         {/* Actions */}
         <div className="flex gap-3 pt-4 border-t border-gray-200 dark:border-gray-700 animate-fade-up duration-normal">
-          {invoice.pdf_url && (
+          {/* Retry button for PENDING or FAILED invoices */}
+          {(invoice.status === 'PENDING' || invoice.status === 'FAILED') && (
             <Button
               variant="primary"
+              onClick={handleRetry}
+              disabled={retrying}
+              icon={
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+              }
+              iconPosition="left"
+            >
+              {retrying ? 'Reintentando...' : 'Reintentar'}
+            </Button>
+          )}
+
+          {/* PDF download button */}
+          {invoice.pdf_url && invoice.status === 'ISSUED' && (
+            <Button
+              variant="secondary"
               onClick={handlePrintPDF}
               icon={
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -233,7 +267,8 @@ const InvoiceDetailModal: React.FC<InvoiceDetailModalProps> = ({
               Descargar PDF
             </Button>
           )}
-          <Button variant="secondary" onClick={onClose} fullWidth>
+
+          <Button variant="secondary" onClick={onClose} fullWidth={!(invoice.status === 'PENDING' || invoice.status === 'FAILED' || invoice.pdf_url)}>
             Cerrar
           </Button>
         </div>

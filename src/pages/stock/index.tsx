@@ -4,7 +4,8 @@ import {
   fetchBranchStock,
   fetchStockMovements,
   adjustStock,
-  recordShrinkage
+  recordShrinkage,
+  submitInventoryCount
 } from '../../store/slices/stockSlice';
 import {
   fetchTransfers,
@@ -19,6 +20,7 @@ import StockInventoryList from './StockInventoryList';
 import StockMovementsList from './StockMovementsList';
 import AdjustStockModal from './AdjustStockModal';
 import ShrinkageModal from './ShrinkageModal';
+import InventoryCountModal from './InventoryCountModal';
 import TransfersList from './TransfersList';
 import CreateTransferModal from './CreateTransferModal';
 import TransferDetailsModal from './TransferDetailsModal';
@@ -34,7 +36,7 @@ const StockPage: React.FC = () => {
   const { transfers, currentTransfer, loading: transferLoading } = useAppSelector((state) => state.transfer);
   const { products } = useAppSelector((state) => state.products);
 
-  const isOwner = user?.role?.permissions?.canAccessAllBranches;
+  const isOwner = user?.role?.can_view_all_branches;
 
   // Local state
   const [activeTab, setActiveTab] = useState<StockTab>('inventory');
@@ -44,6 +46,7 @@ const StockPage: React.FC = () => {
   // Modals
   const [showAdjustModal, setShowAdjustModal] = useState(false);
   const [showShrinkageModal, setShowShrinkageModal] = useState(false);
+  const [showInventoryCountModal, setShowInventoryCountModal] = useState(false);
   const [showCreateTransferModal, setShowCreateTransferModal] = useState(false);
   const [showTransferDetailsModal, setShowTransferDetailsModal] = useState(false);
   const [selectedItem, setSelectedItem] = useState<StockItem | null>(null);
@@ -136,6 +139,27 @@ const StockPage: React.FC = () => {
     }
   };
 
+  // Handle physical inventory count
+  const handleInventoryCount = async (
+    entries: Array<{ product_id: string; counted_quantity: number }>,
+    notes?: string
+  ) => {
+    if (!currentBranch?.id) return;
+
+    try {
+      await dispatch(submitInventoryCount({
+        branch_id: currentBranch.id,
+        entries,
+        notes
+      })).unwrap();
+
+      setShowInventoryCountModal(false);
+      loadStock();
+    } catch (error) {
+      // Error handled in slice
+    }
+  };
+
   // Transfer handlers
   const handleCreateTransfer = async (data: {
     from_branch_id: string;
@@ -157,9 +181,12 @@ const StockPage: React.FC = () => {
     setShowTransferDetailsModal(true);
   };
 
-  const handleApproveTransfer = async (transferId: string) => {
+  const handleApproveTransfer = async (
+    transferId: string,
+    items: Array<{ id: string; shipped_quantity: number }>
+  ) => {
     try {
-      await dispatch(approveTransfer(transferId)).unwrap();
+      await dispatch(approveTransfer({ transferId, items })).unwrap();
       loadTransfers();
       if (selectedTransfer?.id === transferId) {
         await dispatch(fetchTransferById(transferId));
@@ -227,6 +254,12 @@ const StockPage: React.FC = () => {
               }}
             >
               Registrar Merma
+            </Button>
+            <Button
+              variant="secondary"
+              onClick={() => setShowInventoryCountModal(true)}
+            >
+              Conteo Físico
             </Button>
             <Button
               variant="primary"
@@ -351,6 +384,15 @@ const StockPage: React.FC = () => {
         adjustmentData={adjustmentData}
         onDataChange={setAdjustmentData}
         onSubmit={handleShrinkageAdjustment}
+        loading={loading}
+      />
+
+      <InventoryCountModal
+        isOpen={showInventoryCountModal}
+        onClose={() => setShowInventoryCountModal(false)}
+        stockItems={stock}
+        products={products}
+        onSubmit={handleInventoryCount}
         loading={loading}
       />
 

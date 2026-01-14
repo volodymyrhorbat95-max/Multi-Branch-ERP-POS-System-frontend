@@ -24,8 +24,12 @@ const initialFormData: ProductFormData = {
   tax_rate: '21',
   unit_type: 'unit',
   is_active: true,
+  is_featured: false,
   track_stock: true,
   min_stock: '5',
+  is_weighable: false,
+  scale_plu: '',
+  export_to_scale: false,
 };
 
 const ProductsListPage: React.FC = () => {
@@ -85,8 +89,12 @@ const ProductsListPage: React.FC = () => {
       tax_rate: product.tax_rate?.toString() || '21',
       unit_type: 'unit',
       is_active: product.is_active ?? true,
+      is_featured: product.is_featured ?? false,
       track_stock: true,
       min_stock: '5',
+      is_weighable: product.is_weighable ?? false,
+      scale_plu: product.scale_plu?.toString() || '',
+      export_to_scale: product.export_to_scale ?? false,
     });
     setShowModal(true);
   };
@@ -106,8 +114,12 @@ const ProductsListPage: React.FC = () => {
       tax_rate: parseFloat(formData.tax_rate) || 21,
       unit_type: formData.unit_type,
       is_active: formData.is_active,
+      is_featured: formData.is_featured,
       track_stock: formData.track_stock,
       min_stock: parseInt(formData.min_stock) || 5,
+      is_weighable: formData.is_weighable,
+      scale_plu: formData.scale_plu ? parseInt(formData.scale_plu) : undefined,
+      export_to_scale: formData.export_to_scale,
     };
 
     if (editingProduct) {

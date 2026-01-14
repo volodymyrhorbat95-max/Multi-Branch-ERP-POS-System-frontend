@@ -32,37 +32,64 @@ export interface ValidationError {
 // Auth Types
 export interface User {
   id: UUID;
+  employee_code?: string;
   email: string;
   first_name: string;
   last_name: string;
+  phone?: string;
   role_id: UUID;
   role?: Role;
-  primary_branch_id: UUID;
+  primary_branch_id?: UUID;
   primary_branch?: Branch;
   branches?: Branch[];
   is_active: boolean;
+  pin_code?: string;
+  last_login_at?: ISODateString;
+  failed_login_attempts?: number;
+  locked_until?: ISODateString | null;
+  language?: string;
   created_at: ISODateString;
+  updated_at?: ISODateString;
 }
 
 export interface Role {
   id: UUID;
   name: string;
-  code: string;
-  permissions: RolePermissions;
+  description?: string;
+  // Permissions
+  can_void_sale: boolean;
+  can_give_discount: boolean;
+  can_view_all_branches: boolean;
+  can_close_register: boolean;
+  can_reopen_closing: boolean;
+  can_adjust_stock: boolean;
+  can_import_prices: boolean;
+  can_manage_users: boolean;
+  can_view_reports: boolean;
+  can_view_financials: boolean;
+  can_manage_suppliers: boolean;
+  can_manage_products: boolean;
+  can_issue_invoice_a: boolean;
+  max_discount_percent?: Decimal;
+  created_at?: ISODateString;
+  updated_at?: ISODateString;
 }
 
+// Legacy permissions interface for backwards compatibility
 export interface RolePermissions {
   canManageUsers?: boolean;
   canManageProducts?: boolean;
   canManageInventory?: boolean;
   canViewReports?: boolean;
   canManageSettings?: boolean;
-  canVoidSales?: boolean;
-  canApplyDiscounts?: boolean;
+  canVoidSale?: boolean;
+  canGiveDiscount?: boolean;
+  maxDiscountPercent?: number;
   canOpenRegister?: boolean;
   canCloseRegister?: boolean;
   canAccessAllBranches?: boolean;
-  [key: string]: boolean | undefined;
+  canViewAllBranches?: boolean;
+  [key: string]: boolean | number | undefined;
 }
 
 export interface AuthState {
@@ -107,6 +134,15 @@ export interface Branch {
   // FactuHoy/AFIP
   factuhoy_point_of_sale?: number;
   default_invoice_type?: string;
+
+  // POS Configuration
+  receipt_footer?: string;
+  auto_print_receipt?: boolean;
+  require_customer?: boolean;
+  enable_discounts?: boolean;
+  max_discount_percent?: number;
+  tax_id?: string;
+  tax_condition?: string;
 
   // Hardware
   device_type?: string;
@@ -217,6 +253,7 @@ export interface POSProduct {
   tax_rate: Decimal;
   is_tax_included: boolean;
   is_weighable: boolean;
+  is_featured?: boolean;
   unit_code?: string;
   category_name?: string;
   thumbnail_url?: string;
@@ -288,6 +325,8 @@ export interface Cart {
   discount_type?: 'PERCENT' | 'FIXED';
   discount_value: number;
   discount_amount: Decimal;
+  discount_reason?: string;
+  discount_approved_by_pin?: string;
   tax_amount: Decimal;
   total: Decimal;
 }
@@ -297,7 +336,7 @@ export interface PaymentMethod {
   id: UUID;
   name: string;
   code: string;
-  type: 'CASH' | 'CARD' | 'DIGITAL' | 'CREDIT' | 'OTHER';
+  type: 'CASH' | 'CARD' | 'QR' | 'TRANSFER' | 'CREDIT' | 'OTHER';
   icon?: string;
   is_active: boolean;
   requires_reference: boolean;
@@ -335,9 +374,13 @@ export interface Sale {
   cashier_id: UUID;
   cashier?: User;
   subtotal: Decimal;
-  discount_type?: string;
+  discount_type?: 'PERCENT' | 'FIXED' | 'WHOLESALE' | null;
   discount_value?: Decimal;
   discount_amount: Decimal;
+  discount_percent?: Decimal;
+  discount_reason?: string;
+  discount_applied_by?: UUID;
+  discount_approved_by?: UUID;
   tax_amount: Decimal;
   total_amount: Decimal;
   paid_amount: Decimal;
@@ -346,6 +389,7 @@ export interface Sale {
   void_reason?: string;
   voided_by?: UUID;
   voided_at?: ISODateString;
+  void_approved_by?: UUID;
   notes?: string;
   created_at: ISODateString;
   items?: SaleItem[];
@@ -369,7 +413,7 @@ export interface SaleItem {
 }
 
 // Register & Session Types
-export type SessionStatus = 'OPEN' | 'CLOSED' | 'FORCE_CLOSED';
+export type SessionStatus = 'OPEN' | 'CLOSED' | 'REOPENED';
 export type ShiftType = 'MORNING' | 'AFTERNOON' | 'FULL_DAY';
 
 export interface Register {
@@ -473,12 +517,36 @@ export interface DenominationBreakdown {
   coins: number;
 }
 
+export interface PettyCashWarning {
+  type: 'PETTY_CASH_LOW';
+  message: string;
+  severity: 'warning' | 'error';
+  opening_cash?: number;
+  declared_cash?: number;
+  petty_cash_required: number;
+  deficit: number;
+}
+
+export interface AfterHoursWarning {
+  type: 'AFTER_HOURS_CLOSING';
+  message: string;
+  severity: 'warning';
+  closing_time: string;
+  expected_closing_time: string;
+  minutes_late: number;
+  shift_type: ShiftType;
+}
+
 export interface OpenSessionData {
   register_id: UUID;
   opening_cash: number;
   shift_type: ShiftType;
   opening_notes?: string;
   opening_denominations?: DenominationBreakdown;
+}
+
+export interface OpenSessionResponse extends RegisterSession {
+  petty_cash_warning?: PettyCashWarning;
 }
 
 export interface CloseSessionData {
@@ -488,6 +556,13 @@ export interface CloseSessionData {
   declared_transfer: number;
   closing_notes?: string;
   closing_denominations?: DenominationBreakdown;
+}
+
+export interface CloseSessionResponse extends RegisterSession {
+  sales_count: number;
+  sales_total: number;
+  petty_cash_warning?: PettyCashWarning;
+  after_hours_warning?: AfterHoursWarning;
 }
 
 // Withdrawal types
@@ -526,24 +601,46 @@ export interface SessionWithdrawalsResponse {
   count: number;
 }
 
-// Alert Types
-export type AlertType = 'LOW_STOCK' | 'CASH_DISCREPANCY' | 'HIGH_VOID_RATE' | 'SHRINKAGE_HIGH' |
-  'OFFLINE_BRANCH' | 'SESSION_OVERTIME' | 'LARGE_TRANSACTION' | 'SYSTEM_ERROR' |
-  'LOW_PETTY_CASH' | 'REOPEN_REGISTER';
-export type AlertSeverity = 'INFO' | 'WARNING' | 'ERROR' | 'CRITICAL' | 'HIGH';
+// Alert Types - Must match backend ENUM definition exactly
+export type AlertType =
+  | 'VOIDED_SALE'
+  | 'CASH_DISCREPANCY'
+  | 'LOW_PETTY_CASH'
+  | 'LOW_STOCK'
+  | 'LATE_CLOSING'
+  | 'AFTER_HOURS_CLOSING'
+  | 'REOPEN_REGISTER'
+  | 'FAILED_INVOICE'
+  | 'LARGE_DISCOUNT'
+  | 'HIGH_VALUE_SALE'
+  | 'SYNC_ERROR'
+  | 'LOGIN_FAILED'
+  | 'PRICE_CHANGE';
+
+// Severity levels - Must match backend validation
+export type AlertSeverity = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
 
 export interface Alert {
   id: UUID;
-  branch_id: UUID;
+  branch_id?: UUID;
   branch?: Branch;
+  user_id?: UUID;
+  triggered_by?: User;
   alert_type: AlertType;
   severity: AlertSeverity;
   title: string;
   message: string;
-  data?: string;
+  reference_type?: string;
+  reference_id?: UUID;
   is_read: boolean;
   read_by?: UUID;
+  reader?: User;
   read_at?: ISODateString;
+  is_resolved: boolean;
+  resolved_by?: UUID;
+  resolver?: User;
+  resolved_at?: ISODateString;
+  resolution_notes?: string;
   created_at: ISODateString;
 }
 
@@ -654,6 +751,45 @@ export interface LiveBranchShiftStatusData {
   branches: LiveBranchStatus[];
 }
 
+export interface ConsolidatedBranchReport {
+  branch_id: UUID;
+  branch_name: string;
+  branch_code: string;
+  total_cash: number;
+  total_card: number;
+  total_qr: number;
+  total_transfer: number;
+  discrepancy_cash: number;
+  discrepancy_card: number;
+  discrepancy_qr: number;
+  discrepancy_transfer: number;
+  sales_count: number;
+  total_revenue: number;
+  sessions: Array<{
+    shift_type: ShiftType;
+    status: SessionStatus;
+    opened_by: string | null;
+    closed_by: string | null;
+  }>;
+}
+
+export interface ConsolidatedDailyReportData {
+  date: string;
+  branches: ConsolidatedBranchReport[];
+  consolidated: {
+    total_cash: number;
+    total_card: number;
+    total_qr: number;
+    total_transfer: number;
+    total_discrepancy_cash: number;
+    total_discrepancy_card: number;
+    total_discrepancy_qr: number;
+    total_discrepancy_transfer: number;
+    total_sales: number;
+    total_revenue: number;
+  };
+}
+
 export interface OwnerDashboardData {
   period: {
     start_date: ISODateString;
@@ -692,6 +828,244 @@ export interface OwnerDashboardData {
     total_quantity: number;
     total_revenue: number;
   }>;
+}
+
+// Category Report Types
+export interface CategoryReportData {
+  period: { start_date: string; end_date: string };
+  categories: Array<{
+    category_id: UUID | null;
+    category_name: string;
+    category_description?: string;
+    total_quantity: number;
+    total_revenue: number;
+    total_cost: number;
+    transaction_count: number;
+    avg_sale: number;
+    margin_percent: string;
+  }>;
+  totals: {
+    total_revenue: number;
+    total_cost: number;
+    total_quantity: number;
+    overall_margin: string;
+  };
+}
+
+// Discrepancy Report Types
+export interface DiscrepancyReportData {
+  period: { start_date: string; end_date: string };
+  discrepancies: Array<{
+    session_id: UUID;
+    branch: string;
+    branch_code: string;
+    business_date: string;
+    shift_type: string;
+    opened_by: string | null;
+    closed_by: string | null;
+    opened_at: string;
+    closed_at: string;
+    expected_cash: number;
+    declared_cash: number;
+    discrepancy_cash: number;
+    expected_card: number;
+    declared_card: number;
+    discrepancy_card: number;
+    expected_qr: number;
+    declared_qr: number;
+    discrepancy_qr: number;
+    expected_transfer: number;
+    declared_transfer: number;
+    discrepancy_transfer: number;
+    total_discrepancy: number;
+  }>;
+  summary: {
+    total_sessions_with_discrepancy: number;
+    total_discrepancy_cash: number;
+    total_discrepancy_card: number;
+    total_discrepancy_qr: number;
+    total_discrepancy_transfer: number;
+    total_discrepancy_overall: number;
+    avg_discrepancy: number;
+  };
+  by_branch: Array<{
+    branch: string;
+    count: number;
+    total_discrepancy: number;
+  }>;
+}
+
+// Payment Method Report Types
+export interface PaymentMethodReportData {
+  period: { start_date: string; end_date: string };
+  payments: Array<{
+    payment_method_id: UUID;
+    payment_method: string;
+    code: string;
+    type: string;
+    transaction_count: number;
+    total_amount: number;
+    avg_amount: number;
+    min_amount: number;
+    max_amount: number;
+    percentage: string;
+  }>;
+  summary: {
+    total_amount: number;
+    total_transactions: number;
+    avg_transaction: number;
+  };
+  daily_breakdown: Array<{
+    date: string;
+    payment_method: string;
+    code: string;
+    transaction_count: number;
+    total_amount: number;
+  }>;
+}
+
+// Shrinkage Report Types
+export interface ShrinkageReportData {
+  period: { start_date: string; end_date: string };
+  shrinkage_records: Array<{
+    movement_id: UUID;
+    created_at: string;
+    quantity: number;
+    reason: string;
+    notes: string;
+    branch_name: string;
+    branch_code: string;
+    product_name: string;
+    sku: string;
+    cost_price: number;
+    selling_price: number;
+    category_name: string;
+    created_by_name: string;
+    cost_loss: number;
+    retail_loss: number;
+  }>;
+  summary: {
+    total_records: number;
+    total_quantity: number;
+    total_cost_loss: number;
+    total_retail_loss: number;
+    potential_profit_loss: number;
+  };
+  by_category: Array<{
+    category: string;
+    count: number;
+    total_quantity: number;
+    cost_loss: number;
+    retail_loss: number;
+  }>;
+  by_branch: Array<{
+    branch: string;
+    branch_code: string;
+    count: number;
+    cost_loss: number;
+    retail_loss: number;
+  }>;
+  top_products: Array<{
+    product_id: UUID;
+    product_name: string;
+    sku: string;
+    category: string;
+    total_quantity: number;
+    cost_loss: number;
+    retail_loss: number;
+    occurrences: number;
+  }>;
+}
+
+// Hourly Report Types
+export interface HourlyReportData {
+  period: { start_date: string; end_date: string };
+  hourly_data: Array<{
+    hour: number;
+    hour_label: string;
+    sales_count: number;
+    revenue: number;
+    avg_ticket: number;
+    min_ticket: number;
+    max_ticket: number;
+    sales_percentage: string;
+    revenue_percentage: string;
+  }>;
+  day_of_week_data: Array<{
+    day_of_week: number;
+    day_name: string;
+    sales_count: number;
+    revenue: number;
+    avg_ticket: number;
+  }>;
+  peak_hours: Array<{
+    hour: number;
+    hour_label: string;
+    sales_count: number;
+    revenue: number;
+  }>;
+  slow_hours: Array<{
+    hour: number;
+    hour_label: string;
+    sales_count: number;
+    revenue: number;
+  }>;
+  summary: {
+    total_sales: number;
+    total_revenue: number;
+    avg_hourly_sales: number;
+    avg_hourly_revenue: number;
+  };
+}
+
+// Branch Comparison Report Types
+export interface BranchComparisonReportData {
+  period: { start_date: string; end_date: string };
+  branches: Array<{
+    branch_id: UUID;
+    branch_name: string;
+    branch_code: string;
+    sales: {
+      total_sales: number;
+      total_revenue: number;
+      avg_ticket: number;
+      total_discounts: number;
+    };
+    payments: Array<{
+      method: string;
+      name: string;
+      total: number;
+    }>;
+    inventory: {
+      unique_products: number;
+      cost_value: number;
+      retail_value: number;
+    };
+    discrepancies: {
+      session_count: number;
+      total_discrepancy: number;
+    };
+    top_product: {
+      name: string;
+      sku: string;
+      revenue: number;
+    } | null;
+    revenue_percentage: string;
+    sales_percentage: string;
+  }>;
+  rankings: {
+    by_revenue: Array<any>;
+    by_sales_count: Array<any>;
+    by_avg_ticket: Array<any>;
+    by_inventory_value: Array<any>;
+  };
+  consolidated: {
+    total_revenue: number;
+    total_sales: number;
+    total_inventory_value: number;
+    total_discrepancy: number;
+    branch_count: number;
+  };
 }
 
 // Invoice Types
@@ -744,6 +1118,49 @@ export interface Invoice {
 
   created_at: ISODateString;
   updated_at: ISODateString;
+}
+
+// Credit Note Types
+export type CreditNoteType = 'A' | 'B' | 'C';
+export type CreditNoteStatus = 'PENDING' | 'ISSUED' | 'FAILED';
+
+export interface CreditNote {
+  id: UUID;
+  original_invoice_id: UUID;
+  original_invoice?: Invoice;
+  credit_note_type: CreditNoteType;
+  point_of_sale: number;
+  credit_note_number: number;
+
+  // CAE (AFIP electronic authorization)
+  cae?: string;
+  cae_expiration_date?: ISODateString;
+
+  // Reason and amounts
+  reason: string;
+  net_amount: Decimal;
+  tax_amount: Decimal;
+  total_amount: Decimal;
+
+  // FactuHoy integration data
+  factuhoy_id?: string;
+  factuhoy_response?: any;
+  pdf_url?: string;
+
+  // Status and error handling
+  status: CreditNoteStatus;
+  error_message?: string;
+  retry_count: number;
+  last_retry_at?: ISODateString;
+  issued_at?: ISODateString;
+
+  // Relationships
+  branch_id: UUID;
+  branch?: Branch;
+  created_by: UUID;
+  creator?: User;
+
+  created_at: ISODateString;
 }
 
 // Supplier Types
@@ -916,4 +1333,269 @@ export interface CreditTransaction {
   balance_after: Decimal;
   description?: string;
   created_at: ISODateString;
+}
+
+// Shipping Types
+export type DeliveryStatus = 'PENDING' | 'PROCESSING' | 'IN_TRANSIT' | 'OUT_FOR_DELIVERY' | 'DELIVERED' | 'FAILED' | 'CANCELLED';
+
+export interface ShippingZone {
+  id: UUID;
+  name: string;
+  description?: string;
+  base_rate: Decimal;
+  free_shipping_threshold?: Decimal;
+  weight_surcharge_per_kg?: Decimal;
+  express_surcharge?: Decimal;
+  estimated_delivery_hours?: number;
+  is_active: boolean;
+  sort_order: number;
+  created_at: ISODateString;
+  updated_at: ISODateString;
+  // Relations
+  neighborhood_mappings?: NeighborhoodMapping[];
+}
+
+export interface NeighborhoodMapping {
+  id: UUID;
+  neighborhood_name: string;
+  normalized_name: string;
+  postal_code?: string;
+  postal_code_pattern?: string;
+  shipping_zone_id: UUID;
+  city?: string;
+  province?: string;
+  is_active: boolean;
+  created_at: ISODateString;
+  updated_at: ISODateString;
+  // Relations
+  shipping_zone?: ShippingZone;
+}
+
+export interface SaleShipping {
+  id: UUID;
+  sale_id: UUID;
+  customer_id?: UUID;
+  shipping_zone_id: UUID;
+  // Delivery address
+  delivery_address: string;
+  delivery_neighborhood: string;
+  delivery_city?: string;
+  delivery_postal_code?: string;
+  delivery_notes?: string;
+  // Shipping cost breakdown
+  base_rate: Decimal;
+  weight_kg?: Decimal;
+  weight_surcharge: Decimal;
+  is_express: boolean;
+  express_surcharge: Decimal;
+  free_shipping_applied: boolean;
+  free_shipping_threshold?: Decimal;
+  total_shipping_cost: Decimal;
+  // Delivery tracking
+  delivery_status: DeliveryStatus;
+  estimated_delivery_date?: ISODateString;
+  actual_delivery_date?: ISODateString;
+  delivered_by?: UUID;
+  delivery_confirmation_signature?: string;
+  delivery_confirmation_photo?: string;
+  tracking_number?: string;
+  created_at: ISODateString;
+  updated_at: ISODateString;
+  // Relations
+  sale?: Sale;
+  customer?: Customer;
+  shipping_zone?: ShippingZone;
+  delivery_person?: User;
+}
+
+export interface ShippingCalculation {
+  zone_id: UUID;
+  zone_name: string;
+  base_rate: Decimal;
+  weight_kg: Decimal;
+  weight_surcharge: Decimal;
+  is_express: boolean;
+  express_surcharge: Decimal;
+  free_shipping_applied: boolean;
+  free_shipping_threshold?: Decimal;
+  total_shipping_cost: Decimal;
+  estimated_delivery_date?: ISODateString;
+  estimated_delivery_hours?: number;
+}
+
+// Shipping form data types
+export interface ShippingZoneFormData {
+  name: string;
+  description?: string;
+  base_rate: number;
+  free_shipping_threshold?: number;
+  weight_surcharge_per_kg?: number;
+  express_surcharge?: number;
+  estimated_delivery_hours?: number;
+  is_active: boolean;
+  sort_order?: number;
+}
+
+export interface NeighborhoodMappingFormData {
+  neighborhood_name: string;
+  postal_code?: string;
+  postal_code_pattern?: string;
+  shipping_zone_id: UUID;
+  city?: string;
+  province?: string;
+}
+
+export interface ShippingCalculationRequest {
+  neighborhood: string;
+  postal_code?: string;
+  subtotal: number;
+  weight?: number;
+  is_express?: boolean;
+}
+
+export interface CreateSaleShippingRequest {
+  customer_id?: UUID;
+  delivery_address?: string;
+  delivery_neighborhood?: string;
+  delivery_city?: string;
+  delivery_postal_code?: string;
+  delivery_notes?: string;
+  weight_kg?: number;
+  is_express?: boolean;
+}
+
+// ==================== EXPENSE MANAGEMENT ====================
+
+export type ExpensePaymentMethod = 'CASH' | 'BANK_TRANSFER' | 'CHECK' | 'CREDIT_CARD' | 'DEBIT_CARD';
+export type ExpenseStatus = 'PENDING' | 'APPROVED' | 'PAID' | 'REJECTED' | 'CANCELLED';
+export type RecurrencePattern = 'MONTHLY' | 'QUARTERLY' | 'YEARLY';
+
+export interface ExpenseCategory {
+  id: UUID;
+  name: string;
+  description?: string;
+  color_hex?: string;
+  is_system: boolean;
+  is_active: boolean;
+  created_at: ISODateString;
+  updated_at: ISODateString;
+}
+
+export interface Expense {
+  id: UUID;
+  expense_number: string;
+
+  // Classification
+  category_id: UUID;
+  category?: ExpenseCategory;
+  branch_id?: UUID;
+  branch?: {
+    id: UUID;
+    name: string;
+  };
+
+  // Details
+  description: string;
+  amount: Decimal;
+  payment_method: ExpensePaymentMethod;
+
+  // Vendor
+  vendor_name?: string;
+  vendor_tax_id?: string;
+  invoice_number?: string;
+
+  // Dates
+  expense_date: ISODateString;
+  due_date?: ISODateString;
+  paid_date?: ISODateString;
+
+  // Status
+  status: ExpenseStatus;
+
+  // Recurring
+  is_recurring: boolean;
+  recurrence_pattern?: RecurrencePattern;
+  recurrence_day?: number;
+  parent_expense_id?: UUID;
+  parent?: {
+    id: UUID;
+    expense_number: string;
+    description: string;
+  };
+
+  // Attachments
+  receipt_url?: string;
+  attachment_urls?: string[];
+
+  // Approval workflow
+  submitted_by: UUID;
+  submitter?: {
+    id: UUID;
+    first_name: string;
+    last_name: string;
+    email: string;
+  };
+  approved_by?: UUID;
+  approver?: {
+    id: UUID;
+    first_name: string;
+    last_name: string;
+    email: string;
+  };
+  approved_at?: ISODateString;
+  rejection_reason?: string;
+
+  // Accounting
+  account_code?: string;
+  is_tax_deductible: boolean;
+  tax_year?: number;
+
+  notes?: string;
+  created_at: ISODateString;
+  updated_at: ISODateString;
+}
+
+export interface ExpenseFormData {
+  category_id: UUID;
+  branch_id?: UUID;
+  description: string;
+  amount: number;
+  payment_method: ExpensePaymentMethod;
+  vendor_name?: string;
+  vendor_tax_id?: string;
+  invoice_number?: string;
+  expense_date: string;
+  due_date?: string;
+  is_recurring?: boolean;
+  recurrence_pattern?: RecurrencePattern;
+  recurrence_day?: number;
+  account_code?: string;
+  is_tax_deductible?: boolean;
+  tax_year?: number;
+  notes?: string;
+}
+
+export interface ExpenseStats {
+  total_amount: number;
+  total_pending: number;
+  total_approved: number;
+  total_paid: number;
+  count_pending: number;
+  count_approved: number;
+  count_paid: number;
+  by_category: {
+    category_id: UUID;
+    category_name: string;
+    color_hex: string;
+    total: number;
+    count: number;
+  }[];
+}
+
+export interface ExpenseCategoryFormData {
+  name: string;
+  description?: string;
+  color_hex?: string;
+  is_system?: boolean;
+  is_active?: boolean;
 }

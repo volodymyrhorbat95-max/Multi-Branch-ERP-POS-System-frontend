@@ -144,7 +144,7 @@ export const SupplierFormModal: React.FC<SupplierFormModalProps> = ({
         />
 
         {/* Modal */}
-        <div className="inline-block w-full max-w-4xl p-6 my-8 overflow-hidden text-left align-middle transition-all transform bg-white dark:bg-gray-800 shadow-xl rounded-lg">
+        <div className="inline-block w-full max-w-4xl p-6 my-8 overflow-hidden text-left align-middle transition-all transform bg-white dark:bg-gray-800 shadow-xl rounded-md">
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-lg font-medium text-gray-900 dark:text-white">
               {supplier ? 'Editar Proveedor' : 'Nuevo Proveedor'}

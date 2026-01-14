@@ -3,6 +3,7 @@ import { TypedUseSelectorHook, useDispatch, useSelector } from 'react-redux';
 
 // Import slices
 import authReducer from './slices/authSlice';
+import usersReducer from './slices/usersSlice';
 import uiReducer from './slices/uiSlice';
 import posReducer from './slices/posSlice';
 import productsReducer from './slices/productsSlice';
@@ -17,10 +18,14 @@ import loyaltyReducer from './slices/loyaltySlice';
 import dashboardReducer from './slices/dashboardSlice';
 import invoicesReducer from './slices/invoicesSlice';
 import supplierReducer from './slices/supplierSlice';
+import creditNotesReducer from './slices/creditNotesSlice';
+import shippingReducer from './slices/shippingSlice';
+import expenseReducer from './slices/expenseSlice';
 
 export const store = configureStore({
   reducer: {
     auth: authReducer,
+    users: usersReducer,
     ui: uiReducer,
     pos: posReducer,
     products: productsReducer,
@@ -35,6 +40,9 @@ export const store = configureStore({
     dashboard: dashboardReducer,
     invoices: invoicesReducer,
     supplier: supplierReducer,
+    creditNotes: creditNotesReducer,
+    shipping: shippingReducer,
+    expense: expenseReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

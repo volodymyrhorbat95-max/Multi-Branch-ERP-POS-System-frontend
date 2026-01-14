@@ -1,7 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { Modal, Button } from '../../components/ui';
 import invoiceService from '../../services/api/invoice.service';
-import type { Sale, Invoice } from '../../types';
+import printerService from '../../services/api/printer.service';
+import saleService from '../../services/api/sale.service';
+import { printReceipt } from '../../services/printer/thermalPrinter';
+import CancelSaleModal from './CancelSaleModal';
+import type { Sale, Invoice, UUID } from '../../types';
 
 interface SaleSuccessModalProps {
   isOpen: boolean;
@@ -17,6 +21,10 @@ const SaleSuccessModal: React.FC<SaleSuccessModalProps> = ({
   const [invoice, setInvoice] = useState<Invoice | null>(null);
   const [loadingInvoice, setLoadingInvoice] = useState(false);
   const [invoiceError, setInvoiceError] = useState<string | null>(null);
+  const [printing, setPrinting] = useState(false);
+  const [printError, setPrintError] = useState<string | null>(null);
+  const [cancelModalOpen, setCancelModalOpen] = useState(false);
+  const [cancelSuccess, setCancelSuccess] = useState(false);
 
   useEffect(() => {
     const fetchInvoice = async () => {
@@ -68,9 +76,46 @@ const SaleSuccessModal: React.FC<SaleSuccessModalProps> = ({
     }
   };
 
+  const handlePrintReceipt = async () => {
+    if (!sale?.id) return;
+
+    setPrinting(true);
+    setPrintError(null);
+
+    try {
+      // Fetch receipt data from backend
+      const response = await printerService.getReceipt(sale.id);
+
+      if (response.success && response.data) {
+        // Print receipt using thermal printer service
+        await printReceipt(response.data);
+      } else {
+        throw new Error('No se pudo obtener los datos del recibo');
+      }
+    } catch (error: any) {
+      console.error('Error printing receipt:', error);
+      setPrintError(error.message || 'Error al imprimir recibo');
+    } finally {
+      setPrinting(false);
+    }
+  };
+
+  const handleCancelSale = async (saleId: UUID, reason: string, managerPin?: string) => {
+    try {
+      await saleService.void(saleId, reason, managerPin); // Backend still uses 'void' endpoint
+      setCancelSuccess(true);
+      setCancelModalOpen(false);
+    } catch (error) {
+      // Error is handled in CancelSaleModal
+      throw error;
+    }
+  };
+
   const handleNewSale = () => {
     setInvoice(null);
     setInvoiceError(null);
+    setPrintError(null);
+    setCancelSuccess(false);
     onClose();
   };
 
@@ -84,20 +129,36 @@ const SaleSuccessModal: React.FC<SaleSuccessModalProps> = ({
       size="md"
     >
       <div className="space-y-6">
-        {/* Sale Success Info */}
-        <div className="text-center p-6 bg-success-50 dark:bg-success-900/20 rounded-sm animate-zoom-in duration-fast">
-          <div className="w-16 h-16 bg-success-100 dark:bg-success-900/30 rounded-full flex items-center justify-center mx-auto mb-4 animate-pulse-slow">
-            <svg className="w-8 h-8 text-success-600 dark:text-success-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-            </svg>
+        {/* Sale Success or Void Success Info */}
+        {cancelSuccess ? (
+          <div className="text-center p-6 bg-red-50 dark:bg-red-900/20 rounded-sm animate-zoom-in duration-fast">
+            <div className="w-16 h-16 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg className="w-8 h-8 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </div>
+            <h3 className="text-2xl font-bold text-red-700 dark:text-red-300 mb-2 animate-fade-down duration-normal">
+              Venta Cancelada
+            </h3>
+            <p className="text-red-600 dark:text-red-400 animate-fade-up duration-light-slow">
+              La venta #{sale.sale_number} ha sido cancelada exitosamente
+            </p>
           </div>
-          <h3 className="text-2xl font-bold text-success-700 dark:text-success-300 mb-2 animate-fade-down duration-normal">
-            ¡Venta Exitosa!
-          </h3>
-          <p className="text-success-600 dark:text-success-400 animate-fade-up duration-light-slow">
-            Venta #{sale.sale_number}
-          </p>
-        </div>
+        ) : (
+          <div className="text-center p-6 bg-success-50 dark:bg-success-900/20 rounded-sm animate-zoom-in duration-fast">
+            <div className="w-16 h-16 bg-success-100 dark:bg-success-900/30 rounded-full flex items-center justify-center mx-auto mb-4 animate-pulse-slow">
+              <svg className="w-8 h-8 text-success-600 dark:text-success-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+            <h3 className="text-2xl font-bold text-success-700 dark:text-success-300 mb-2 animate-fade-down duration-normal">
+              ¡Venta Exitosa!
+            </h3>
+            <p className="text-success-600 dark:text-success-400 animate-fade-up duration-light-slow">
+              Venta #{sale.sale_number}
+            </p>
+          </div>
+        )}
 
         {/* Sale Details */}
         <div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-sm animate-fade-up duration-normal">
@@ -242,22 +303,67 @@ const SaleSuccessModal: React.FC<SaleSuccessModalProps> = ({
           )}
         </div>
 
+        {/* Print Error */}
+        {printError && (
+          <div className="p-4 bg-danger-50 dark:bg-danger-900/20 border border-danger-200 dark:border-danger-800 rounded-sm animate-zoom-in duration-fast">
+            <p className="text-sm text-danger-700 dark:text-danger-300">
+              {printError}
+            </p>
+          </div>
+        )}
+
         {/* Actions */}
-        <div className="flex gap-3 pt-4 border-t border-gray-200 dark:border-gray-700 animate-fade-up duration-slow">
-          {invoice?.pdf_url && invoice.status === 'ISSUED' && (
-            <Button
-              variant="secondary"
-              onClick={handlePrintInvoice}
-              icon={
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
-                </svg>
-              }
-              iconPosition="left"
-            >
-              Imprimir Factura
-            </Button>
+        <div className="flex flex-wrap gap-3 pt-4 border-t border-gray-200 dark:border-gray-700 animate-fade-up duration-slow">
+          {!cancelSuccess && (
+            <>
+              <Button
+                variant="secondary"
+                onClick={handlePrintReceipt}
+                disabled={printing}
+                icon={
+                  printing ? (
+                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                    </svg>
+                  )
+                }
+                iconPosition="left"
+              >
+                {printing ? 'Imprimiendo...' : 'Imprimir Recibo'}
+              </Button>
+
+              {invoice?.pdf_url && invoice.status === 'ISSUED' && (
+                <Button
+                  variant="secondary"
+                  onClick={handlePrintInvoice}
+                  icon={
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                  }
+                  iconPosition="left"
+                >
+                  Ver Factura PDF
+                </Button>
+              )}
+
+              <Button
+                variant="danger"
+                onClick={() => setCancelModalOpen(true)}
+                icon={
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                }
+                iconPosition="left"
+              >
+                Cancelar Venta
+              </Button>
+            </>
           )}
+
           <Button
             variant="primary"
             onClick={handleNewSale}
@@ -273,6 +379,14 @@ const SaleSuccessModal: React.FC<SaleSuccessModalProps> = ({
           </Button>
         </div>
       </div>
+
+      {/* Cancel Sale Modal */}
+      <CancelSaleModal
+        isOpen={cancelModalOpen}
+        onClose={() => setCancelModalOpen(false)}
+        onSubmit={handleCancelSale}
+        sale={sale}
+      />
     </Modal>
   );
 };

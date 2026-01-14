@@ -42,6 +42,13 @@ interface PaymentModalProps {
   onCustomerTaxConditionChange: (value: string) => void;
   customerAddress: string;
   onCustomerAddressChange: (value: string) => void;
+  // Loyalty-related props
+  pointsToRedeem: number;
+  onPointsToRedeemChange: (value: number) => void;
+  creditToUse: number;
+  onCreditToUseChange: (value: number) => void;
+  changeAsCredit: boolean;
+  onChangeAsCreditChange: (value: boolean) => void;
 }
 
 const PaymentModal: React.FC<PaymentModalProps> = ({
@@ -83,6 +90,13 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
   onCustomerTaxConditionChange,
   customerAddress,
   onCustomerAddressChange,
+  // Loyalty props
+  pointsToRedeem,
+  onPointsToRedeemChange,
+  creditToUse,
+  onCreditToUseChange,
+  changeAsCredit,
+  onChangeAsCreditChange,
 }) => {
   // Auto-detect suggested invoice type based on customer data
   const [suggestedInvoiceType, setSuggestedInvoiceType] = useState<'A' | 'B' | 'C'>('B');
@@ -114,11 +128,15 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
   // Validation for Invoice Type A
   const isInvoiceTypeAValid = () => {
     if (invoiceType !== 'A') return true;
+    // CUIT must be exactly 11 digits (format: XX-XXXXXXXX-X without dashes)
+    const cuitDigitsOnly = customerCuit?.replace(/\D/g, '') || '';
     return (
       customerCuit &&
-      customerCuit.length >= 11 &&
+      cuitDigitsOnly.length === 11 &&
       customerTaxCondition &&
-      customerAddress
+      customerTaxCondition.trim().length > 0 &&
+      customerAddress &&
+      customerAddress.trim().length > 0
     );
   };
   return (
@@ -246,6 +264,129 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
             </div>
           )}
         </div>
+
+        {/* Loyalty Section - Only show if customer exists */}
+        {customer && (Number(customer.loyalty_points) > 0 || Number(customer.credit_balance) > 0) && (
+          <div className="p-4 bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 rounded-sm border border-purple-200 dark:border-purple-800 animate-fade-down duration-normal">
+            <h3 className="font-medium text-gray-900 dark:text-white mb-3 flex items-center gap-2">
+              <svg className="w-5 h-5 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              Puntos y Crédito
+            </h3>
+
+            <div className="grid grid-cols-2 gap-4">
+              {/* Points Redemption */}
+              {Number(customer.loyalty_points) > 0 && (
+                <div className="space-y-2 animate-fade-up duration-normal">
+                  <div className="flex justify-between items-center">
+                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      Canjear Puntos
+                    </label>
+                    <span className="text-xs text-purple-600 dark:text-purple-400 font-medium">
+                      Disponible: {Number(customer.loyalty_points)} pts
+                    </span>
+                  </div>
+                  <Input
+                    type="number"
+                    min="0"
+                    max={Math.min(Number(customer.loyalty_points), Math.floor(remainingAmount * 10))}
+                    step="10"
+                    value={pointsToRedeem || ''}
+                    onChange={(e) => {
+                      const value = parseInt(e.target.value) || 0;
+                      const maxPoints = Math.min(
+                        Number(customer.loyalty_points),
+                        Math.floor(remainingAmount * 10) // 10 points = $1
+                      );
+                      onPointsToRedeemChange(Math.min(value, maxPoints));
+                    }}
+                    placeholder="0"
+                  />
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    {pointsToRedeem > 0 ? `= ${formatCurrency(pointsToRedeem / 10)}` : '10 puntos = $1'}
+                  </p>
+                  {pointsToRedeem > 0 && (
+                    <button
+                      onClick={() => onPointsToRedeemChange(0)}
+                      className="text-xs text-purple-600 dark:text-purple-400 hover:underline"
+                    >
+                      Limpiar
+                    </button>
+                  )}
+                </div>
+              )}
+
+              {/* Credit Usage */}
+              {customer.credit_balance > 0 && (
+                <div className="space-y-2 animate-fade-up duration-light-slow">
+                  <div className="flex justify-between items-center">
+                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      Usar Crédito
+                    </label>
+                    <span className="text-xs text-pink-600 dark:text-pink-400 font-medium">
+                      Disponible: {formatCurrency(customer.credit_balance)}
+                    </span>
+                  </div>
+                  <Input
+                    type="number"
+                    min="0"
+                    max={Math.min(Number(customer.credit_balance), remainingAmount)}
+                    step="0.01"
+                    value={creditToUse || ''}
+                    onChange={(e) => {
+                      const value = parseFloat(e.target.value) || 0;
+                      const maxCredit = Math.min(
+                        Number(customer.credit_balance),
+                        remainingAmount
+                      );
+                      onCreditToUseChange(Math.min(value, maxCredit));
+                    }}
+                    placeholder="0.00"
+                  />
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => onCreditToUseChange(Math.min(Number(customer.credit_balance), remainingAmount))}
+                      className="text-xs text-pink-600 dark:text-pink-400 hover:underline"
+                    >
+                      Usar todo
+                    </button>
+                    {creditToUse > 0 && (
+                      <button
+                        onClick={() => onCreditToUseChange(0)}
+                        className="text-xs text-pink-600 dark:text-pink-400 hover:underline"
+                      >
+                        Limpiar
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Change as Credit Option */}
+            {change > 10 && (
+              <div className="mt-4 p-3 bg-white dark:bg-gray-800 rounded-sm border border-gray-200 dark:border-gray-700 animate-fade-up duration-slow">
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={changeAsCredit}
+                    onChange={(e) => onChangeAsCreditChange(e.target.checked)}
+                    className="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
+                  />
+                  <div className="flex-1">
+                    <span className="text-sm font-medium text-gray-900 dark:text-white">
+                      Guardar vuelto como crédito
+                    </span>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      El vuelto de {formatCurrency(change)} se guardará como crédito en la cuenta del cliente
+                    </p>
+                  </div>
+                </label>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Payment Section */}
         <div className="grid grid-cols-2 gap-6">

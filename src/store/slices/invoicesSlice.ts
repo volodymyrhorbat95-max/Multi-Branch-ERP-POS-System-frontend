@@ -141,6 +141,37 @@ export const retryPendingInvoices = createAsyncThunk<
   }
 );
 
+export const retryInvoice = createAsyncThunk<
+  Invoice,
+  string,
+  { rejectValue: string }
+>(
+  'invoices/retryInvoice',
+  async (invoiceId, { dispatch, rejectWithValue }) => {
+    try {
+      dispatch(startLoading('Reintentando factura...'));
+      const response = await invoiceService.retryInvoice(invoiceId);
+
+      if (!response.success) {
+        throw new Error(response.error || 'Error al reintentar factura');
+      }
+
+      dispatch(showToast({
+        type: 'success',
+        message: response.message || 'Factura reintentada exitosamente',
+      }));
+
+      return response.data;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Error al reintentar factura';
+      dispatch(showToast({ type: 'error', message }));
+      return rejectWithValue(message);
+    } finally {
+      dispatch(stopLoading());
+    }
+  }
+);
+
 const invoicesSlice = createSlice({
   name: 'invoices',
   initialState,
@@ -187,6 +218,23 @@ const invoicesSlice = createSlice({
       // Retry pending
       .addCase(retryPendingInvoices.fulfilled, (state) => {
         state.error = null;
+      })
+
+      // Retry single invoice
+      .addCase(retryInvoice.fulfilled, (state, action) => {
+        // Update the invoice in the list if it exists
+        const index = state.invoices.findIndex(inv => inv.id === action.payload.id);
+        if (index !== -1) {
+          state.invoices[index] = action.payload;
+        }
+        // Update current invoice if it's the one being retried
+        if (state.currentInvoice?.id === action.payload.id) {
+          state.currentInvoice = action.payload;
+        }
+        state.error = null;
+      })
+      .addCase(retryInvoice.rejected, (state, action) => {
+        state.error = action.payload || 'Error al reintentar factura';
       });
   },
 });

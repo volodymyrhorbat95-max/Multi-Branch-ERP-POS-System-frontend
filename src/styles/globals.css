@@ -130,6 +130,49 @@
   .duration-slow { animation-duration: 1000ms; }
   .duration-very-slow { animation-duration: 1200ms; }
 
+  /* Staggered animation utilities - NO DELAYS as per design rules */
+  /* Use these classes with inline style for animation-delay if needed */
+  .stagger-item {
+    animation-fill-mode: both;
+  }
+
+  /* Individual stagger delay utilities (use sparingly, inline styles preferred) */
+  .stagger-1 { animation-delay: 50ms; }
+  .stagger-2 { animation-delay: 100ms; }
+  .stagger-3 { animation-delay: 150ms; }
+  .stagger-4 { animation-delay: 200ms; }
+  .stagger-5 { animation-delay: 250ms; }
+  .stagger-6 { animation-delay: 300ms; }
+  .stagger-7 { animation-delay: 350ms; }
+  .stagger-8 { animation-delay: 400ms; }
+  .stagger-9 { animation-delay: 450ms; }
+  .stagger-10 { animation-delay: 500ms; }
+
+  /* Combined animation + stagger classes for common patterns */
+  .animate-stagger-fade-up {
+    animation: fadeUp 600ms ease-out forwards;
+  }
+
+  .animate-stagger-fade-down {
+    animation: fadeDown 600ms ease-out forwards;
+  }
+
+  .animate-stagger-fade-left {
+    animation: fadeLeft 600ms ease-out forwards;
+  }
+
+  .animate-stagger-fade-right {
+    animation: fadeRight 600ms ease-out forwards;
+  }
+
+  .animate-stagger-zoom-in {
+    animation: zoomIn 600ms ease-out forwards;
+  }
+
+  .animate-stagger-zoom-out {
+    animation: zoomOut 600ms ease-out forwards;
+  }
+
   /* Glass effect */
   .glass {
     @apply bg-white/80 dark:bg-gray-800/80 backdrop-blur-md;

@@ -10,6 +10,7 @@ import ShrinkageSummary from './ShrinkageSummary';
 import TopProductsList from './TopProductsList';
 import PendingInvoicesAlert from './PendingInvoicesAlert';
 import BranchShiftStatus from './BranchShiftStatus';
+import StockLevelOverview from './StockLevelOverview';
 
 const DashboardPage: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -102,12 +103,15 @@ const DashboardPage: React.FC = () => {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="animate-fade-right duration-light-slow">
               <CashDiscrepancies discrepancies={data.discrepancies} />
             </div>
-            <div className="animate-fade-left duration-light-slow">
+            <div className="animate-fade-up duration-light-slow">
               <ShrinkageSummary shrinkage={data.shrinkage} />
+            </div>
+            <div className="animate-fade-left duration-light-slow">
+              <StockLevelOverview />
             </div>
           </div>
 

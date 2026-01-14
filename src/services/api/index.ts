@@ -3,6 +3,9 @@ export { default as apiClient, get, post, put, patch, del } from './client';
 
 // Services
 export { default as authService } from './auth.service';
+export { default as userService } from './user.service';
+export { default as roleService } from './role.service';
+export { default as branchService } from './branch.service';
 export { default as productService } from './product.service';
 export { default as categoryService } from './category.service';
 export { default as customerService } from './customer.service';
@@ -17,3 +20,5 @@ export { default as priceService } from './price.service';
 export { default as loyaltyService } from './loyalty.service';
 export { default as syncService } from './sync.service';
 export { withdrawalService } from './withdrawal.service';
+export { default as shippingService } from './shipping.service';
+export { default as expenseService } from './expense.service';

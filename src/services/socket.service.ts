@@ -40,7 +40,7 @@ class SocketService {
       // Join appropriate rooms
       const state = store.getState();
       const branchId = state.auth.currentBranch?.id;
-      const isOwner = state.auth.user?.role?.permissions?.canAccessAllBranches;
+      const isOwner = state.auth.user?.role?.can_view_all_branches;
 
       if (branchId) {
         this.joinBranch(branchId);

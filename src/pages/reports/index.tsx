@@ -4,9 +4,17 @@ import SalesReport from './SalesReport';
 import ProductReport from './ProductReport';
 import CashierReport from './CashierReport';
 import InventoryReport from './InventoryReport';
+import CategoryReport from './CategoryReport';
+import DiscrepancyReport from './DiscrepancyReport';
+import PaymentMethodReport from './PaymentMethodReport';
+import ShrinkageReport from './ShrinkageReport';
+import HourlyReport from './HourlyReport';
+import BranchComparisonReport from './BranchComparisonReport';
+
+type TabType = 'daily' | 'sales' | 'products' | 'cashiers' | 'inventory' | 'categories' | 'discrepancies' | 'payments' | 'shrinkage' | 'hourly' | 'comparison';
 
 const ReportsPage: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'daily' | 'sales' | 'products' | 'cashiers' | 'inventory'>('daily');
+  const [activeTab, setActiveTab] = useState<TabType>('daily');
 
   return (
     <div className="p-6 space-y-6">
@@ -66,6 +74,66 @@ const ReportsPage: React.FC = () => {
           >
             Inventario
           </button>
+          <button
+            className={`px-6 py-3 text-sm font-medium transition-colors animate-fade-down duration-slow ${
+              activeTab === 'categories'
+                ? 'text-primary-600 dark:text-primary-400 border-b-2 border-primary-500'
+                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+            }`}
+            onClick={() => setActiveTab('categories')}
+          >
+            Categorías
+          </button>
+          <button
+            className={`px-6 py-3 text-sm font-medium transition-colors animate-fade-down duration-slow ${
+              activeTab === 'discrepancies'
+                ? 'text-primary-600 dark:text-primary-400 border-b-2 border-primary-500'
+                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+            }`}
+            onClick={() => setActiveTab('discrepancies')}
+          >
+            Discrepancias
+          </button>
+          <button
+            className={`px-6 py-3 text-sm font-medium transition-colors animate-fade-down duration-slow ${
+              activeTab === 'payments'
+                ? 'text-primary-600 dark:text-primary-400 border-b-2 border-primary-500'
+                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+            }`}
+            onClick={() => setActiveTab('payments')}
+          >
+            Métodos de Pago
+          </button>
+          <button
+            className={`px-6 py-3 text-sm font-medium transition-colors animate-fade-down duration-slow ${
+              activeTab === 'shrinkage'
+                ? 'text-primary-600 dark:text-primary-400 border-b-2 border-primary-500'
+                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+            }`}
+            onClick={() => setActiveTab('shrinkage')}
+          >
+            Mermas
+          </button>
+          <button
+            className={`px-6 py-3 text-sm font-medium transition-colors animate-fade-down duration-slow ${
+              activeTab === 'hourly'
+                ? 'text-primary-600 dark:text-primary-400 border-b-2 border-primary-500'
+                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+            }`}
+            onClick={() => setActiveTab('hourly')}
+          >
+            Por Hora
+          </button>
+          <button
+            className={`px-6 py-3 text-sm font-medium transition-colors animate-fade-down duration-slow ${
+              activeTab === 'comparison'
+                ? 'text-primary-600 dark:text-primary-400 border-b-2 border-primary-500'
+                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+            }`}
+            onClick={() => setActiveTab('comparison')}
+          >
+            Comparación
+          </button>
         </div>
       </div>
 
@@ -75,6 +143,12 @@ const ReportsPage: React.FC = () => {
         {activeTab === 'products' && <ProductReport />}
         {activeTab === 'cashiers' && <CashierReport />}
         {activeTab === 'inventory' && <InventoryReport />}
+        {activeTab === 'categories' && <CategoryReport />}
+        {activeTab === 'discrepancies' && <DiscrepancyReport />}
+        {activeTab === 'payments' && <PaymentMethodReport />}
+        {activeTab === 'shrinkage' && <ShrinkageReport />}
+        {activeTab === 'hourly' && <HourlyReport />}
+        {activeTab === 'comparison' && <BranchComparisonReport />}
       </div>
     </div>
   );

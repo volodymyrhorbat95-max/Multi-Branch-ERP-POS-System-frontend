@@ -1,5 +1,15 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
-import type { DailyReportData, OwnerDashboardData, UUID } from '../../types';
+import type {
+  DailyReportData,
+  OwnerDashboardData,
+  UUID,
+  CategoryReportData,
+  DiscrepancyReportData,
+  PaymentMethodReportData,
+  ShrinkageReportData,
+  HourlyReportData,
+  BranchComparisonReportData
+} from '../../types';
 import { reportService } from '../../services/api';
 import { startLoading, stopLoading } from './uiSlice';
 
@@ -16,6 +26,12 @@ interface ReportsState {
   productReport: any | null;
   cashierReport: any | null;
   inventoryReport: any | null;
+  categoryReport: CategoryReportData | null;
+  discrepancyReport: DiscrepancyReportData | null;
+  paymentMethodReport: PaymentMethodReportData | null;
+  shrinkageReport: ShrinkageReportData | null;
+  hourlyReport: HourlyReportData | null;
+  branchComparisonReport: BranchComparisonReportData | null;
 
   // Report filters
   filters: {
@@ -36,6 +52,12 @@ const initialState: ReportsState = {
   productReport: null,
   cashierReport: null,
   inventoryReport: null,
+  categoryReport: null,
+  discrepancyReport: null,
+  paymentMethodReport: null,
+  shrinkageReport: null,
+  hourlyReport: null,
+  branchComparisonReport: null,
   filters: {},
   loading: false,
   error: null,
@@ -268,6 +290,173 @@ export const loadInventoryReport = createAsyncThunk<
   }
 );
 
+export const loadCategoryReport = createAsyncThunk<
+  CategoryReportData,
+  {
+    branch_id?: UUID;
+    start_date?: string;
+    end_date?: string;
+  },
+  { rejectValue: string }
+>(
+  'reports/loadCategoryReport',
+  async (params, { dispatch, rejectWithValue }) => {
+    try {
+      dispatch(startLoading());
+      const response = await reportService.getCategoryReport(params);
+
+      if (!response.success) {
+        throw new Error('Failed to load category report');
+      }
+
+      return response.data;
+    } catch (error) {
+      return rejectWithValue('Error loading category report');
+    } finally {
+      dispatch(stopLoading());
+    }
+  }
+);
+
+export const loadDiscrepancyReport = createAsyncThunk<
+  DiscrepancyReportData,
+  {
+    branch_id?: UUID;
+    start_date?: string;
+    end_date?: string;
+  },
+  { rejectValue: string }
+>(
+  'reports/loadDiscrepancyReport',
+  async (params, { dispatch, rejectWithValue }) => {
+    try {
+      dispatch(startLoading());
+      const response = await reportService.getDiscrepancyReport(params);
+
+      if (!response.success) {
+        throw new Error('Failed to load discrepancy report');
+      }
+
+      return response.data;
+    } catch (error) {
+      return rejectWithValue('Error loading discrepancy report');
+    } finally {
+      dispatch(stopLoading());
+    }
+  }
+);
+
+export const loadPaymentMethodReport = createAsyncThunk<
+  PaymentMethodReportData,
+  {
+    branch_id?: UUID;
+    start_date?: string;
+    end_date?: string;
+  },
+  { rejectValue: string }
+>(
+  'reports/loadPaymentMethodReport',
+  async (params, { dispatch, rejectWithValue }) => {
+    try {
+      dispatch(startLoading());
+      const response = await reportService.getPaymentMethodReport(params);
+
+      if (!response.success) {
+        throw new Error('Failed to load payment method report');
+      }
+
+      return response.data;
+    } catch (error) {
+      return rejectWithValue('Error loading payment method report');
+    } finally {
+      dispatch(stopLoading());
+    }
+  }
+);
+
+export const loadShrinkageReport = createAsyncThunk<
+  ShrinkageReportData,
+  {
+    branch_id?: UUID;
+    start_date?: string;
+    end_date?: string;
+  },
+  { rejectValue: string }
+>(
+  'reports/loadShrinkageReport',
+  async (params, { dispatch, rejectWithValue }) => {
+    try {
+      dispatch(startLoading());
+      const response = await reportService.getShrinkageReport(params);
+
+      if (!response.success) {
+        throw new Error('Failed to load shrinkage report');
+      }
+
+      return response.data;
+    } catch (error) {
+      return rejectWithValue('Error loading shrinkage report');
+    } finally {
+      dispatch(stopLoading());
+    }
+  }
+);
+
+export const loadHourlyReport = createAsyncThunk<
+  HourlyReportData,
+  {
+    branch_id?: UUID;
+    start_date?: string;
+    end_date?: string;
+  },
+  { rejectValue: string }
+>(
+  'reports/loadHourlyReport',
+  async (params, { dispatch, rejectWithValue }) => {
+    try {
+      dispatch(startLoading());
+      const response = await reportService.getHourlyReport(params);
+
+      if (!response.success) {
+        throw new Error('Failed to load hourly report');
+      }
+
+      return response.data;
+    } catch (error) {
+      return rejectWithValue('Error loading hourly report');
+    } finally {
+      dispatch(stopLoading());
+    }
+  }
+);
+
+export const loadBranchComparisonReport = createAsyncThunk<
+  BranchComparisonReportData,
+  {
+    start_date?: string;
+    end_date?: string;
+  },
+  { rejectValue: string }
+>(
+  'reports/loadBranchComparisonReport',
+  async (params, { dispatch, rejectWithValue }) => {
+    try {
+      dispatch(startLoading());
+      const response = await reportService.getBranchComparisonReport(params);
+
+      if (!response.success) {
+        throw new Error('Failed to load branch comparison report');
+      }
+
+      return response.data;
+    } catch (error) {
+      return rejectWithValue('Error loading branch comparison report');
+    } finally {
+      dispatch(stopLoading());
+    }
+  }
+);
+
 const reportsSlice = createSlice({
   name: 'reports',
   initialState,
@@ -291,6 +480,12 @@ const reportsSlice = createSlice({
       state.productReport = null;
       state.cashierReport = null;
       state.inventoryReport = null;
+      state.categoryReport = null;
+      state.discrepancyReport = null;
+      state.paymentMethodReport = null;
+      state.shrinkageReport = null;
+      state.hourlyReport = null;
+      state.branchComparisonReport = null;
     },
 
     clearError: (state) => {
@@ -353,6 +548,42 @@ const reportsSlice = createSlice({
       state.inventoryReport = action.payload;
       state.loading = false;
     });
+
+    // Category Report
+    builder.addCase(loadCategoryReport.fulfilled, (state, action) => {
+      state.categoryReport = action.payload;
+      state.loading = false;
+    });
+
+    // Discrepancy Report
+    builder.addCase(loadDiscrepancyReport.fulfilled, (state, action) => {
+      state.discrepancyReport = action.payload;
+      state.loading = false;
+    });
+
+    // Payment Method Report
+    builder.addCase(loadPaymentMethodReport.fulfilled, (state, action) => {
+      state.paymentMethodReport = action.payload;
+      state.loading = false;
+    });
+
+    // Shrinkage Report
+    builder.addCase(loadShrinkageReport.fulfilled, (state, action) => {
+      state.shrinkageReport = action.payload;
+      state.loading = false;
+    });
+
+    // Hourly Report
+    builder.addCase(loadHourlyReport.fulfilled, (state, action) => {
+      state.hourlyReport = action.payload;
+      state.loading = false;
+    });
+
+    // Branch Comparison Report
+    builder.addCase(loadBranchComparisonReport.fulfilled, (state, action) => {
+      state.branchComparisonReport = action.payload;
+      state.loading = false;
+    });
   },
 });
 
@@ -360,6 +591,12 @@ export const fetchSalesReport = loadSalesReport;
 export const fetchProductReport = loadProductReport;
 export const fetchCashierReport = loadCashierReport;
 export const fetchInventoryReport = loadInventoryReport;
+export const fetchCategoryReport = loadCategoryReport;
+export const fetchDiscrepancyReport = loadDiscrepancyReport;
+export const fetchPaymentMethodReport = loadPaymentMethodReport;
+export const fetchShrinkageReport = loadShrinkageReport;
+export const fetchHourlyReport = loadHourlyReport;
+export const fetchBranchComparisonReport = loadBranchComparisonReport;
 
 export const {
   setFilters,

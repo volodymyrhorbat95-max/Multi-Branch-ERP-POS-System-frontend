@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const SystemSettings: React.FC = () => {
+  const navigate = useNavigate();
   const [settings, setSettings] = useState({
     company_name: 'Mi Empresa',
     tax_id: '',
@@ -156,6 +158,103 @@ const SystemSettings: React.FC = () => {
                   />
                 </div>
               )}
+            </div>
+          </section>
+
+          <section className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-sm p-6 animate-fade-right duration-normal">
+            <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-4 animate-fade-up duration-fast">Envíos y Entregas</h3>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+              Configura las zonas de envío, mapeos de barrios y visualiza los envíos realizados.
+            </p>
+            <div className="space-y-3 animate-fade-left duration-normal">
+              <button
+                type="button"
+                onClick={() => navigate('/shipping/zones')}
+                className="w-full text-left px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-sm hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors duration-fast"
+              >
+                <div className="flex items-center gap-3">
+                  <svg className="w-5 h-5 text-primary-600 dark:text-primary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                  <div>
+                    <div className="font-medium text-gray-900 dark:text-white">Zonas de Envío</div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400">Configura tarifas por zona</div>
+                  </div>
+                </div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => navigate('/shipping/neighborhoods')}
+                className="w-full text-left px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-sm hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors duration-fast"
+              >
+                <div className="flex items-center gap-3">
+                  <svg className="w-5 h-5 text-primary-600 dark:text-primary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                  </svg>
+                  <div>
+                    <div className="font-medium text-gray-900 dark:text-white">Mapeo de Barrios</div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400">Asigna barrios a zonas</div>
+                  </div>
+                </div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => navigate('/shipping/calculator')}
+                className="w-full text-left px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-sm hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors duration-fast"
+              >
+                <div className="flex items-center gap-3">
+                  <svg className="w-5 h-5 text-primary-600 dark:text-primary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                  </svg>
+                  <div>
+                    <div className="font-medium text-gray-900 dark:text-white">Calculadora de Envíos</div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400">Prueba el cálculo de costos</div>
+                  </div>
+                </div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => navigate('/shipping/shipments')}
+                className="w-full text-left px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-sm hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors duration-fast"
+              >
+                <div className="flex items-center gap-3">
+                  <svg className="w-5 h-5 text-primary-600 dark:text-primary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+                  </svg>
+                  <div>
+                    <div className="font-medium text-gray-900 dark:text-white">Gestión de Envíos</div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400">Ver todos los envíos</div>
+                  </div>
+                </div>
+              </button>
+            </div>
+          </section>
+
+          <section className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-sm p-6 animate-fade-left duration-normal">
+            <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-4 animate-fade-up duration-fast">Gestión de Gastos</h3>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+              Administra los gastos de tu negocio, categorías y reportes.
+            </p>
+            <div className="space-y-3 animate-fade-right duration-normal">
+              <button
+                type="button"
+                onClick={() => navigate('/expenses')}
+                className="w-full text-left px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-sm hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors duration-fast"
+              >
+                <div className="flex items-center gap-3">
+                  <svg className="w-5 h-5 text-primary-600 dark:text-primary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  <div>
+                    <div className="font-medium text-gray-900 dark:text-white">Gastos</div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400">Administra todos los gastos</div>
+                  </div>
+                </div>
+              </button>
             </div>
           </section>
 

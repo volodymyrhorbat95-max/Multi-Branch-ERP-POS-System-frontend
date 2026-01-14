@@ -1,6 +1,8 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { Provider } from 'react-redux';
+import { ThemeProvider } from '@mui/material/styles';
+import CssBaseline from '@mui/material/CssBaseline';
 import { store, useAppDispatch, useAppSelector } from './store';
 import { getCurrentUser, initializeAuth } from './store/slices/authSlice';
 import { GlobalLoader, Toast } from './components/ui';
@@ -9,6 +11,7 @@ import MainLayout from './components/layout/MainLayout';
 import { downloadDataForOffline } from './services/offline/syncService';
 import { processSyncQueue } from './services/offline/syncProcessor';
 import { useNetworkStatusWithCallbacks } from './hooks/useNetworkStatus';
+import muiTheme, { darkMuiTheme } from './theme/muiTheme';
 
 // Lazy load pages
 const LoginPage = React.lazy(() => import('./pages/auth/LoginPage'));
@@ -26,6 +29,8 @@ const PriceImportPage = React.lazy(() => import('./pages/prices'));
 const LoyaltyPage = React.lazy(() => import('./pages/loyalty'));
 const InvoicesPage = React.lazy(() => import('./pages/invoices'));
 const SuppliersPage = React.lazy(() => import('./pages/suppliers'));
+const ShippingPage = React.lazy(() => import('./pages/shipping'));
+const ExpensesPage = React.lazy(() => import('./pages/expenses'));
 
 // Loading fallback
 const PageLoader = () => (
@@ -144,46 +149,62 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
   return <>{children}</>;
 };
 
-// Main App Router
+// Main App Router with MUI Theme
 const AppRouter: React.FC = () => {
+  // Detect dark mode from localStorage or system preference
+  const isDarkMode = useMemo(() => {
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme) {
+      return savedTheme === 'dark';
+    }
+    return window.matchMedia('(prefers-color-scheme: dark)').matches;
+  }, []);
+
+  const theme = useMemo(() => (isDarkMode ? darkMuiTheme : muiTheme), [isDarkMode]);
+
   return (
-    <BrowserRouter>
-      <AuthProvider>
-        <GlobalLoader />
-        <Toast />
-        <React.Suspense fallback={<PageLoader />}>
-          <Routes>
-            {/* Public routes */}
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/pin-login" element={<PINLoginPage />} />
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      <BrowserRouter>
+        <AuthProvider>
+          <GlobalLoader />
+          <Toast />
+          <React.Suspense fallback={<PageLoader />}>
+            <Routes>
+              {/* Public routes */}
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/pin-login" element={<PINLoginPage />} />
 
-            {/* Protected routes */}
-            <Route element={<ProtectedRoute />}>
-              {/* POS route - full screen without layout */}
-              <Route path="/pos" element={<POSPage />} />
+              {/* Protected routes */}
+              <Route element={<ProtectedRoute />}>
+                {/* POS route - full screen without layout */}
+                <Route path="/pos" element={<POSPage />} />
 
-              {/* Routes with MainLayout */}
-              <Route element={<LayoutWrapper />}>
-                <Route path="/dashboard" element={<DashboardPage />} />
-                <Route path="/products/*" element={<ProductsPage />} />
-                <Route path="/customers/*" element={<CustomersPage />} />
-                <Route path="/reports/*" element={<ReportsPage />} />
-                <Route path="/sessions/*" element={<SessionsPage />} />
-                <Route path="/alerts" element={<AlertsPage />} />
-                <Route path="/settings/*" element={<SettingsPage />} />
-                <Route path="/stock/*" element={<StockPage />} />
-                <Route path="/prices/*" element={<PriceImportPage />} />
-                <Route path="/suppliers/*" element={<SuppliersPage />} />
-                <Route path="/loyalty/*" element={<LoyaltyPage />} />
-                <Route path="/invoices/*" element={<InvoicesPage />} />
-                <Route path="/" element={<Navigate to="/dashboard" replace />} />
-                <Route path="*" element={<Navigate to="/dashboard" replace />} />
+                {/* Routes with MainLayout */}
+                <Route element={<LayoutWrapper />}>
+                  <Route path="/dashboard" element={<DashboardPage />} />
+                  <Route path="/products/*" element={<ProductsPage />} />
+                  <Route path="/customers/*" element={<CustomersPage />} />
+                  <Route path="/reports/*" element={<ReportsPage />} />
+                  <Route path="/sessions/*" element={<SessionsPage />} />
+                  <Route path="/alerts" element={<AlertsPage />} />
+                  <Route path="/settings/*" element={<SettingsPage />} />
+                  <Route path="/stock/*" element={<StockPage />} />
+                  <Route path="/prices/*" element={<PriceImportPage />} />
+                  <Route path="/suppliers/*" element={<SuppliersPage />} />
+                  <Route path="/loyalty/*" element={<LoyaltyPage />} />
+                  <Route path="/invoices/*" element={<InvoicesPage />} />
+                  <Route path="/shipping/*" element={<ShippingPage />} />
+                  <Route path="/expenses/*" element={<ExpensesPage />} />
+                  <Route path="/" element={<Navigate to="/dashboard" replace />} />
+                  <Route path="*" element={<Navigate to="/dashboard" replace />} />
+                </Route>
               </Route>
-            </Route>
-          </Routes>
-        </React.Suspense>
-      </AuthProvider>
-    </BrowserRouter>
+            </Routes>
+          </React.Suspense>
+        </AuthProvider>
+      </BrowserRouter>
+    </ThemeProvider>
   );
 };
 

@@ -6,7 +6,7 @@ interface TransferDetailsModalProps {
   isOpen: boolean;
   onClose: () => void;
   transfer: StockTransfer | null;
-  onApprove?: (transferId: UUID) => void;
+  onApprove?: (transferId: UUID, items: Array<{ id: UUID; shipped_quantity: number }>) => void;
   onReceive?: (transferId: UUID, items: Array<{ item_id: UUID; quantity_received: number }>, notes?: string) => void;
   onCancel?: (transferId: UUID, reason: string) => void;
   loading: boolean;
@@ -21,9 +21,11 @@ const TransferDetailsModal: React.FC<TransferDetailsModalProps> = ({
   onCancel,
   loading
 }) => {
+  const [shippedQuantities, setShippedQuantities] = useState<Record<UUID, string>>({});
   const [receivedQuantities, setReceivedQuantities] = useState<Record<UUID, string>>({});
   const [receiveNotes, setReceiveNotes] = useState('');
   const [cancelReason, setCancelReason] = useState('');
+  const [showApproveForm, setShowApproveForm] = useState(false);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [showReceiveForm, setShowReceiveForm] = useState(false);
 
@@ -69,9 +71,18 @@ const TransferDetailsModal: React.FC<TransferDetailsModalProps> = ({
   };
 
   const handleApprove = () => {
-    if (transfer && onApprove) {
-      onApprove(transfer.id);
-    }
+    if (!transfer || !onApprove) return;
+
+    const items = transfer.items?.map(item => ({
+      id: item.id,
+      shipped_quantity: shippedQuantities[item.id]
+        ? parseFloat(shippedQuantities[item.id])
+        : item.requested_quantity
+    })) || [];
+
+    onApprove(transfer.id, items);
+    setShowApproveForm(false);
+    setShippedQuantities({});
   };
 
   const handleReceive = () => {
@@ -99,8 +110,10 @@ const TransferDetailsModal: React.FC<TransferDetailsModalProps> = ({
   };
 
   const handleClose = () => {
+    setShowApproveForm(false);
     setShowReceiveForm(false);
     setShowCancelConfirm(false);
+    setShippedQuantities({});
     setReceivedQuantities({});
     setReceiveNotes('');
     setCancelReason('');
@@ -257,6 +270,40 @@ const TransferDetailsModal: React.FC<TransferDetailsModalProps> = ({
           </div>
         )}
 
+        {/* Approve Form */}
+        {showApproveForm && transfer.items && (
+          <div className="border-t border-gray-200 dark:border-gray-700 pt-4 space-y-4 animate-fade-down duration-normal">
+            <div className="bg-primary-50 dark:bg-primary-900/20 p-3 rounded-sm">
+              <p className="text-sm text-primary-800 dark:text-primary-300">
+                Confirme las cantidades que se enviarán. Por defecto se enviarán las cantidades solicitadas.
+              </p>
+            </div>
+            {transfer.items.map((item) => (
+              <div key={item.id} className="flex items-center gap-3">
+                <div className="flex-1">
+                  <p className="text-sm font-medium">{item.product?.name}</p>
+                  <p className="text-xs text-gray-500">
+                    Solicitado: {formatNumber(item.requested_quantity)}
+                  </p>
+                </div>
+                <div className="w-32">
+                  <Input
+                    type="number"
+                    min="0"
+                    step="0.001"
+                    value={shippedQuantities[item.id] || item.requested_quantity}
+                    onChange={(e) => setShippedQuantities({
+                      ...shippedQuantities,
+                      [item.id]: e.target.value
+                    })}
+                    placeholder="Cantidad"
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
         {/* Receive Form */}
         {showReceiveForm && transfer.items && (
           <div className="border-t border-gray-200 dark:border-gray-700 pt-4 space-y-4 animate-fade-down duration-normal">
@@ -321,7 +368,26 @@ const TransferDetailsModal: React.FC<TransferDetailsModalProps> = ({
 
         {/* Actions */}
         <div className="flex gap-3 pt-4 border-t border-gray-200 dark:border-gray-700 animate-fade-up duration-slow">
-          {showReceiveForm ? (
+          {showApproveForm ? (
+            <>
+              <Button
+                variant="secondary"
+                fullWidth
+                onClick={() => setShowApproveForm(false)}
+                disabled={loading}
+              >
+                Volver
+              </Button>
+              <Button
+                variant="primary"
+                fullWidth
+                onClick={handleApprove}
+                disabled={loading}
+              >
+                {loading ? 'Aprobando...' : 'Aprobar y Enviar'}
+              </Button>
+            </>
+          ) : showReceiveForm ? (
             <>
               <Button
                 variant="secondary"
@@ -370,10 +436,10 @@ const TransferDetailsModal: React.FC<TransferDetailsModalProps> = ({
               {canApprove && (
                 <Button
                   variant="primary"
-                  onClick={handleApprove}
+                  onClick={() => setShowApproveForm(true)}
                   disabled={loading}
                 >
-                  {loading ? 'Aprobando...' : 'Aprobar y Enviar'}
+                  Aprobar y Enviar
                 </Button>
               )}
               {canReceive && (

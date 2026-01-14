@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNetworkStatus } from '../../hooks/useNetworkStatus';
 import { getSyncQueueStatus, getPendingSalesCount } from '../../services/offline/syncProcessor';
+import ConflictResolutionModal from './ConflictResolutionModal';
+import FailedSyncModal from './FailedSyncModal';
 
 interface TopBarProps {
   branchName?: string;
@@ -12,6 +14,8 @@ const TopBar: React.FC<TopBarProps> = ({ branchName, registerName, onBack }) => 
   const isOnline = useNetworkStatus();
   const [pendingSalesCount, setPendingSalesCount] = useState(0);
   const [syncStatus, setSyncStatus] = useState({ pending: 0, failed: 0, conflicts: 0 });
+  const [showConflictModal, setShowConflictModal] = useState(false);
+  const [showFailedModal, setShowFailedModal] = useState(false);
 
   // Update sync status every 5 seconds
   useEffect(() => {
@@ -33,6 +37,20 @@ const TopBar: React.FC<TopBarProps> = ({ branchName, registerName, onBack }) => 
 
     return () => clearInterval(interval);
   }, []);
+
+  // Refresh sync status after resolving conflicts or retrying failed syncs
+  const handleRefreshStatus = async () => {
+    try {
+      const [status, salesCount] = await Promise.all([
+        getSyncQueueStatus(),
+        getPendingSalesCount()
+      ]);
+      setSyncStatus(status);
+      setPendingSalesCount(salesCount);
+    } catch (error) {
+      console.error('[TopBar] Error refreshing sync status:', error);
+    }
+  };
 
   return (
     <header className="h-14 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between px-4 animate-fade-down duration-fast">
@@ -78,14 +96,33 @@ const TopBar: React.FC<TopBarProps> = ({ branchName, registerName, onBack }) => 
         )}
 
         {syncStatus.conflicts > 0 && (
-          <div className="flex items-center gap-2 px-3 py-1 bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300 rounded-md border border-red-300 dark:border-red-700">
+          <button
+            onClick={() => setShowConflictModal(true)}
+            className="flex items-center gap-2 px-3 py-1 bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300 rounded-md border border-red-300 dark:border-red-700 hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors cursor-pointer"
+            title="Click para resolver conflictos"
+          >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
             </svg>
             <span className="text-xs font-medium">
               CONFLICTOS ({syncStatus.conflicts})
             </span>
-          </div>
+          </button>
+        )}
+
+        {syncStatus.failed > 0 && (
+          <button
+            onClick={() => setShowFailedModal(true)}
+            className="flex items-center gap-2 px-3 py-1 bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-300 rounded-md border border-orange-300 dark:border-orange-700 hover:bg-orange-200 dark:hover:bg-orange-900/50 transition-colors cursor-pointer"
+            title="Click para reintentar sincronizaciones fallidas"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span className="text-xs font-medium">
+              FALLIDAS ({syncStatus.failed})
+            </span>
+          </button>
         )}
 
         <span className="text-sm text-gray-500 dark:text-gray-400">
@@ -96,6 +133,20 @@ const TopBar: React.FC<TopBarProps> = ({ branchName, registerName, onBack }) => 
         <div className={`w-2 h-2 rounded-full ${isOnline ? 'bg-green-500 animate-pulse' : 'bg-gray-400'}`}
              title={isOnline ? 'En línea' : 'Sin conexión'} />
       </div>
+
+      {/* Conflict Resolution Modal */}
+      <ConflictResolutionModal
+        isOpen={showConflictModal}
+        onClose={() => setShowConflictModal(false)}
+        onResolved={handleRefreshStatus}
+      />
+
+      {/* Failed Sync Modal */}
+      <FailedSyncModal
+        isOpen={showFailedModal}
+        onClose={() => setShowFailedModal(false)}
+        onRetryComplete={handleRefreshStatus}
+      />
     </header>
   );
 };

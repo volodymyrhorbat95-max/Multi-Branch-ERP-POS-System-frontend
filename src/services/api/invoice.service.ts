@@ -1,5 +1,5 @@
 import apiClient from './client';
-import type { Invoice, ApiResponse, PaginatedResponse } from '../../types';
+import type { Invoice, CreditNote, ApiResponse, PaginatedResponse } from '../../types';
 
 export interface InvoiceFilters {
   page?: number;
@@ -161,12 +161,105 @@ const invoiceService = {
     return response.data;
   },
 
-  // Retry pending invoices
+  // Retry pending invoices (batch)
   retryPending: async (branchId?: string): Promise<ApiResponse<{ processed: number; failed: number }>> => {
     const response = await apiClient.post<ApiResponse<{ processed: number; failed: number }>>(
       '/invoices/retry-pending',
       { branch_id: branchId }
     );
+    return response.data;
+  },
+
+  // Retry single invoice
+  retryInvoice: async (id: string): Promise<ApiResponse<Invoice>> => {
+    const response = await apiClient.post<ApiResponse<Invoice>>(`/invoices/${id}/retry`);
+    return response.data;
+  },
+
+  // Get invoice types
+  getInvoiceTypes: async (): Promise<ApiResponse<Array<{
+    id: string;
+    code: string;
+    name: string;
+    description: string;
+    afip_code: number;
+  }>>> => {
+    const response = await apiClient.get('/invoices/types');
+    return response.data;
+  },
+
+  // Get pending invoices
+  getPendingInvoices: async (filters: {
+    page?: number;
+    limit?: number;
+    branch_id?: string;
+  }): Promise<PaginatedResponse<Invoice>> => {
+    const params = new URLSearchParams();
+
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value !== undefined && value !== '') {
+        params.append(key, String(value));
+      }
+    });
+
+    const response = await apiClient.get<PaginatedResponse<Invoice>>(
+      `/invoices/status/pending?${params.toString()}`
+    );
+    return response.data;
+  },
+
+  // Get failed invoices
+  getFailedInvoices: async (filters: {
+    page?: number;
+    limit?: number;
+    branch_id?: string;
+  }): Promise<PaginatedResponse<Invoice>> => {
+    const params = new URLSearchParams();
+
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value !== undefined && value !== '') {
+        params.append(key, String(value));
+      }
+    });
+
+    const response = await apiClient.get<PaginatedResponse<Invoice>>(
+      `/invoices/status/failed?${params.toString()}`
+    );
+    return response.data;
+  },
+
+  // Get credit notes
+  getCreditNotes: async (filters: {
+    page?: number;
+    limit?: number;
+    branch_id?: string;
+    status?: string;
+    from_date?: string;
+    to_date?: string;
+  }): Promise<PaginatedResponse<CreditNote>> => {
+    const params = new URLSearchParams();
+
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value !== undefined && value !== '') {
+        params.append(key, String(value));
+      }
+    });
+
+    const response = await apiClient.get<PaginatedResponse<CreditNote>>(
+      `/invoices/credit-notes/list?${params.toString()}`
+    );
+    return response.data;
+  },
+
+  // Get credit note by ID
+  getCreditNoteById: async (id: string): Promise<ApiResponse<CreditNote>> => {
+    const response = await apiClient.get<ApiResponse<CreditNote>>(`/invoices/credit-notes/${id}`);
+    return response.data;
+  },
+
+  // Retry failed credit note
+  retryCreditNote: async (id: string): Promise<ApiResponse<CreditNote>> => {
+    const response = await apiClient.post<ApiResponse<CreditNote>>(`/invoices/credit-notes/${id}/retry`);
     return response.data;
   },
 };

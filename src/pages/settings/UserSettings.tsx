@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { useSelector } from 'react-redux';
-import { RootState } from '../../store';
+import { RootState, useAppDispatch } from '../../store';
+import { updateProfile, changePassword } from '../../store/slices/authSlice';
 
 const UserSettings: React.FC = () => {
+  const dispatch = useAppDispatch();
   const { user } = useSelector((state: RootState) => state.auth);
 
   const [formData, setFormData] = useState({
@@ -18,20 +20,46 @@ const UserSettings: React.FC = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmitProfile = (e: React.FormEvent) => {
+  const handleSubmitProfile = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Dispatch update profile action
-    // TODO: Implement Redux action for updating user profile
+
+    const profileData: any = {};
+    if (formData.first_name !== user?.first_name) profileData.first_name = formData.first_name;
+    if (formData.last_name !== user?.last_name) profileData.last_name = formData.last_name;
+    if (formData.email !== user?.email) profileData.email = formData.email;
+
+    if (Object.keys(profileData).length > 0) {
+      await dispatch(updateProfile(profileData));
+    }
   };
 
-  const handleSubmitPassword = (e: React.FormEvent) => {
+  const handleSubmitPassword = async (e: React.FormEvent) => {
     e.preventDefault();
+
     if (formData.new_password !== formData.confirm_password) {
       alert('Las contraseñas no coinciden');
       return;
     }
-    // Dispatch change password action
-    // TODO: Implement Redux action for changing password
+
+    if (!formData.current_password || !formData.new_password) {
+      alert('Por favor complete todos los campos');
+      return;
+    }
+
+    const result = await dispatch(changePassword({
+      currentPassword: formData.current_password,
+      newPassword: formData.new_password
+    }));
+
+    // Clear password fields on success
+    if (changePassword.fulfilled.match(result)) {
+      setFormData({
+        ...formData,
+        current_password: '',
+        new_password: '',
+        confirm_password: ''
+      });
+    }
   };
 
   return (

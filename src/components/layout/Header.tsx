@@ -5,7 +5,7 @@ import { useAppSelector } from '../../store';
 const Header: React.FC<{ onMenuClick: () => void }> = ({ onMenuClick }) => {
   const { goTo } = useNavigation();
   const { currentBranch, user } = useAppSelector((state) => state.auth);
-  const canAccessAllBranches = user?.role?.permissions?.canAccessAllBranches;
+  const canAccessAllBranches = user?.role?.can_view_all_branches;
 
   return (
     <header className="fixed top-0 left-0 right-0 h-16 bg-primary-600/80 dark:bg-primary-700/80 backdrop-blur-md border-b border-primary-500/10 flex items-center justify-between px-4 lg:px-6 z-50">

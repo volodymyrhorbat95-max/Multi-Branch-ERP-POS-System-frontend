@@ -4,40 +4,65 @@ import type { ApiResponse, PaginatedResponse, UUID } from '../../types';
 // Price import related types
 export interface PriceImportItem {
   id: UUID;
-  supplier_code: string;
-  description: string;
-  cost_price: number;
-  matched_product_id?: UUID;
-  matched_product_name?: string;
-  matched_product_sku?: string;
+  batch_id: UUID;
+  row_number: number;
+  extracted_code: string;
+  extracted_description: string;
+  extracted_price: number;
+  product_id?: UUID;
+  product?: {
+    id: UUID;
+    name: string;
+    sku: string;
+    cost_price: number;
+    selling_price: number;
+  };
+  match_type: 'EXACT_CODE' | 'FUZZY_NAME' | 'MANUAL' | 'UNMATCHED';
+  match_confidence: number;
   current_cost_price?: number;
-  current_sell_price?: number;
-  suggested_sell_price: number;
-  price_change_percentage: number;
-  confidence_score: number;
-  match_status: 'MATCHED' | 'SUGGESTED' | 'NOT_FOUND' | 'MANUAL';
-  validation_errors: string[];
-  is_selected: boolean;
+  new_cost_price: number;
+  current_selling_price?: number;
+  new_selling_price: number;
+  price_change_percent: number;
+  status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'APPLIED' | 'SKIPPED';
+  rejection_reason?: string;
+  created_at: string;
 }
 
 export interface PriceImportBatch {
   id: UUID;
   supplier_id?: UUID;
-  supplier_name?: string;
+  supplier?: {
+    name: string;
+    code: string;
+  };
   file_name: string;
   file_type: 'PDF' | 'EXCEL' | 'CSV';
-  status: 'PENDING' | 'PROCESSING' | 'READY' | 'APPLIED' | 'CANCELLED';
-  total_items: number;
-  matched_items: number;
-  unmatched_items: number;
-  applied_items?: number;
-  margin_percentage: number;
+  file_url: string;
+  file_size_bytes: number;
+  status: 'PENDING' | 'PROCESSING' | 'PREVIEW' | 'APPLIED' | 'CANCELLED' | 'FAILED' | 'REVERTED';
+  ocr_required: boolean;
+  ocr_engine?: string;
+  extraction_confidence?: number;
+  total_rows_extracted: number;
+  rows_matched: number;
+  rows_unmatched: number;
+  rows_applied?: number;
+  margin_type: 'PERCENTAGE' | 'FIXED';
+  margin_value: number;
+  margin_percentage: number; // Alias for margin_value
   rounding_rule: 'NONE' | 'UP' | 'DOWN' | 'NEAREST';
   rounding_value: number;
   uploaded_by: UUID;
-  uploaded_by_name: string;
+  uploaded_by_user?: {
+    first_name: string;
+    last_name: string;
+  };
   applied_by?: UUID;
-  applied_by_name?: string;
+  applied_by_user?: {
+    first_name: string;
+    last_name: string;
+  };
   created_at: string;
   applied_at?: string;
 }
@@ -45,17 +70,24 @@ export interface PriceImportBatch {
 export interface PriceHistory {
   id: UUID;
   product_id: UUID;
-  product_name: string;
-  product_sku: string;
+  product?: {
+    name: string;
+    sku: string;
+  };
   old_cost_price: number;
   new_cost_price: number;
-  old_sell_price: number;
-  new_sell_price: number;
-  change_type: 'IMPORT' | 'MANUAL' | 'BULK';
+  old_selling_price: number;
+  new_selling_price: number;
+  change_reason: 'MANUAL' | 'OCR_IMPORT' | 'MARGIN_UPDATE' | 'BULK_UPDATE';
   import_batch_id?: UUID;
-  user_id: UUID;
-  user_name: string;
-  reason?: string;
+  import_batch?: {
+    file_name: string;
+  };
+  changed_by: UUID;
+  changed_by_user?: {
+    first_name: string;
+    last_name: string;
+  };
   created_at: string;
 }
 
@@ -101,7 +133,7 @@ export const priceService = {
    * Get import batch items
    */
   getBatchItems: (batchId: UUID, params?: {
-    match_status?: string;
+    match_type?: string; // Changed from match_status
     search?: string;
     page?: number;
     limit?: number;
@@ -152,7 +184,7 @@ export const priceService = {
    * Select/deselect all items in batch
    */
   selectAllItems: (batchId: UUID, selected: boolean, filters?: {
-    match_status?: string;
+    match_type?: string; // Changed from match_status
   }): Promise<ApiResponse<{ updated_count: number }>> => {
     return put(`/prices/batch/${batchId}/select-all`, {
       is_selected: selected,

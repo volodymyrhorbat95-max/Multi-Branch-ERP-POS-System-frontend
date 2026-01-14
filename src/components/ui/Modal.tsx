@@ -1,7 +1,12 @@
-import React, { useEffect } from 'react';
-import { FiX } from 'react-icons/fi';
+import React from 'react';
+import Dialog, { DialogProps } from '@mui/material/Dialog';
+import DialogTitle from '@mui/material/DialogTitle';
+import DialogContent from '@mui/material/DialogContent';
+import IconButton from '@mui/material/IconButton';
+import CloseIcon from '@mui/icons-material/Close';
+import { styled } from '@mui/material/styles';
 
-interface ModalProps {
+interface ModalProps extends Omit<DialogProps, 'open' | 'onClose'> {
   isOpen: boolean;
   onClose: () => void;
   title?: string;
@@ -11,6 +16,18 @@ interface ModalProps {
   closeOnOverlayClick?: boolean;
 }
 
+// Styled Dialog with animation support
+const AnimatedDialog = styled(Dialog)(() => ({
+  '& .MuiDialog-paper': {
+    borderRadius: '6px', // Enforce 6px max border radius
+    animation: 'zoomIn 300ms ease-out forwards',
+  },
+  '& .MuiBackdrop-root': {
+    animation: 'fadeUp 150ms ease-out forwards',
+    backdropFilter: 'blur(4px)',
+  },
+}));
+
 const Modal: React.FC<ModalProps> = ({
   isOpen,
   onClose,
@@ -19,80 +36,95 @@ const Modal: React.FC<ModalProps> = ({
   size = 'md',
   showCloseButton = true,
   closeOnOverlayClick = true,
+  ...props
 }) => {
-  // Handle escape key
-  useEffect(() => {
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isOpen) {
-        onClose();
-      }
-    };
-
-    document.addEventListener('keydown', handleEscape);
-    return () => document.removeEventListener('keydown', handleEscape);
-  }, [isOpen, onClose]);
-
-  // Prevent body scroll when modal is open
-  useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = 'unset';
+  // Map custom sizes to MUI maxWidth
+  const getMuiMaxWidth = (): DialogProps['maxWidth'] | false => {
+    switch (size) {
+      case 'sm':
+        return 'sm';
+      case 'md':
+        return 'md';
+      case 'lg':
+        return 'lg';
+      case 'xl':
+        return 'xl';
+      case 'full':
+        return false;
+      default:
+        return 'md';
     }
-    return () => {
-      document.body.style.overflow = 'unset';
-    };
-  }, [isOpen]);
+  };
 
-  if (!isOpen) return null;
-
-  const sizes = {
-    sm: 'max-w-sm',
-    md: 'max-w-md',
-    lg: 'max-w-lg',
-    xl: 'max-w-xl',
-    full: 'max-w-full mx-4',
+  const handleClose = (_event: {}, reason: 'backdropClick' | 'escapeKeyDown') => {
+    if (reason === 'backdropClick' && !closeOnOverlayClick) {
+      return;
+    }
+    onClose();
   };
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto">
-      {/* Overlay */}
-      <div
-        className="fixed inset-0 bg-black/50 backdrop-blur-sm transition-opacity animate-fade-up"
-        onClick={closeOnOverlayClick ? onClose : undefined}
-        style={{ animationDuration: '150ms' }}
-      />
-
-      {/* Modal container */}
-      <div className="flex min-h-full items-center justify-center p-4">
-        <div
-          className={`relative w-full ${sizes[size]} bg-white dark:bg-gray-800 rounded-sm shadow-2xl transform transition-all animate-zoom-in`}
-          onClick={(e) => e.stopPropagation()}
+    <AnimatedDialog
+      open={isOpen}
+      onClose={handleClose}
+      maxWidth={getMuiMaxWidth()}
+      fullWidth={size !== 'full'}
+      fullScreen={size === 'full'}
+      scroll="paper"
+      sx={{
+        '& .MuiDialog-paper': {
+          ...(size === 'full' && {
+            margin: 2,
+            maxWidth: 'calc(100% - 32px)',
+            maxHeight: 'calc(100% - 32px)',
+          }),
+        },
+      }}
+      {...props}
+    >
+      {/* Header */}
+      {(title || showCloseButton) && (
+        <DialogTitle
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            px: 3,
+            py: 2,
+            borderBottom: 1,
+            borderColor: 'divider',
+            fontWeight: 600,
+            fontSize: '1.125rem',
+          }}
         >
-          {/* Header */}
-          {(title || showCloseButton) && (
-            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-              {title && (
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                  {title}
-                </h3>
-              )}
-              {showCloseButton && (
-                <button
-                  onClick={onClose}
-                  className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-sm transition-colors"
-                >
-                  <FiX className="w-5 h-5" />
-                </button>
-              )}
-            </div>
+          {title && <span>{title}</span>}
+          {showCloseButton && (
+            <IconButton
+              aria-label="close"
+              onClick={onClose}
+              sx={{
+                ml: title ? 2 : 0,
+                color: 'text.secondary',
+                '&:hover': {
+                  backgroundColor: 'action.hover',
+                },
+              }}
+            >
+              <CloseIcon />
+            </IconButton>
           )}
+        </DialogTitle>
+      )}
 
-          {/* Content */}
-          <div className="p-6">{children}</div>
-        </div>
-      </div>
-    </div>
+      {/* Content */}
+      <DialogContent
+        sx={{
+          p: 3,
+        }}
+      >
+        {children}
+      </DialogContent>
+    </AnimatedDialog>
   );
 };
 

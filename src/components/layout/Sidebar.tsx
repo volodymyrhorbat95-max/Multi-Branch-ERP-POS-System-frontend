@@ -48,7 +48,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
   const branchDropdownRef = useRef<HTMLDivElement>(null);
   const userDropdownRef = useRef<HTMLDivElement>(null);
 
-  const canAccessAllBranches = user?.role?.permissions?.canAccessAllBranches;
+  const canAccessAllBranches = user?.role?.can_view_all_branches;
 
   // Close dropdowns when clicking outside
   useEffect(() => {
@@ -162,7 +162,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
         {/* Mobile Header with Close Button */}
         <div className="lg:hidden flex items-center justify-between p-4 border-b border-primary-600/30 bg-primary-600/50 backdrop-blur-sm">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center backdrop-blur-sm">
+            <div className="w-10 h-10 bg-white/20 rounded-md flex items-center justify-center backdrop-blur-sm">
               <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
               </svg>
@@ -171,7 +171,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
           </div>
           <button
             onClick={onClose}
-            className="p-2 text-white/90 hover:text-white hover:bg-white/10 rounded-lg transition-all"
+            className="p-2 text-white/90 hover:text-white hover:bg-white/10 rounded-md transition-all"
             aria-label="Close menu"
           >
             <MdClose className="w-6 h-6" />
@@ -184,7 +184,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
             <div className="relative" ref={branchDropdownRef}>
               <button
                 onClick={() => setBranchDropdownOpen(!branchDropdownOpen)}
-                className="w-full flex items-center justify-between px-3 py-2.5 text-sm bg-white/10 rounded-lg hover:bg-white/20 backdrop-blur-sm transition-all active:scale-95"
+                className="w-full flex items-center justify-between px-3 py-2.5 text-sm bg-white/10 rounded-md hover:bg-white/20 backdrop-blur-sm transition-all active:scale-95"
               >
                 <span className="font-medium text-white truncate">
                   {currentBranch?.name || 'Todas las sucursales'}
@@ -197,7 +197,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
               </button>
 
               {branchDropdownOpen && (
-                <div className="absolute top-full left-0 right-0 mt-2 bg-primary-800/95 rounded-lg shadow-2xl border border-primary-600/30 z-20 animate-fade-down duration-fast backdrop-blur-md overflow-hidden">
+                <div className="absolute top-full left-0 right-0 mt-2 bg-primary-800/95 rounded-md shadow-2xl border border-primary-600/30 z-20 animate-fade-down duration-fast backdrop-blur-md overflow-hidden">
                   <button
                     onClick={() => handleBranchChange('')}
                     className="w-full px-4 py-2.5 text-left text-sm text-white hover:bg-white/10 transition-colors"
@@ -226,16 +226,15 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
         {/* Navigation - Scrollable */}
         <nav className="flex-1 px-2 py-4 overflow-y-auto scrollbar-thin scrollbar-thumb-white/20 scrollbar-track-transparent hover:scrollbar-thumb-white/30">
           <div className="space-y-1">
-            {navigation.map((item, index) => (
+            {navigation.map((item) => (
               <button
                 key={item.path}
                 onClick={() => {
                   goTo(item.path);
                   onClose();
                 }}
-                style={{ animationDelay: `${index * 30}ms` }}
                 className={`
-                  w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium
+                  w-full flex items-center gap-3 px-4 py-3 rounded-md text-sm font-medium
                   transition-all duration-200 animate-fade-right
                   ${isActive(item.path)
                     ? 'bg-white/20 text-white shadow-lg backdrop-blur-sm scale-[1.02]'
@@ -262,7 +261,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
           <div className="relative" ref={userDropdownRef}>
             <button
               onClick={() => setUserDropdownOpen(!userDropdownOpen)}
-              className="w-full flex items-center gap-3 p-2.5 rounded-lg hover:bg-white/10 transition-all active:scale-95"
+              className="w-full flex items-center gap-3 p-2.5 rounded-md hover:bg-white/10 transition-all active:scale-95"
             >
               <div className="w-10 h-10 bg-gradient-to-br from-white/30 to-white/10 rounded-full flex items-center justify-center backdrop-blur-sm ring-2 ring-white/20">
                 <span className="text-white font-bold text-sm">
@@ -285,7 +284,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
             </button>
 
             {userDropdownOpen && (
-              <div className="absolute bottom-full left-0 right-0 mb-2 bg-primary-800/95 rounded-lg shadow-2xl border border-primary-600/30 animate-fade-up duration-fast backdrop-blur-md overflow-hidden">
+              <div className="absolute bottom-full left-0 right-0 mb-2 bg-primary-800/95 rounded-md shadow-2xl border border-primary-600/30 animate-fade-up duration-fast backdrop-blur-md overflow-hidden">
                 <button
                   onClick={() => {
                     dispatch(toggleTheme());

@@ -8,42 +8,42 @@ export const paymentService = {
   getMethods: (params?: {
     is_active?: boolean;
   }): Promise<ApiResponse<PaymentMethod[]>> => {
-    return get<PaymentMethod[]>('/payments/methods', params);
+    return get<PaymentMethod[]>('/payment-methods', params);
   },
 
   /**
    * Get payment method by ID
    */
   getMethodById: (id: UUID): Promise<ApiResponse<PaymentMethod>> => {
-    return get<PaymentMethod>(`/payments/methods/${id}`);
+    return get<PaymentMethod>(`/payment-methods/${id}`);
   },
 
   /**
    * Create payment method
    */
   createMethod: (data: Partial<PaymentMethod>): Promise<ApiResponse<PaymentMethod>> => {
-    return post<PaymentMethod>('/payments/methods', data);
+    return post<PaymentMethod>('/payment-methods', data);
   },
 
   /**
    * Update payment method
    */
   updateMethod: (id: UUID, data: Partial<PaymentMethod>): Promise<ApiResponse<PaymentMethod>> => {
-    return put<PaymentMethod>(`/payments/methods/${id}`, data);
+    return put<PaymentMethod>(`/payment-methods/${id}`, data);
   },
 
   /**
    * Deactivate payment method
    */
   deactivateMethod: (id: UUID): Promise<ApiResponse<null>> => {
-    return del<null>(`/payments/methods/${id}`);
+    return del<null>(`/payment-methods/${id}`);
   },
 
   /**
    * Reorder payment methods
    */
   reorderMethods: (order: Array<{ id: UUID; sort_order: number }>): Promise<ApiResponse<PaymentMethod[]>> => {
-    return post<PaymentMethod[]>('/payments/methods/reorder', { order });
+    return post<PaymentMethod[]>('/payment-methods/reorder', { order });
   },
 
   /**

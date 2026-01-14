@@ -11,6 +11,8 @@ import {
   removePayment,
   clearPayments,
   loadPaymentMethods,
+  applyCartDiscount,
+  clearCartDiscount,
 } from '../../store/slices/posSlice';
 import { searchProducts } from '../../store/slices/productsSlice';
 import { quickSearchCustomers } from '../../store/slices/customersSlice';
@@ -20,6 +22,7 @@ import NoActiveSessionCard from './NoActiveSessionCard';
 import OpenSessionModal from './OpenSessionModal';
 import CloseSessionModal from './CloseSessionModal';
 import WithdrawalModal from './WithdrawalModal';
+import DiscountModal from './DiscountModal';
 import TopBar from './TopBar';
 import ProductsGrid from './ProductsGrid';
 import CartSection from './CartSection';
@@ -67,6 +70,7 @@ const POSPage: React.FC = () => {
   const [showOpenSessionModal, setShowOpenSessionModal] = useState(false);
   const [showCloseSessionModal, setShowCloseSessionModal] = useState(false);
   const [showWithdrawalModal, setShowWithdrawalModal] = useState(false);
+  const [showDiscountModal, setShowDiscountModal] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [quantity, setQuantity] = useState('1');
   const [cashReceived, setCashReceived] = useState('');
@@ -80,11 +84,25 @@ const POSPage: React.FC = () => {
   const [qrProvider, setQrProvider] = useState('');
   const [qrTransactionId, setQrTransactionId] = useState('');
 
-  // Invoice-related fields
-  const [invoiceType, setInvoiceType] = useState<'A' | 'B' | 'C' | null>('B');
+  // Invoice-related fields - Initialize with branch default
+  const [invoiceType, setInvoiceType] = useState<'A' | 'B' | 'C' | null>(
+    (currentBranch?.default_invoice_type as 'A' | 'B' | 'C') || 'B'
+  );
   const [customerCuit, setCustomerCuit] = useState('');
   const [customerTaxCondition, setCustomerTaxCondition] = useState('');
   const [customerAddress, setCustomerAddress] = useState('');
+
+  // Loyalty-related fields
+  const [pointsToRedeem, setPointsToRedeem] = useState(0);
+  const [creditToUse, setCreditToUse] = useState(0);
+  const [changeAsCredit, setChangeAsCredit] = useState(false);
+
+  // Update invoice type when branch changes
+  useEffect(() => {
+    if (currentBranch?.default_invoice_type) {
+      setInvoiceType(currentBranch.default_invoice_type as 'A' | 'B' | 'C');
+    }
+  }, [currentBranch]);
 
   // Auto-populate invoice fields when customer changes
   useEffect(() => {
@@ -106,9 +124,10 @@ const POSPage: React.FC = () => {
       setCustomerCuit('');
       setCustomerTaxCondition('');
       setCustomerAddress('');
-      setInvoiceType('B'); // Reset to default
+      // Reset to branch default
+      setInvoiceType((currentBranch?.default_invoice_type as 'A' | 'B' | 'C') || 'B');
     }
-  }, [cart.customer]);
+  }, [cart.customer, currentBranch]);
 
   // Debounced search
   const debouncedSearch = useDebounce(searchQuery, 300);
@@ -218,18 +237,26 @@ const POSPage: React.FC = () => {
     return products;
   }, [searchQuery, searchResults, products]);
 
+  // Calculate total after loyalty deductions
+  const finalTotal = useMemo(() => {
+    const baseTotal = Number(cart.total);
+    const pointsValue = pointsToRedeem * 0.1; // 10 points = $1
+    const creditValue = creditToUse;
+    return Math.max(0, baseTotal - pointsValue - creditValue);
+  }, [cart.total, pointsToRedeem, creditToUse]);
+
   // Calculate remaining amount
   const totalPaid = useMemo(() => {
     return payments.reduce((sum, p) => sum + Number(p.amount), 0);
   }, [payments]);
 
   const remainingAmount = useMemo(() => {
-    return Math.max(0, Number(cart.total) - totalPaid);
-  }, [cart.total, totalPaid]);
+    return Math.max(0, finalTotal - totalPaid);
+  }, [finalTotal, totalPaid]);
 
   const change = useMemo(() => {
-    return Math.max(0, totalPaid - Number(cart.total));
-  }, [totalPaid, cart.total]);
+    return Math.max(0, totalPaid - finalTotal);
+  }, [totalPaid, finalTotal]);
 
   // Map payment method codes to UUIDs
   const paymentMethodMap = useMemo(() => {
@@ -289,6 +316,21 @@ const POSPage: React.FC = () => {
 
   const handleRemoveCustomer = useCallback(() => {
     dispatch(setCustomer(undefined));
+  }, [dispatch]);
+
+  // Handle discount
+  const handleApplyDiscount = useCallback((
+    type: 'PERCENT' | 'FIXED',
+    value: number,
+    reason: string,
+    managerPin?: string
+  ) => {
+    dispatch(applyCartDiscount({ type, value, reason, managerPin }));
+    setShowDiscountModal(false);
+  }, [dispatch]);
+
+  const handleRemoveDiscount = useCallback(() => {
+    dispatch(clearCartDiscount());
   }, [dispatch]);
 
   // Handle payment
@@ -381,6 +423,10 @@ const POSPage: React.FC = () => {
       session_id: activeSession.id,
       user_id: user.id,
       invoice_override: invoiceOverride,
+      // Loyalty data
+      points_to_redeem: pointsToRedeem,
+      credit_to_use: creditToUse,
+      change_as_credit: changeAsCredit,
     }));
 
     if (completeSale.fulfilled.match(result)) {
@@ -393,6 +439,11 @@ const POSPage: React.FC = () => {
       setCustomerCuit('');
       setCustomerTaxCondition('');
       setCustomerAddress('');
+
+      // Reset loyalty fields for next sale
+      setPointsToRedeem(0);
+      setCreditToUse(0);
+      setChangeAsCredit(false);
     }
   }, [
     dispatch,
@@ -404,7 +455,10 @@ const POSPage: React.FC = () => {
     invoiceType,
     customerCuit,
     customerTaxCondition,
-    customerAddress
+    customerAddress,
+    pointsToRedeem,
+    creditToUse,
+    changeAsCredit
   ]);
 
   // Clear all
@@ -506,6 +560,8 @@ const POSPage: React.FC = () => {
           onRemoveItem={(itemId) => dispatch(removeFromCart(itemId))}
           onClearCart={handleClearCart}
           onProceedToPayment={() => setShowPaymentModal(true)}
+          onApplyDiscount={() => setShowDiscountModal(true)}
+          onRemoveDiscount={handleRemoveDiscount}
           formatCurrency={formatCurrency}
         />
       </div>
@@ -577,6 +633,13 @@ const POSPage: React.FC = () => {
         onCustomerTaxConditionChange={setCustomerTaxCondition}
         customerAddress={customerAddress}
         onCustomerAddressChange={setCustomerAddress}
+        // Loyalty props
+        pointsToRedeem={pointsToRedeem}
+        onPointsToRedeemChange={setPointsToRedeem}
+        creditToUse={creditToUse}
+        onCreditToUseChange={setCreditToUse}
+        changeAsCredit={changeAsCredit}
+        onChangeAsCreditChange={setChangeAsCredit}
       />
 
       <SaleSuccessModal
@@ -596,6 +659,16 @@ const POSPage: React.FC = () => {
         onClose={() => setShowWithdrawalModal(false)}
         onSubmit={handleWithdrawalSubmit}
         sessionId={activeSession?.id || ''}
+      />
+
+      <DiscountModal
+        isOpen={showDiscountModal}
+        onClose={() => setShowDiscountModal(false)}
+        onApply={handleApplyDiscount}
+        currentTotal={Number(cart.total) + Number(cart.discount_amount)}
+        currentDiscountType={cart.discount_type}
+        currentDiscountValue={cart.discount_value}
+        currentDiscountReason={cart.discount_reason}
       />
     </div>
   );

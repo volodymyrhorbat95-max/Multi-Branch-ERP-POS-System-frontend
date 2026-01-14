@@ -53,6 +53,8 @@ const emptyCart: Cart = {
   discount_type: undefined,
   discount_value: 0,
   discount_amount: 0,
+  discount_reason: undefined,
+  discount_approved_by_pin: undefined,
   tax_amount: 0,
   total: 0,
 };
@@ -170,6 +172,9 @@ const createOfflineSale = async (
       customer_tax_condition?: string;
       customer_address?: string;
     };
+    points_to_redeem?: number;
+    credit_to_use?: number;
+    change_as_credit?: boolean;
   },
   cart: Cart,
   payments: SalePayment[],
@@ -184,6 +189,22 @@ const createOfflineSale = async (
   const taxAmount = Number(cart.tax_amount);
   const total = Number(cart.total);
 
+  // Calculate loyalty values
+  const pointsRedeemed = saleData.points_to_redeem || 0;
+  const creditUsed = saleData.credit_to_use || 0;
+  const pointsRedemptionValue = pointsRedeemed * 0.1; // 10 points = $1
+
+  // Calculate actual total after loyalty deductions (matches backend calculation at sale.controller.js:466)
+  const totalAfterLoyalty = total - pointsRedemptionValue - creditUsed;
+
+  // Calculate change amount - just overpayment on final total
+  const totalPaid = payments.reduce((sum, p) => sum + Number(p.amount), 0);
+  const changeAmount = Math.max(0, totalPaid - totalAfterLoyalty);
+  const changeAsCreditAmount = (saleData.change_as_credit && changeAmount > 10) ? changeAmount : 0;
+
+  // Calculate points earned (0.01 points per peso as per helpers.js:134)
+  const pointsEarned = cart.customer ? Math.floor(totalAfterLoyalty * 0.01) : 0;
+
   // Prepare local sale data matching LocalSale interface
   const localSale: LocalSale = {
     local_id: localId,
@@ -197,11 +218,11 @@ const createOfflineSale = async (
     discount_percent: cart.discount_type === 'PERCENT' ? cart.discount_value || 0 : 0,
     tax_amount: taxAmount,
     total_amount: total,
-    points_earned: 0,
-    points_redeemed: 0,
-    points_redemption_value: 0,
-    credit_used: 0,
-    change_as_credit: 0,
+    points_earned: pointsEarned,
+    points_redeemed: pointsRedeemed,
+    points_redemption_value: pointsRedemptionValue,
+    credit_used: creditUsed,
+    change_as_credit: changeAsCreditAmount,
     status: 'COMPLETED',
     created_by: userId,
     invoice_override: saleData.invoice_override, // Preserve invoice override for offline sales
@@ -350,6 +371,10 @@ export const completeSale = createAsyncThunk<
       customer_tax_condition?: string;
       customer_address?: string;
     };
+    // Loyalty parameters
+    points_to_redeem?: number;
+    credit_to_use?: number;
+    change_as_credit?: boolean;
   },
   { rejectValue: string }
 >(
@@ -393,8 +418,14 @@ export const completeSale = createAsyncThunk<
         })),
         discount_type: cart.discount_type,
         discount_value: cart.discount_value,
+        discount_reason: cart.discount_reason,
+        discount_approved_by_pin: cart.discount_approved_by_pin,
         // Include invoice override data if provided
         invoice_override: saleData.invoice_override,
+        // Include loyalty data if provided
+        points_redeemed: saleData.points_to_redeem || 0,
+        credit_used: saleData.credit_to_use || 0,
+        change_as_credit: saleData.change_as_credit && saleData.change_as_credit ? true : false,
       };
 
       // Check if online
@@ -588,10 +619,17 @@ const posSlice = createSlice({
     // Apply cart discount
     applyCartDiscount: (
       state,
-      action: PayloadAction<{ type: 'PERCENT' | 'FIXED'; value: number }>
+      action: PayloadAction<{
+        type: 'PERCENT' | 'FIXED';
+        value: number;
+        reason: string;
+        managerPin?: string;
+      }>
     ) => {
       state.cart.discount_type = action.payload.type;
       state.cart.discount_value = action.payload.value;
+      state.cart.discount_reason = action.payload.reason;
+      state.cart.discount_approved_by_pin = action.payload.managerPin;
       state.cart = calculateCartTotals(state.cart);
     },
 
@@ -599,6 +637,8 @@ const posSlice = createSlice({
     clearCartDiscount: (state) => {
       state.cart.discount_type = undefined;
       state.cart.discount_value = 0;
+      state.cart.discount_reason = undefined;
+      state.cart.discount_approved_by_pin = undefined;
       state.cart = calculateCartTotals(state.cart);
     },
 

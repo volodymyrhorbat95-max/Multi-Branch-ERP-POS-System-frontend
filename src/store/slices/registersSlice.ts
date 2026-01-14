@@ -4,6 +4,7 @@ import type {
   RegisterSession,
   OpenSessionData,
   CloseSessionData,
+  CloseSessionResponse,
   UUID,
 } from '../../types';
 import { registerService } from '../../services/api';
@@ -104,7 +105,7 @@ export const openSession = createAsyncThunk<
 
 // BLIND CLOSING - Cashier declares amounts without seeing expected
 export const closeSession = createAsyncThunk<
-  RegisterSession,
+  CloseSessionResponse,
   { session_id: UUID; data: CloseSessionData },
   { rejectValue: string }
 >(
@@ -120,8 +121,26 @@ export const closeSession = createAsyncThunk<
 
       dispatch(setCurrentSession(null));
 
-      // Show discrepancy if any
+      // Show warnings
       const session = response.data;
+
+      // Show petty cash warning if present
+      if (session.petty_cash_warning) {
+        dispatch(showToast({
+          type: 'error',
+          message: session.petty_cash_warning.message,
+        }));
+      }
+
+      // Show after-hours warning if present
+      if (session.after_hours_warning) {
+        dispatch(showToast({
+          type: 'warning',
+          message: session.after_hours_warning.message,
+        }));
+      }
+
+      // Show discrepancy if any
       const totalDiscrepancy =
         Number(session.discrepancy_cash || 0) +
         Number(session.discrepancy_card || 0) +
@@ -133,7 +152,8 @@ export const closeSession = createAsyncThunk<
           type: totalDiscrepancy < 0 ? 'warning' : 'info',
           message: `Caja cerrada. Diferencia: $${totalDiscrepancy.toFixed(2)}`,
         }));
-      } else {
+      } else if (!session.petty_cash_warning && !session.after_hours_warning) {
+        // Only show success if no warnings
         dispatch(showToast({ type: 'success', message: 'Caja cerrada correctamente' }));
       }
 

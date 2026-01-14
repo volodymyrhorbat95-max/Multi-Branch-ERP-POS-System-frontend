@@ -108,6 +108,21 @@ const DailyReport: React.FC = () => {
         <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
           <h4 className="font-semibold text-gray-900 dark:text-white mb-3">Detalle por Método de Pago</h4>
 
+          {/* Total to Account For - Requirement Formula */}
+          {shift.opening_cash !== null && shift.expected_cash !== null && (
+            <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-800 rounded">
+              <div className="flex justify-between items-center">
+                <div>
+                  <p className="text-sm font-medium text-blue-900 dark:text-blue-300">Total a Rendir</p>
+                  <p className="text-xs text-blue-700 dark:text-blue-400">(Ventas en Efectivo - Gastos/Retiros)</p>
+                </div>
+                <p className="text-lg font-bold text-blue-900 dark:text-blue-200">
+                  {formatCurrency(shift.expected_cash - shift.opening_cash)}
+                </p>
+              </div>
+            </div>
+          )}
+
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-200 dark:border-gray-700">

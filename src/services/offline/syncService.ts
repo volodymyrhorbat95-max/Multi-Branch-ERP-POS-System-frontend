@@ -89,7 +89,7 @@ export const downloadDataForOffline = async (
     }
 
     // Update last sync time
-    await db.setLastSyncTime(response.data.server_time || now);
+    await db.setLastSyncTime(data.server_time || now);
 
     console.log('[SyncService] Data download completed successfully');
     return true;

@@ -13,8 +13,12 @@ export interface ProductFormData {
   tax_rate: string;
   unit_type: string;
   is_active: boolean;
+  is_featured: boolean;
   track_stock: boolean;
   min_stock: string;
+  is_weighable: boolean;
+  scale_plu: string;
+  export_to_scale: boolean;
 }
 
 interface ProductFormModalProps {
@@ -167,7 +171,7 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
           />
         </div>
 
-        <div className="flex gap-6 animate-flip-up duration-light-slow">
+        <div className="flex flex-wrap gap-6 animate-flip-up duration-light-slow">
           <label className="flex items-center gap-2 animate-fade-right duration-fast">
             <input
               type="checkbox"
@@ -177,6 +181,21 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
               className="w-4 h-4 text-primary-500 border-gray-300 rounded focus:ring-primary-500"
             />
             <span className="text-sm text-gray-700 dark:text-gray-300">Activo</span>
+          </label>
+          <label className="flex items-center gap-2 animate-fade-down duration-fast">
+            <input
+              type="checkbox"
+              name="is_featured"
+              checked={formData.is_featured}
+              onChange={onChange}
+              className="w-4 h-4 text-primary-500 border-gray-300 rounded focus:ring-primary-500"
+            />
+            <span className="flex items-center gap-1 text-sm text-gray-700 dark:text-gray-300">
+              <svg className="w-4 h-4 text-primary-500" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+              </svg>
+              Acceso Rápido
+            </span>
           </label>
           <label className="flex items-center gap-2 animate-fade-left duration-fast">
             <input
@@ -188,7 +207,57 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
             />
             <span className="text-sm text-gray-700 dark:text-gray-300">Controlar Stock</span>
           </label>
+          <label className="flex items-center gap-2 animate-fade-up duration-normal">
+            <input
+              type="checkbox"
+              name="is_weighable"
+              checked={formData.is_weighable}
+              onChange={onChange}
+              className="w-4 h-4 text-primary-500 border-gray-300 rounded focus:ring-primary-500"
+            />
+            <span className="text-sm text-gray-700 dark:text-gray-300">Producto Pesable</span>
+          </label>
         </div>
+
+        {/* Scale Configuration Section */}
+        {formData.is_weighable && (
+          <div className="border-t border-gray-200 dark:border-gray-700 pt-4 mt-4 animate-fade-up duration-fast">
+            <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-4">
+              Configuración de Balanza
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="animate-fade-right duration-fast">
+                <Input
+                  label="Código PLU"
+                  name="scale_plu"
+                  type="number"
+                  min="1"
+                  max="99999"
+                  value={formData.scale_plu}
+                  onChange={onChange}
+                  placeholder="Código PLU para balanza (1-99999)"
+                />
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  Código único para identificar el producto en la balanza Kretz Aura
+                </p>
+              </div>
+              <div className="flex items-center animate-fade-left duration-fast">
+                <label className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    name="export_to_scale"
+                    checked={formData.export_to_scale}
+                    onChange={onChange}
+                    className="w-4 h-4 text-primary-500 border-gray-300 rounded focus:ring-primary-500"
+                  />
+                  <span className="text-sm text-gray-700 dark:text-gray-300">
+                    Exportar a Balanza
+                  </span>
+                </label>
+              </div>
+            </div>
+          </div>
+        )}
 
         <div className="flex gap-3 pt-4 border-t border-gray-200 dark:border-gray-700 animate-fade-up duration-very-slow">
           <Button

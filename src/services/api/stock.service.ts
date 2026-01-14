@@ -100,7 +100,7 @@ export const stockService = {
    * Adjust stock
    */
   adjust: (data: StockAdjustment): Promise<ApiResponse<{ stock: any; movement: StockMovement }>> => {
-    return post('/stock/adjust', data);
+    return post('/stock/adjustment', data);
   },
 
   /**
@@ -114,6 +114,31 @@ export const stockService = {
     notes?: string;
   }): Promise<ApiResponse<StockMovement>> => {
     return post<StockMovement>('/stock/shrinkage', data);
+  },
+
+  /**
+   * Submit physical inventory count
+   */
+  submitInventoryCount: (data: {
+    branch_id: UUID;
+    entries: Array<{
+      product_id: UUID;
+      counted_quantity: number;
+    }>;
+    notes?: string;
+  }): Promise<ApiResponse<{
+    processed: number;
+    adjustments: number;
+    no_change: number;
+    details: Array<{
+      product_id: UUID;
+      previous_quantity: number;
+      counted_quantity: number;
+      variance: number;
+      action: string;
+    }>;
+  }>> => {
+    return post('/stock/inventory-count', data);
   },
 
   // ===== Stock Transfers =====
@@ -156,8 +181,14 @@ export const stockService = {
   /**
    * Approve transfer (start transit)
    */
-  approveTransfer: (transferId: UUID): Promise<ApiResponse<StockTransfer>> => {
-    return post<StockTransfer>(`/stock/transfers/${transferId}/approve`, {});
+  approveTransfer: (
+    transferId: UUID,
+    items: Array<{
+      id: UUID;
+      shipped_quantity: number;
+    }>
+  ): Promise<ApiResponse<StockTransfer>> => {
+    return post<StockTransfer>(`/stock/transfers/${transferId}/approve`, { items });
   },
 
   /**

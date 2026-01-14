@@ -6,6 +6,7 @@ import type {
   RegisterSession,
   OpenSessionData,
   CloseSessionData,
+  CloseSessionResponse,
   UUID,
 } from '../../types';
 
@@ -32,7 +33,7 @@ export const registerService = {
    * Get registers by branch
    */
   getByBranch: (branchId: UUID): Promise<ApiResponse<Register[]>> => {
-    return get<Register[]>(`/registers/branch/${branchId}`);
+    return get<Register[]>('/registers', { branch_id: branchId });
   },
 
   /**
@@ -68,15 +69,15 @@ export const registerService = {
    * Close register session (BLIND CLOSING)
    * Cashier declares amounts without seeing expected values
    */
-  closeSession: (sessionId: UUID, data: CloseSessionData): Promise<ApiResponse<RegisterSession>> => {
-    return post<RegisterSession>(`/registers/sessions/${sessionId}/close`, data);
+  closeSession: (sessionId: UUID, data: CloseSessionData): Promise<ApiResponse<CloseSessionResponse>> => {
+    return post<CloseSessionResponse>(`/registers/sessions/${sessionId}/close`, data);
   },
 
   /**
    * Get active session for a register
    */
   getActiveSession: (registerId: UUID): Promise<ApiResponse<RegisterSession | null>> => {
-    return get<RegisterSession | null>(`/registers/${registerId}/active-session`);
+    return get<RegisterSession | null>(`/registers/${registerId}/current-session`);
   },
 
   /**
@@ -119,6 +120,16 @@ export const registerService = {
     );
     // Backend endpoint is /registers/sessions/list
     return get<RegisterSession[]>('/registers/sessions/list', cleanParams) as Promise<PaginatedResponse<RegisterSession>>;
+  },
+
+  /**
+   * Reopen a closed session (requires manager authorization)
+   */
+  reopenSession: (sessionId: UUID, reason: string, managerPin: string): Promise<ApiResponse<RegisterSession>> => {
+    return post<RegisterSession>(`/registers/sessions/${sessionId}/reopen`, {
+      reason,
+      manager_pin: managerPin
+    });
   },
 
   /**

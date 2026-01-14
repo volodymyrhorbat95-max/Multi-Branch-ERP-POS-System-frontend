@@ -1,6 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useAppDispatch, useAppSelector } from '../../store/hooks';
+import { updateBranchSettings } from '../../store/slices/authSlice';
 
 const BranchSettings: React.FC = () => {
+  const dispatch = useAppDispatch();
+  const { currentBranch } = useAppSelector((state) => state.auth);
+
   const [settings, setSettings] = useState({
     receipt_footer: '',
     auto_print_receipt: true,
@@ -9,8 +14,26 @@ const BranchSettings: React.FC = () => {
     max_discount_percent: 10,
     tax_id: '',
     tax_condition: '',
-    factuhoy_point_of_sale: ''
+    factuhoy_point_of_sale: '',
+    default_invoice_type: 'B'
   });
+
+  // Load current branch settings on component mount
+  useEffect(() => {
+    if (currentBranch) {
+      setSettings({
+        receipt_footer: currentBranch.receipt_footer || '',
+        auto_print_receipt: currentBranch.auto_print_receipt ?? true,
+        require_customer: currentBranch.require_customer ?? false,
+        enable_discounts: currentBranch.enable_discounts ?? true,
+        max_discount_percent: currentBranch.max_discount_percent || 10,
+        tax_id: currentBranch.tax_id || '',
+        tax_condition: currentBranch.tax_condition || '',
+        factuhoy_point_of_sale: currentBranch.factuhoy_point_of_sale?.toString() || '',
+        default_invoice_type: (currentBranch.default_invoice_type as 'A' | 'B' | 'C') || 'B'
+      });
+    }
+  }, [currentBranch]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
@@ -20,9 +43,31 @@ const BranchSettings: React.FC = () => {
     });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Implement Redux action for saving branch settings
+
+    if (!currentBranch) {
+      return;
+    }
+
+    try {
+      await dispatch(updateBranchSettings({
+        branchId: currentBranch.id,
+        data: {
+          receipt_footer: settings.receipt_footer,
+          auto_print_receipt: settings.auto_print_receipt,
+          require_customer: settings.require_customer,
+          enable_discounts: settings.enable_discounts,
+          max_discount_percent: settings.max_discount_percent,
+          tax_id: settings.tax_id,
+          tax_condition: settings.tax_condition,
+          factuhoy_point_of_sale: settings.factuhoy_point_of_sale,
+          default_invoice_type: settings.default_invoice_type as 'A' | 'B' | 'C'
+        }
+      })).unwrap();
+    } catch (error) {
+      // Error already handled by Redux thunk
+    }
   };
 
   return (
@@ -139,6 +184,25 @@ const BranchSettings: React.FC = () => {
             />
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
               Este número debe coincidir con el punto de venta configurado en FactuHoy para esta sucursal
+            </p>
+          </div>
+
+          <div className="flex flex-col animate-fade-down duration-normal">
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Tipo de Factura por Defecto:
+            </label>
+            <select
+              name="default_invoice_type"
+              value={settings.default_invoice_type}
+              onChange={handleChange}
+              className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+            >
+              <option value="A">Factura A - Para Responsables Inscriptos (requiere CUIT)</option>
+              <option value="B">Factura B - Para Consumidores Finales (más común)</option>
+              <option value="C">Factura C - Para Monotributistas</option>
+            </select>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+              Este tipo de factura se aplicará por defecto en el POS. Se puede cambiar por transacción.
             </p>
           </div>
         </div>

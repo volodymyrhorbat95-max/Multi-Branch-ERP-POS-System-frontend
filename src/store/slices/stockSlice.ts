@@ -156,6 +156,55 @@ export const recordShrinkage = createAsyncThunk<
   }
 );
 
+export const submitInventoryCount = createAsyncThunk<
+  {
+    processed: number;
+    adjustments: number;
+    no_change: number;
+    details: Array<{
+      product_id: UUID;
+      previous_quantity: number;
+      counted_quantity: number;
+      variance: number;
+      action: string;
+    }>;
+  },
+  {
+    branch_id: UUID;
+    entries: Array<{
+      product_id: UUID;
+      counted_quantity: number;
+    }>;
+    notes?: string;
+  },
+  { rejectValue: string }
+>(
+  'stock/submitInventoryCount',
+  async (data, { dispatch, rejectWithValue }) => {
+    try {
+      dispatch(startLoading('inventoryCount'));
+      const response = await stockService.submitInventoryCount(data);
+
+      if (!response.success) {
+        throw new Error('Failed to submit inventory count');
+      }
+
+      const { processed, adjustments, no_change } = response.data;
+      dispatch(showToast({
+        message: `Conteo procesado: ${processed} productos, ${adjustments} ajustes, ${no_change} sin cambios`,
+        type: 'success'
+      }));
+
+      return response.data;
+    } catch (error: any) {
+      dispatch(showToast({ message: error.message || 'Error al procesar conteo', type: 'error' }));
+      return rejectWithValue(error.message || 'Error al procesar conteo');
+    } finally {
+      dispatch(stopLoading());
+    }
+  }
+);
+
 
 const stockSlice = createSlice({
   name: 'stock',

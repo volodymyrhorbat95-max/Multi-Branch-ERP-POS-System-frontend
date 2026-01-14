@@ -149,14 +149,20 @@ export const createTransfer = createAsyncThunk<
  */
 export const approveTransfer = createAsyncThunk<
   StockTransfer,
-  UUID,
+  {
+    transferId: UUID;
+    items: Array<{
+      id: UUID;
+      shipped_quantity: number;
+    }>;
+  },
   { rejectValue: string }
 >(
   'transfer/approveTransfer',
-  async (transferId, { dispatch, rejectWithValue }) => {
+  async ({ transferId, items }, { dispatch, rejectWithValue }) => {
     try {
       dispatch(startLoading('approveTransfer'));
-      const response = await stockService.approveTransfer(transferId);
+      const response = await stockService.approveTransfer(transferId, items);
 
       if (!response.success) {
         throw new Error('Failed to approve transfer');

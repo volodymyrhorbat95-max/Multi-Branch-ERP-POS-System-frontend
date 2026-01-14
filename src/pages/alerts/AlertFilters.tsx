@@ -29,8 +29,10 @@ const AlertFilters: React.FC<AlertFiltersProps> = ({ filters, onFilterChange }) 
             <option value="">Todos</option>
             <option value="VOIDED_SALE">Venta Anulada</option>
             <option value="CASH_DISCREPANCY">Discrepancia de Efectivo</option>
+            <option value="LOW_PETTY_CASH">Fondo Caja Bajo</option>
             <option value="LOW_STOCK">Stock Bajo</option>
             <option value="LATE_CLOSING">Cierre Tardío</option>
+            <option value="AFTER_HOURS_CLOSING">Cierre Fuera de Horario</option>
             <option value="REOPEN_REGISTER">Caja Reabierta</option>
             <option value="FAILED_INVOICE">Error de Factura</option>
             <option value="LARGE_DISCOUNT">Descuento Grande</option>
@@ -51,12 +53,9 @@ const AlertFilters: React.FC<AlertFiltersProps> = ({ filters, onFilterChange }) 
             className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent"
           >
             <option value="">Todas</option>
-            <option value="INFO">Info</option>
             <option value="LOW">Baja</option>
             <option value="MEDIUM">Media</option>
-            <option value="WARNING">Advertencia</option>
             <option value="HIGH">Alta</option>
-            <option value="ERROR">Error</option>
             <option value="CRITICAL">Crítica</option>
           </select>
         </div>

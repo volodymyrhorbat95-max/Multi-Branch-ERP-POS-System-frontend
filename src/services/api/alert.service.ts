@@ -62,6 +62,13 @@ export const alertService = {
   },
 
   /**
+   * Resolve alert with optional resolution notes
+   */
+  resolve: (id: UUID, resolution_notes?: string): Promise<ApiResponse<Alert>> => {
+    return post<Alert>(`/alerts/${id}/resolve`, { resolution_notes });
+  },
+
+  /**
    * Delete alert
    */
   delete: (id: UUID): Promise<ApiResponse<null>> => {

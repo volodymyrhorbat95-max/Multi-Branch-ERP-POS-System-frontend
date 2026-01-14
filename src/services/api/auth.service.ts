@@ -1,4 +1,4 @@
-import { get, post } from './client';
+import { get, post, put } from './client';
 import type {
   ApiResponse,
   User,
@@ -65,7 +65,7 @@ export const authService = {
    * Change password
    */
   changePassword: (currentPassword: string, newPassword: string): Promise<ApiResponse<null>> => {
-    return post<null>('/auth/change-password', {
+    return put<null>('/auth/password', {
       current_password: currentPassword,
       new_password: newPassword,
     });

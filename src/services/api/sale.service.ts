@@ -116,8 +116,8 @@ export const saleService = {
   /**
    * Void sale
    */
-  void: (id: UUID, reason: string): Promise<ApiResponse<Sale>> => {
-    return post<Sale>(`/sales/${id}/void`, { reason });
+  void: (id: UUID, reason: string, manager_pin?: string): Promise<ApiResponse<Sale>> => {
+    return post<Sale>(`/sales/${id}/void`, { reason, manager_pin });
   },
 
   /**

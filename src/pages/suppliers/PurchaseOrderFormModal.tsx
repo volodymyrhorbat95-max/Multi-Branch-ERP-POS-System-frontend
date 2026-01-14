@@ -197,7 +197,7 @@ export const PurchaseOrderFormModal: React.FC<PurchaseOrderFormModalProps> = ({
         />
 
         {/* Modal */}
-        <div className="inline-block w-full max-w-5xl p-6 my-8 overflow-hidden text-left align-middle transition-all transform bg-white dark:bg-gray-800 shadow-xl rounded-lg">
+        <div className="inline-block w-full max-w-5xl p-6 my-8 overflow-hidden text-left align-middle transition-all transform bg-white dark:bg-gray-800 shadow-xl rounded-md">
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-lg font-medium text-gray-900 dark:text-white">
               {order ? 'Editar Orden de Compra' : 'Nueva Orden de Compra'}
@@ -366,8 +366,8 @@ export const PurchaseOrderFormModal: React.FC<PurchaseOrderFormModalProps> = ({
 
             {/* Totals */}
             <div className="bg-gray-50 dark:bg-gray-900 p-4 rounded-md">
-              <div className="flex justify-end space-y-2">
-                <div className="w-64">
+              <div className="flex justify-end">
+                <div className="w-64 space-y-2">
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-600 dark:text-gray-400">Subtotal:</span>
                     <span className="font-medium text-gray-900 dark:text-white">

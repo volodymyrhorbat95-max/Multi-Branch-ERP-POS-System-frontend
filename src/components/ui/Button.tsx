@@ -1,6 +1,8 @@
 import React from 'react';
+import MuiButton, { ButtonProps as MuiButtonProps } from '@mui/material/Button';
+import CircularProgress from '@mui/material/CircularProgress';
 
-interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+interface ButtonProps extends Omit<MuiButtonProps, 'variant' | 'size' | 'color'> {
   variant?: 'primary' | 'secondary' | 'success' | 'danger' | 'warning' | 'ghost';
   size?: 'sm' | 'md' | 'lg' | 'xl';
   loading?: boolean;
@@ -9,7 +11,7 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   fullWidth?: boolean;
   animate?: boolean;
   animationType?: 'fade-up' | 'fade-down' | 'fade-left' | 'fade-right' | 'zoom-in' | 'zoom-out';
-  animationDuration?: 'very-fast' | 'fast' | 'normal' | 'light-slow' | 'slow';
+  animationDuration?: 'very-fast' | 'fast' | 'normal' | 'light-slow' | 'slow' | 'very-slow';
 }
 
 const Button: React.FC<ButtonProps> = ({
@@ -25,67 +27,95 @@ const Button: React.FC<ButtonProps> = ({
   animationDuration = 'fast',
   disabled,
   className = '',
+  sx = {},
   ...props
 }) => {
-  const baseStyles = 'inline-flex items-center justify-center font-medium rounded-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed';
-
-  const variants = {
-    primary: 'bg-primary-600 text-white hover:bg-primary-700 focus:ring-primary-500 active:bg-primary-800',
-    secondary: 'bg-gray-200 text-gray-800 hover:bg-gray-300 focus:ring-gray-500 dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600',
-    success: 'bg-success-500 text-white hover:bg-success-600 focus:ring-success-500',
-    danger: 'bg-danger-500 text-white hover:bg-danger-600 focus:ring-danger-500',
-    warning: 'bg-warning-500 text-white hover:bg-warning-600 focus:ring-warning-500',
-    ghost: 'bg-transparent text-gray-700 hover:bg-gray-100 focus:ring-gray-500 dark:text-gray-200 dark:hover:bg-gray-800',
+  // Map custom variants to MUI variants and colors
+  const getMuiVariantAndColor = (): { variant: MuiButtonProps['variant']; color: MuiButtonProps['color'] } => {
+    switch (variant) {
+      case 'primary':
+        return { variant: 'contained', color: 'primary' };
+      case 'secondary':
+        return { variant: 'outlined', color: 'primary' };
+      case 'success':
+        return { variant: 'contained', color: 'success' };
+      case 'danger':
+        return { variant: 'contained', color: 'error' };
+      case 'warning':
+        return { variant: 'contained', color: 'warning' };
+      case 'ghost':
+        return { variant: 'text', color: 'inherit' };
+      default:
+        return { variant: 'contained', color: 'primary' };
+    }
   };
 
-  const sizes = {
-    sm: 'text-sm px-3 py-1.5 gap-1.5',
-    md: 'text-sm px-4 py-2 gap-2',
-    lg: 'text-base px-5 py-2.5 gap-2',
-    xl: 'text-lg px-6 py-3 gap-3',
+  // Map custom sizes to MUI sizes
+  const getMuiSize = (): MuiButtonProps['size'] => {
+    switch (size) {
+      case 'sm':
+        return 'small';
+      case 'md':
+        return 'medium';
+      case 'lg':
+      case 'xl':
+        return 'large';
+      default:
+        return 'medium';
+    }
   };
 
-  const widthClass = fullWidth ? 'w-full' : '';
+  const { variant: muiVariant, color: muiColor } = getMuiVariantAndColor();
+  const muiSize = getMuiSize();
+
+  // Build animation class
   const animationClass = animate ? `animate-${animationType} duration-${animationDuration}` : '';
 
   return (
-    <button
-      className={`${baseStyles} ${variants[variant]} ${sizes[size]} ${widthClass} ${animationClass} ${className}`}
+    <MuiButton
+      variant={muiVariant}
+      color={muiColor}
+      size={muiSize}
+      fullWidth={fullWidth}
       disabled={disabled || loading}
+      className={`${animationClass} ${className}`}
+      sx={{
+        textTransform: 'none',
+        fontWeight: 500,
+        borderRadius: '6px', // Enforce 6px max border radius
+        ...(size === 'xl' && {
+          padding: '12px 24px',
+          fontSize: '1.125rem',
+        }),
+        ...(variant === 'secondary' && {
+          backgroundColor: 'transparent',
+          borderColor: 'divider',
+          color: 'text.primary',
+          '&:hover': {
+            backgroundColor: 'action.hover',
+            borderColor: 'divider',
+          },
+        }),
+        ...(variant === 'ghost' && {
+          '&:hover': {
+            backgroundColor: 'action.hover',
+          },
+        }),
+        ...sx,
+      }}
+      startIcon={!loading && icon && iconPosition === 'left' ? icon : undefined}
+      endIcon={!loading && icon && iconPosition === 'right' ? icon : undefined}
       {...props}
     >
       {loading ? (
         <>
-          <svg
-            className="animate-spin h-4 w-4"
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-          >
-            <circle
-              className="opacity-25"
-              cx="12"
-              cy="12"
-              r="10"
-              stroke="currentColor"
-              strokeWidth="4"
-            />
-            <path
-              className="opacity-75"
-              fill="currentColor"
-              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-            />
-          </svg>
+          <CircularProgress size={16} color="inherit" sx={{ mr: 1 }} />
           <span>Cargando...</span>
         </>
       ) : (
-        <>
-          {icon && iconPosition === 'left' && icon}
-          {children}
-          {icon && iconPosition === 'right' && icon}
-        </>
+        children
       )}
-    </button>
+    </MuiButton>
   );
 };
 

@@ -8,6 +8,7 @@ import type {
   
 } from '../../types';
 import { authService } from '../../services/api';
+import branchService, { UpdateBranchSettingsData } from '../../services/api/branch.service';
 import { startLoading, stopLoading, showToast } from './uiSlice';
 
 interface AuthState {
@@ -164,6 +165,107 @@ export const refreshToken = createAsyncThunk<
   }
 );
 
+export const updateProfile = createAsyncThunk<
+  User,
+  { first_name?: string; last_name?: string; email?: string },
+  { rejectValue: string }
+>(
+  'auth/updateProfile',
+  async (data, { dispatch, getState, rejectWithValue }) => {
+    try {
+      dispatch(startLoading('Guardando cambios...'));
+      const state = getState() as any;
+      const userId = state.auth.user?.id;
+
+      if (!userId) {
+        throw new Error('Usuario no encontrado');
+      }
+
+      const { userService } = await import('../../services/api/user.service');
+      const response = await userService.update(userId, data);
+
+      if (!response.success) {
+        throw new Error(response.error || 'Error al actualizar perfil');
+      }
+
+      dispatch(showToast({
+        type: 'success',
+        message: 'Perfil actualizado correctamente',
+      }));
+
+      return response.data;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Error al actualizar perfil';
+      dispatch(showToast({ type: 'error', message }));
+      return rejectWithValue(message);
+    } finally {
+      dispatch(stopLoading());
+    }
+  }
+);
+
+export const changePassword = createAsyncThunk<
+  void,
+  { currentPassword: string; newPassword: string },
+  { rejectValue: string }
+>(
+  'auth/changePassword',
+  async ({ currentPassword, newPassword }, { dispatch, rejectWithValue }) => {
+    try {
+      dispatch(startLoading('Cambiando contraseña...'));
+      const response = await authService.changePassword(currentPassword, newPassword);
+
+      if (!response.success) {
+        throw new Error(response.error || 'Error al cambiar contraseña');
+      }
+
+      dispatch(showToast({
+        type: 'success',
+        message: 'Contraseña cambiada correctamente. Todas las demás sesiones se han cerrado.',
+      }));
+
+      return;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Error al cambiar contraseña';
+      dispatch(showToast({ type: 'error', message }));
+      return rejectWithValue(message);
+    } finally {
+      dispatch(stopLoading());
+    }
+  }
+);
+
+export const updateBranchSettings = createAsyncThunk<
+  Branch,
+  { branchId: string; data: UpdateBranchSettingsData },
+  { rejectValue: string }
+>(
+  'auth/updateBranchSettings',
+  async ({ branchId, data }, { dispatch, rejectWithValue }) => {
+    try {
+      dispatch(startLoading('Guardando configuración...'));
+      const response = await branchService.updateSettings(branchId, data);
+
+      if (!response.success) {
+        throw new Error(response.error || 'Error al actualizar configuración');
+      }
+
+      dispatch(showToast({
+        type: 'success',
+        message: 'Configuración actualizada correctamente',
+      }));
+
+      return response.data;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Error al guardar configuración';
+      dispatch(showToast({ type: 'error', message }));
+      return rejectWithValue(message);
+    } finally {
+      dispatch(stopLoading());
+    }
+  }
+);
+
 const authSlice = createSlice({
   name: 'auth',
   initialState,
@@ -293,6 +395,45 @@ const authSlice = createSlice({
         state.user = null;
         state.token = null;
         state.isAuthenticated = false;
+      });
+
+    // Update Branch Settings
+    builder
+      .addCase(updateBranchSettings.fulfilled, (state, action) => {
+        // Update the current branch if it matches
+        if (state.currentBranch?.id === action.payload.id) {
+          state.currentBranch = action.payload;
+        }
+        // Update in availableBranches array
+        const index = state.availableBranches.findIndex(b => b.id === action.payload.id);
+        if (index !== -1) {
+          state.availableBranches[index] = action.payload;
+        }
+        state.error = null;
+      })
+      .addCase(updateBranchSettings.rejected, (state, action) => {
+        state.error = action.payload || 'Error al actualizar configuración';
+      });
+
+    // Update Profile
+    builder
+      .addCase(updateProfile.fulfilled, (state, action) => {
+        // Update user in state
+        state.user = action.payload;
+        state.error = null;
+      })
+      .addCase(updateProfile.rejected, (state, action) => {
+        state.error = action.payload || 'Error al actualizar perfil';
+      });
+
+    // Change Password
+    builder
+      .addCase(changePassword.fulfilled, (state) => {
+        // Password changed successfully, no state update needed
+        state.error = null;
+      })
+      .addCase(changePassword.rejected, (state, action) => {
+        state.error = action.payload || 'Error al cambiar contraseña';
       });
   },
 });
