@@ -114,7 +114,7 @@ const DailyReport: React.FC = () => {
               <div className="flex justify-between items-center">
                 <div>
                   <p className="text-sm font-medium text-blue-900 dark:text-blue-300">Total a Rendir</p>
-                  <p className="text-xs text-blue-700 dark:text-blue-400">(Ventas en Efectivo - Gastos/Retiros)</p>
+                  <p className="text-xs text-blue-700 dark:text-blue-400">(Ventas en Efectivo - Gastos/Retiros - Vueltos como Crédito)</p>
                 </div>
                 <p className="text-lg font-bold text-blue-900 dark:text-blue-200">
                   {formatCurrency(shift.expected_cash - shift.opening_cash)}

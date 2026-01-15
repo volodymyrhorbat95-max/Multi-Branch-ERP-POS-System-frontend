@@ -1,7 +1,9 @@
 // Common Types
 export type UUID = string;
 export type ISODateString = string;
-export type Decimal = string | number;
+// CRITICAL FIX #4: Use string-only for Decimal to prevent precision loss
+// Backend stores as DECIMAL(12,2) - must maintain 2 decimal places
+export type Decimal = string;
 
 // API Response Types
 export interface ApiResponse<T = unknown> {

@@ -1,5 +1,16 @@
-import { get, post, del } from './client';
+import { get, post, put, del } from './client';
 import type { ApiResponse, PaginatedResponse, Alert, UUID } from '../../types';
+
+export interface AlertConfig {
+  id: UUID;
+  branch_id: UUID | null;
+  alert_type: string;
+  threshold: number | null;
+  is_active: boolean;
+  severity_override: string | null;
+  created_at: string;
+  updated_at: string;
+}
 
 export const alertService = {
   /**
@@ -80,6 +91,25 @@ export const alertService = {
    */
   deleteOld: (days?: number): Promise<ApiResponse<{ deleted_count: number }>> => {
     return del<{ deleted_count: number }>(`/alerts/old?days=${days || 30}`);
+  },
+
+  /**
+   * Get alert configurations
+   */
+  getConfigs: (branchId?: UUID): Promise<ApiResponse<AlertConfig[]>> => {
+    return get<AlertConfig[]>('/alerts/config', branchId ? { branch_id: branchId } : undefined);
+  },
+
+  /**
+   * Update alert configuration
+   */
+  updateConfig: (alertType: string, updates: {
+    threshold?: number;
+    is_active?: boolean;
+    severity_override?: string;
+    branch_id?: UUID;
+  }): Promise<ApiResponse<AlertConfig>> => {
+    return put<AlertConfig>('/alerts/config', { alert_type: alertType, ...updates });
   },
 };
 

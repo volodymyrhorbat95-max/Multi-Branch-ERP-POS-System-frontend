@@ -4,10 +4,11 @@ import { RootState } from '../../store';
 import UserSettings from './UserSettings';
 import BranchSettings from './BranchSettings';
 import SystemSettings from './SystemSettings';
+import AlertSettings from './AlertSettings';
 
 const SettingsPage: React.FC = () => {
   const { user } = useSelector((state: RootState) => state.auth);
-  const [activeTab, setActiveTab] = useState<'user' | 'branch' | 'system'>('user');
+  const [activeTab, setActiveTab] = useState<'user' | 'branch' | 'system' | 'alerts'>('user');
 
   const isOwner = user?.role?.name === 'OWNER';
   const isManager = user?.role?.name === 'MANAGER';
@@ -56,6 +57,19 @@ const SettingsPage: React.FC = () => {
               Sistema
             </button>
           )}
+
+          {(isOwner || isManager) && (
+            <button
+              className={`px-6 py-3 text-sm font-medium transition-colors animate-fade-down duration-normal ${
+                activeTab === 'alerts'
+                  ? 'text-primary-600 dark:text-primary-400 border-b-2 border-primary-500'
+                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+              }`}
+              onClick={() => setActiveTab('alerts')}
+            >
+              Alertas
+            </button>
+          )}
         </div>
       </div>
 
@@ -63,6 +77,7 @@ const SettingsPage: React.FC = () => {
         {activeTab === 'user' && <UserSettings />}
         {activeTab === 'branch' && (isOwner || isManager) && <BranchSettings />}
         {activeTab === 'system' && isOwner && <SystemSettings />}
+        {activeTab === 'alerts' && (isOwner || isManager) && <AlertSettings />}
       </div>
     </div>
   );

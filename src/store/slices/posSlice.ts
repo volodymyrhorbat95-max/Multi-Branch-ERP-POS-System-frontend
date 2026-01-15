@@ -120,8 +120,15 @@ const calculateItemTotals = (
   const afterDiscount = subtotal - discountAmount;
 
   let taxAmount = 0;
-  if (product.tax_rate && !product.is_tax_included) {
-    taxAmount = afterDiscount * (Number(product.tax_rate) / 100);
+  if (product.tax_rate) {
+    if (product.is_tax_included) {
+      // Tax is included in price - extract tax amount using reverse calculation
+      // Formula: tax = lineTotal * taxRate / (100 + taxRate)
+      taxAmount = afterDiscount * (Number(product.tax_rate) / (100 + Number(product.tax_rate)));
+    } else {
+      // Tax is not included - calculate tax on top of price
+      taxAmount = afterDiscount * (Number(product.tax_rate) / 100);
+    }
   }
 
   return {
@@ -132,7 +139,7 @@ const calculateItemTotals = (
     tax_rate: Number(product.tax_rate) || 0,
     tax_amount: taxAmount,
     subtotal,
-    total: afterDiscount + taxAmount,
+    total: afterDiscount + (product.is_tax_included ? 0 : taxAmount), // Add tax only if not included
   };
 };
 
