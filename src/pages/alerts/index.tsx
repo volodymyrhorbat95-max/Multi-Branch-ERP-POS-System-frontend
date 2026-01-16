@@ -63,8 +63,11 @@ const AlertsPage: React.FC = () => {
       </div>
 
       {loading ? (
-        <div className="flex items-center justify-center py-20">
-          <div className="text-lg text-gray-600 dark:text-gray-400 animate-fade-up duration-fast">Cargando alertas...</div>
+        <div className="bg-white dark:bg-gray-800 rounded-sm shadow-md p-8 animate-fade-up duration-fast">
+          <div className="flex items-center justify-center py-12">
+            <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-gray-300 border-t-primary-600"></div>
+            <span className="ml-3 text-lg text-gray-600 dark:text-gray-400">Cargando alertas...</span>
+          </div>
         </div>
       ) : error ? (
         <div className="flex items-center justify-center py-20">
