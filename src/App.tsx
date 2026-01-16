@@ -36,7 +36,7 @@ const AlertSettingsPage = React.lazy(() => import('./pages/settings/AlertSetting
 // Loading fallback
 const PageLoader = () => (
   <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900">
-    <div className="w-12 h-12 border-4 border-primary-200 border-t-primary-500 rounded-full animate-spin" />
+    <div className="animate-spin rounded-full h-12 w-12 border-4 border-gray-300 border-t-primary-600"></div>
   </div>
 );
 

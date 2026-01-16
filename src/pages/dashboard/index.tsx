@@ -31,13 +31,8 @@ const DashboardPage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="p-6">
-        <div className="bg-white dark:bg-gray-800 rounded-sm shadow-md p-8 animate-fade-up duration-fast">
-          <div className="flex items-center justify-center py-12">
-            <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-gray-300 border-t-primary-600"></div>
-            <span className="ml-3 text-lg text-gray-600 dark:text-gray-400">Cargando dashboard...</span>
-          </div>
-        </div>
+      <div className="flex justify-center py-12">
+        <div className="animate-spin rounded-full h-8 w-8 border-4 border-gray-300 border-t-primary-600"></div>
       </div>
     );
   }

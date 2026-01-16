@@ -111,8 +111,8 @@ const ProductsGrid: React.FC<ProductsGridProps> = ({
       {/* Products Grid */}
       <div className="flex-1 overflow-y-auto">
         {loading ? (
-          <div className="flex items-center justify-center h-full animate-zoom-in duration-fast">
-            <div className="w-8 h-8 border-4 border-primary-200 border-t-primary-500 rounded-full animate-spin" />
+          <div className="flex items-center justify-center h-full">
+            <div className="animate-spin rounded-full h-8 w-8 border-4 border-gray-300 border-t-primary-600"></div>
           </div>
         ) : products.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-gray-500 animate-fade-up duration-normal">

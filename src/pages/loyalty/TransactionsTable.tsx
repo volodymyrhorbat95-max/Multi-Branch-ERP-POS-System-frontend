@@ -60,11 +60,9 @@ const TransactionsTable: React.FC<TransactionsTableProps> = ({
 
   if (loading && transactions.length === 0) {
     return (
-      <Card className="overflow-hidden animate-fade-up duration-normal">
-        <div className="flex justify-center py-12 animate-zoom-in duration-fast">
-          <div className="w-8 h-8 border-4 border-primary-200 border-t-primary-500 rounded-full animate-spin" />
-        </div>
-      </Card>
+      <div className="flex justify-center py-12">
+        <div className="animate-spin rounded-full h-8 w-8 border-4 border-gray-300 border-t-primary-600"></div>
+      </div>
     );
   }
 

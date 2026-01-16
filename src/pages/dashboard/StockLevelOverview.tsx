@@ -73,11 +73,8 @@ const StockLevelOverview: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="bg-white dark:bg-gray-800 rounded-sm shadow-md p-6 animate-fade-right duration-normal">
-        <div className="flex items-center justify-center py-8">
-          <div className="inline-block animate-spin rounded-full h-6 w-6 border-4 border-gray-300 border-t-primary-600"></div>
-          <span className="ml-3 text-gray-600 dark:text-gray-400">Cargando stock...</span>
-        </div>
+      <div className="flex justify-center py-8">
+        <div className="animate-spin rounded-full h-6 w-6 border-4 border-gray-300 border-t-primary-600"></div>
       </div>
     );
   }

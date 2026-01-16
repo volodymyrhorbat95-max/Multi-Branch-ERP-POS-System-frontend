@@ -328,7 +328,7 @@ export const PricePreviewTable: React.FC<PricePreviewTableProps> = ({
                               />
                               {isSearching && (
                                 <div className="absolute right-3 top-2">
-                                  <div className="animate-spin h-4 w-4 border-2 border-primary-500 border-t-transparent rounded-full" />
+                                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-gray-300 border-t-primary-600"></div>
                                 </div>
                               )}
                               {searchResults.length > 0 && (

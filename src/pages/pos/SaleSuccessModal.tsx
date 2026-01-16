@@ -205,10 +205,7 @@ const SaleSuccessModal: React.FC<SaleSuccessModalProps> = ({
 
           {loadingInvoice && (
             <div className="flex items-center justify-center py-8">
-              <div className="w-6 h-6 border-4 border-primary-200 border-t-primary-500 rounded-full animate-spin" />
-              <span className="ml-3 text-sm text-gray-600 dark:text-gray-400">
-                Cargando factura...
-              </span>
+              <div className="animate-spin rounded-full h-6 w-6 border-4 border-gray-300 border-t-primary-600"></div>
             </div>
           )}
 
@@ -315,7 +312,7 @@ const SaleSuccessModal: React.FC<SaleSuccessModalProps> = ({
                 disabled={printing}
                 icon={
                   printing ? (
-                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    <div className="animate-spin rounded-full h-5 w-5 border-2 border-white/30 border-t-white"></div>
                   ) : (
                     <MdPrint className="w-5 h-5" />
                   )

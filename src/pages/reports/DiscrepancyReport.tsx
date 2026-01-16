@@ -120,9 +120,8 @@ const DiscrepancyReport: React.FC = () => {
       </div>
 
       {loading ? (
-        <div className="bg-white dark:bg-gray-800 rounded-sm shadow-md p-8 text-center animate-zoom-in duration-normal">
-          <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-gray-300 border-t-primary-600"></div>
-          <p className="mt-4 text-gray-600 dark:text-gray-400">Cargando...</p>
+        <div className="flex justify-center py-12">
+          <div className="animate-spin rounded-full h-8 w-8 border-4 border-gray-300 border-t-primary-600"></div>
         </div>
       ) : error ? (
         <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-sm p-4 animate-fade-up duration-fast">

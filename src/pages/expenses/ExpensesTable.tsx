@@ -101,8 +101,8 @@ export const ExpensesTable: React.FC<ExpensesTableProps> = ({
 
   if (loading && expenses.length === 0) {
     return (
-      <div className="flex justify-center items-center py-12">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+      <div className="flex justify-center py-12">
+        <div className="animate-spin rounded-full h-8 w-8 border-4 border-gray-300 border-t-primary-600"></div>
       </div>
     );
   }

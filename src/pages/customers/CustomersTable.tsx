@@ -52,7 +52,7 @@ export const CustomersTable: React.FC<CustomersTableProps> = ({
   if (loading && customers.length === 0) {
     return (
       <div className="flex justify-center py-12">
-        <div className="w-8 h-8 border-4 border-primary-200 border-t-primary-500 rounded-full animate-spin" />
+        <div className="animate-spin rounded-full h-8 w-8 border-4 border-gray-300 border-t-primary-600"></div>
       </div>
     );
   }

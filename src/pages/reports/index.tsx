@@ -36,8 +36,8 @@ const TABS: TabConfig[] = [
 ];
 
 const LoadingFallback: React.FC = () => (
-  <div className="flex items-center justify-center p-12">
-    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500"></div>
+  <div className="flex justify-center py-12">
+    <div className="animate-spin rounded-full h-8 w-8 border-4 border-gray-300 border-t-primary-600"></div>
   </div>
 );
 

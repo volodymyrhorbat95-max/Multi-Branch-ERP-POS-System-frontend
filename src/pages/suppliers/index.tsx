@@ -9,8 +9,8 @@ const SuppliersPage: React.FC = () => {
   return (
     <Suspense
       fallback={
-        <div className="flex items-center justify-center h-screen">
-          <div className="animate-spin h-12 w-12 border-4 border-primary-500 border-t-transparent rounded-full" />
+        <div className="flex justify-center py-12">
+          <div className="animate-spin rounded-full h-8 w-8 border-4 border-gray-300 border-t-primary-600"></div>
         </div>
       }
     >

@@ -42,8 +42,8 @@ const CustomerSearchModal: React.FC<CustomerSearchModalProps> = ({
 
         <div className="max-h-80 overflow-y-auto animate-fade-up duration-normal">
           {loading ? (
-            <div className="flex justify-center py-8 animate-zoom-in duration-fast">
-              <div className="w-8 h-8 border-4 border-primary-200 border-t-primary-500 rounded-full animate-spin" />
+            <div className="flex justify-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-4 border-gray-300 border-t-primary-600"></div>
             </div>
           ) : customers.length > 0 ? (
             <div className="space-y-2">
