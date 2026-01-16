@@ -44,7 +44,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
         <Header onMenuClick={() => setSidebarOpen(true)} />
 
         {/* Page Content - Add top padding for fixed header */}
-        <main className="flex-1 bg-gray-50 dark:bg-gray-900 pt-16 relative">
+        <main className="flex-1 bg-gray-50 dark:bg-gray-900 pt-16 relative min-h-[calc(100vh-4rem)]">
           {loading && <LoadingSpinner message={loadingMessage} />}
           {children}
         </main>
