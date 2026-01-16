@@ -60,20 +60,22 @@ const ReportsPage: React.FC = () => {
       </div>
 
       <div className="bg-white dark:bg-gray-800 rounded-sm shadow-md animate-fade-up duration-normal">
-        <div className="flex flex-col sm:flex-row border-b border-gray-200 dark:border-gray-700">
-          {TABS.map((tab) => (
-            <button
-              key={tab.id}
-              className={`px-6 py-3 text-sm font-medium transition-colors ${
-                activeTab === tab.id
-                  ? 'text-primary-600 dark:text-primary-400 border-b-2 border-primary-500'
-                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-              }`}
-              onClick={() => handleTabClick(tab.id)}
-            >
-              {tab.label}
-            </button>
-          ))}
+        <div className="overflow-x-auto">
+          <div className="flex border-b border-gray-200 dark:border-gray-700 min-w-max">
+            {TABS.map((tab) => (
+              <button
+                key={tab.id}
+                className={`px-6 py-3 text-sm font-medium whitespace-nowrap ${
+                  activeTab === tab.id
+                    ? 'text-primary-600 dark:text-primary-400 border-b-2 border-primary-500'
+                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                }`}
+                onClick={() => handleTabClick(tab.id)}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
