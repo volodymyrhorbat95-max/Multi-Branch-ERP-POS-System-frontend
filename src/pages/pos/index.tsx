@@ -545,7 +545,7 @@ const POSPage: React.FC = () => {
 
         <CartSection
           customer={cart.customer || null}
-          cart={cart.items}
+          cart={cart.items || []}
           totals={{
             subtotal: Number(cart.subtotal),
             discount: Number(cart.discount_amount),

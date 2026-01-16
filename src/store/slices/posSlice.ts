@@ -79,7 +79,9 @@ const calculateCartTotals = (cart: Cart): Cart => {
   let subtotal = 0;
   let taxAmount = 0;
 
-  cart.items.forEach((item) => {
+  // Ensure items array exists
+  const items = cart.items || [];
+  items.forEach((item) => {
     subtotal += Number(item.subtotal);
     taxAmount += Number(item.tax_amount);
   });
@@ -101,6 +103,7 @@ const calculateCartTotals = (cart: Cart): Cart => {
 
   return {
     ...cart,
+    items, // Ensure items is always an array
     subtotal: String(subtotal),
     discount_amount: String(discountAmount),
     tax_amount: String(taxAmount),
