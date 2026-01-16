@@ -50,16 +50,17 @@ const CustomersGrid: React.FC<CustomersGridProps> = ({
       </Card>
 
       {/* Customers Grid */}
-      {loading ? (
-        <div className="flex justify-center py-12">
-          <div className="animate-spin rounded-full h-8 w-8 border-4 border-gray-300 border-t-primary-600"></div>
-        </div>
-      ) : filteredCustomers.length === 0 ? (
+      {!loading && filteredCustomers.length === 0 ? (
         <Card className="p-12 text-center text-gray-500 animate-zoom-in duration-normal">
           <p>No hay clientes con programa de fidelidad</p>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 animate-fade-up duration-normal">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 animate-fade-up duration-normal relative">
+          {loading && (
+            <div className="absolute top-4 right-4 z-10">
+              <div className="animate-spin rounded-full h-6 w-6 border-4 border-gray-300 border-t-primary-600"></div>
+            </div>
+          )}
           {filteredCustomers.map((customer, index) => (
             <Card
               key={customer.id}

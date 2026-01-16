@@ -60,16 +60,17 @@ const SessionsPage: React.FC = () => {
         <SessionFilters filters={filters} onFilterChange={handleFilterChange} />
       </div>
 
-      {loading ? (
-        <div className="flex justify-center py-12">
-          <div className="animate-spin rounded-full h-8 w-8 border-4 border-gray-300 border-t-primary-600"></div>
-        </div>
-      ) : error ? (
+      {error ? (
         <div className="flex items-center justify-center py-20 animate-fade-up duration-fast">
           <div className="text-lg text-red-600 dark:text-red-400 animate-zoom-out duration-normal">Error: {error}</div>
         </div>
       ) : (
-        <div className="animate-fade-up duration-light-slow">
+        <div className="animate-fade-up duration-light-slow relative">
+          {loading && (
+            <div className="absolute top-4 right-4 z-10">
+              <div className="animate-spin rounded-full h-6 w-6 border-4 border-gray-300 border-t-primary-600"></div>
+            </div>
+          )}
           <SessionsList
             sessions={sessions}
             loading={loading}

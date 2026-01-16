@@ -114,14 +114,6 @@ const AlertSettings: React.FC = () => {
     return ['CASH_DISCREPANCY', 'LARGE_DISCOUNT', 'HIGH_VALUE_SALE', 'LATE_CLOSING'].includes(type);
   };
 
-  if (loading) {
-    return (
-      <div className="flex justify-center py-12">
-        <div className="animate-spin rounded-full h-8 w-8 border-4 border-gray-300 border-t-primary-600"></div>
-      </div>
-    );
-  }
-
   if (error) {
     return (
       <div className="flex items-center justify-center py-20">
@@ -133,7 +125,12 @@ const AlertSettings: React.FC = () => {
   }
 
   return (
-    <div className="space-y-6 animate-fade-up duration-normal">
+    <div className="space-y-6 animate-fade-up duration-normal relative">
+      {loading && (
+        <div className="absolute top-4 right-4 z-10">
+          <div className="animate-spin rounded-full h-6 w-6 border-4 border-gray-300 border-t-primary-600"></div>
+        </div>
+      )}
       <div className="bg-white dark:bg-gray-800 rounded-sm shadow-md p-6 animate-fade-down duration-fast">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
           Configuración de Alertas

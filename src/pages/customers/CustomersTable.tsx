@@ -49,15 +49,7 @@ export const CustomersTable: React.FC<CustomersTableProps> = ({
     />
   );
 
-  if (loading && customers.length === 0) {
-    return (
-      <div className="flex justify-center py-12">
-        <div className="animate-spin rounded-full h-8 w-8 border-4 border-gray-300 border-t-primary-600"></div>
-      </div>
-    );
-  }
-
-  if (customers.length === 0) {
+  if (!loading && customers.length === 0) {
     return (
       <div className="text-center py-12 text-gray-500 dark:text-gray-400">
         <MdGroup className="w-12 h-12 mx-auto mb-4 opacity-50" />
@@ -73,7 +65,12 @@ export const CustomersTable: React.FC<CustomersTableProps> = ({
   }
 
   return (
-    <div>
+    <div className="relative">
+      {loading && (
+        <div className="absolute top-4 right-4 z-10">
+          <div className="animate-spin rounded-full h-6 w-6 border-4 border-gray-300 border-t-primary-600"></div>
+        </div>
+      )}
       {/* Top Pagination */}
       <div className="border-b border-gray-200 dark:border-gray-700">
         <PaginationNav />

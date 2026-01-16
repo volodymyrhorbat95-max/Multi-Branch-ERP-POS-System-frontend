@@ -72,15 +72,7 @@ export const ShippingZonesTable: React.FC<ShippingZonesTableProps> = ({
     }).format(Number(value));
   };
 
-  if (loading && zones.length === 0) {
-    return (
-      <div className="flex justify-center py-12">
-        <div className="animate-spin rounded-full h-8 w-8 border-4 border-gray-300 border-t-primary-600"></div>
-      </div>
-    );
-  }
-
-  if (zones.length === 0) {
+  if (!loading && zones.length === 0) {
     return (
       <div className="text-center py-12">
         <MdLocationOn className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-600" />
@@ -93,7 +85,12 @@ export const ShippingZonesTable: React.FC<ShippingZonesTableProps> = ({
   }
 
   return (
-    <div>
+    <div className="relative">
+      {loading && (
+        <div className="absolute top-4 right-4 z-10">
+          <div className="animate-spin rounded-full h-6 w-6 border-4 border-gray-300 border-t-primary-600"></div>
+        </div>
+      )}
       {/* Top Pagination */}
       <div className="border-b border-gray-200 dark:border-gray-700">
         <PaginationNav />

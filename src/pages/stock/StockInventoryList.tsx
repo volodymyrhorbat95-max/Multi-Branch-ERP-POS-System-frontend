@@ -113,12 +113,13 @@ const StockInventoryList: React.FC<StockInventoryListProps> = ({
       </Card>
 
       {/* Stock Table */}
-      <Card className="overflow-hidden animate-fade-up duration-normal">
-        {loading && stock.length === 0 ? (
-          <div className="flex justify-center py-12">
-            <div className="animate-spin rounded-full h-8 w-8 border-4 border-gray-300 border-t-primary-600"></div>
+      <Card className="overflow-hidden animate-fade-up duration-normal relative">
+        {loading && (
+          <div className="absolute top-4 right-4 z-10">
+            <div className="animate-spin rounded-full h-6 w-6 border-4 border-gray-300 border-t-primary-600"></div>
           </div>
-        ) : paginatedData.length === 0 ? (
+        )}
+        {!loading && paginatedData.length === 0 ? (
           <div className="text-center py-12 text-gray-500 animate-zoom-in duration-normal">
             <p>No hay productos en el inventario</p>
           </div>

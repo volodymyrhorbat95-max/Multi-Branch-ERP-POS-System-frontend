@@ -59,15 +59,7 @@ export const ProductsTable: React.FC<ProductsTableProps> = ({
     return <span className="text-xs text-green-500">{product.stock_quantity} en stock</span>;
   };
 
-  if (loading) {
-    return (
-      <div className="flex justify-center py-12">
-        <div className="animate-spin rounded-full h-8 w-8 border-4 border-gray-300 border-t-primary-600"></div>
-      </div>
-    );
-  }
-
-  if (products.length === 0) {
+  if (!loading && products.length === 0) {
     return (
       <div className="text-center py-12 text-gray-500 dark:text-gray-400 animate-fade-up duration-normal">
         <MdInventory className="w-12 h-12 mx-auto mb-4 opacity-50 animate-zoom-in duration-fast" />
@@ -80,7 +72,12 @@ export const ProductsTable: React.FC<ProductsTableProps> = ({
   }
 
   return (
-    <>
+    <div className="relative">
+      {loading && (
+        <div className="absolute top-4 right-4 z-10">
+          <div className="animate-spin rounded-full h-6 w-6 border-4 border-gray-300 border-t-primary-600"></div>
+        </div>
+      )}
       {/* Top Pagination */}
       <div className="border-b border-gray-200 dark:border-gray-700">
         <PaginationNav />
@@ -195,6 +192,6 @@ export const ProductsTable: React.FC<ProductsTableProps> = ({
       <div className="border-t border-gray-200 dark:border-gray-700">
         <PaginationNav />
       </div>
-    </>
+    </div>
   );
 };

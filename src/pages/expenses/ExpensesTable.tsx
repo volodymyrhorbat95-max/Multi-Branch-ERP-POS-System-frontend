@@ -99,15 +99,7 @@ export const ExpensesTable: React.FC<ExpensesTableProps> = ({
     }
   };
 
-  if (loading && expenses.length === 0) {
-    return (
-      <div className="flex justify-center py-12">
-        <div className="animate-spin rounded-full h-8 w-8 border-4 border-gray-300 border-t-primary-600"></div>
-      </div>
-    );
-  }
-
-  if (expenses.length === 0) {
+  if (!loading && expenses.length === 0) {
     return (
       <div className="text-center py-12">
         <MdDescription className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-600" />
@@ -122,7 +114,12 @@ export const ExpensesTable: React.FC<ExpensesTableProps> = ({
   }
 
   return (
-    <>
+    <div className="relative">
+      {loading && (
+        <div className="absolute top-4 right-4 z-10">
+          <div className="animate-spin rounded-full h-6 w-6 border-4 border-gray-300 border-t-primary-600"></div>
+        </div>
+      )}
       {/* Top Pagination */}
       <div className="border-b border-gray-200 dark:border-gray-700">
         <PaginationNav />
@@ -264,6 +261,6 @@ export const ExpensesTable: React.FC<ExpensesTableProps> = ({
       <div className="border-t border-gray-200 dark:border-gray-700">
         <PaginationNav />
       </div>
-    </>
+    </div>
   );
 };

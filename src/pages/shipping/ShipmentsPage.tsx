@@ -184,12 +184,13 @@ const ShipmentsPage: React.FC = () => {
       </div>
 
       {/* Shipments Table */}
-      <Card className="animate-fade-up duration-normal overflow-hidden">
-        {loading && shipments.length === 0 ? (
-          <div className="flex justify-center py-12">
-            <div className="animate-spin rounded-full h-8 w-8 border-4 border-gray-300 border-t-primary-600"></div>
+      <Card className="animate-fade-up duration-normal overflow-hidden relative">
+        {loading && (
+          <div className="absolute top-4 right-4 z-10">
+            <div className="animate-spin rounded-full h-6 w-6 border-4 border-gray-300 border-t-primary-600"></div>
           </div>
-        ) : shipments.length === 0 ? (
+        )}
+        {!loading && shipments.length === 0 ? (
           <div className="text-center py-12">
             <MdLocalShipping className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-600" />
             <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-white">No hay envíos</h3>

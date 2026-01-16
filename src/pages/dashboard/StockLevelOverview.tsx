@@ -71,14 +71,6 @@ const StockLevelOverview: React.FC = () => {
     return 'text-gray-900 dark:text-white';
   };
 
-  if (loading) {
-    return (
-      <div className="flex justify-center py-8">
-        <div className="animate-spin rounded-full h-6 w-6 border-4 border-gray-300 border-t-primary-600"></div>
-      </div>
-    );
-  }
-
   if (error) {
     return (
       <div className="bg-white dark:bg-gray-800 rounded-sm shadow-md p-6 animate-fade-right duration-normal">
@@ -88,7 +80,12 @@ const StockLevelOverview: React.FC = () => {
   }
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-sm shadow-md p-6 animate-fade-right duration-normal">
+    <div className="bg-white dark:bg-gray-800 rounded-sm shadow-md p-6 animate-fade-right duration-normal relative">
+      {loading && (
+        <div className="absolute top-4 right-4 z-10">
+          <div className="animate-spin rounded-full h-5 w-5 border-4 border-gray-300 border-t-primary-600"></div>
+        </div>
+      )}
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-bold text-gray-900 dark:text-white">
           Stock - Vista Rápida

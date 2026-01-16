@@ -14,7 +14,6 @@ import StockLevelOverview from './StockLevelOverview';
 const DashboardPage: React.FC = () => {
   const dispatch = useAppDispatch();
   const { data, error } = useAppSelector((state) => state.dashboard);
-  const loading = useAppSelector((state) => state.ui.loading);
 
   const [dateRange, setDateRange] = useState({
     start_date: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
@@ -28,14 +27,6 @@ const DashboardPage: React.FC = () => {
   const handleDateRangeChange = (start: string, end: string) => {
     setDateRange({ start_date: start, end_date: end });
   };
-
-  if (loading) {
-    return (
-      <div className="flex justify-center py-12">
-        <div className="animate-spin rounded-full h-8 w-8 border-4 border-gray-300 border-t-primary-600"></div>
-      </div>
-    );
-  }
 
   if (error) {
     return (
