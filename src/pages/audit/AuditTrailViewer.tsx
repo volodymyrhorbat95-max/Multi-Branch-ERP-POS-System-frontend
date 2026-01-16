@@ -321,9 +321,11 @@ const AuditTrailViewer: React.FC = () => {
       {/* Audit Logs Table */}
       <Card className="overflow-hidden">
         {loading && logs.length === 0 ? (
-          <div className="flex items-center justify-center py-12">
-            <div className="w-8 h-8 border-4 border-primary-200 border-t-primary-500 rounded-full animate-spin" />
-            <span className="ml-3 text-gray-600 dark:text-gray-400">Cargando registros...</span>
+          <div className="p-8 animate-fade-up duration-fast">
+            <div className="flex items-center justify-center py-12">
+              <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-gray-300 border-t-primary-600"></div>
+              <span className="ml-3 text-lg text-gray-600 dark:text-gray-400">Cargando registros...</span>
+            </div>
           </div>
         ) : logs.length === 0 ? (
           <div className="text-center py-12">
