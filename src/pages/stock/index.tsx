@@ -32,12 +32,10 @@ type StockTab = 'inventory' | 'movements' | 'shrinkage' | 'transfers';
 
 const StockPage: React.FC = () => {
   const dispatch = useAppDispatch();
-  const { currentBranch, user, availableBranches } = useAppSelector((state) => state.auth);
+  const { currentBranch, availableBranches } = useAppSelector((state) => state.auth);
   const { items: stock, movements, loading } = useAppSelector((state) => state.stock);
   const { transfers, loading: transferLoading } = useAppSelector((state) => state.transfer);
   const { products } = useAppSelector((state) => state.products);
-
-  const isOwner = user?.role?.can_view_all_branches;
 
   // Local state
   const [activeTab, setActiveTab] = useState<StockTab>('inventory');

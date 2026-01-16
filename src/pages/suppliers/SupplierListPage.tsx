@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../../store';
-import { loadSuppliers, setCurrentSupplier } from '../../store/slices/supplierSlice';
+import { loadSuppliers } from '../../store/slices/supplierSlice';
 import { Card, Button, Input, Pagination } from '../../components/ui';
 import type { PaginationState } from '../../components/ui/Pagination';
 import { SupplierFormModal } from './SupplierFormModal';
