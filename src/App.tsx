@@ -5,7 +5,7 @@ import { ThemeProvider } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import { store, useAppDispatch, useAppSelector } from './store';
 import { getCurrentUser, initializeAuth } from './store/slices/authSlice';
-import { GlobalLoader, Toast } from './components/ui';
+import { Toast } from './components/ui';
 import { socketService } from './services/socket.service';
 import MainLayout from './components/layout/MainLayout';
 import { downloadDataForOffline } from './services/offline/syncService';
@@ -168,7 +168,6 @@ const AppRouter: React.FC = () => {
       <CssBaseline />
       <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <AuthProvider>
-          <GlobalLoader />
           <Toast />
           <React.Suspense fallback={<PageLoader />}>
             <Routes>
