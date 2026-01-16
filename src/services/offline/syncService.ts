@@ -34,7 +34,7 @@ export const downloadDataForOffline = async (
     // Call sync/pull endpoint
     const response = await syncService.pull({
       branch_id: branchId,
-      last_sync_at: lastSyncTime,
+      last_sync_at: lastSyncTime || null,
     });
 
     if (!response.success || !response.data) {
@@ -42,7 +42,9 @@ export const downloadDataForOffline = async (
       return false;
     }
 
-    const data = response.data;
+    // The API response wraps data in response.data, and the actual sync data is in response.data
+    // Server returns: { success, data: { products, customers, payment_methods, categories, download_timestamp } }
+    const data = response.data as any;
     const now = new Date().toISOString();
 
     // Cache products
@@ -88,8 +90,8 @@ export const downloadDataForOffline = async (
       console.log(`[SyncService] Cached ${categories.length} categories`);
     }
 
-    // Update last sync time
-    await db.setLastSyncTime(data.server_time || now);
+    // Update last sync time (server returns download_timestamp)
+    await db.setLastSyncTime(data.download_timestamp || now);
 
     console.log('[SyncService] Data download completed successfully');
     return true;

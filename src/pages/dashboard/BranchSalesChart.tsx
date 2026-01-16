@@ -2,8 +2,8 @@ import React from 'react';
 
 interface BranchSale {
   branch_id: string;
-  total_sales: string;
-  total_revenue: string;
+  total_sales: number;
+  total_revenue: number;
   branch: {
     name: string;
     code: string;
@@ -15,11 +15,11 @@ interface BranchSalesChartProps {
 }
 
 const BranchSalesChart: React.FC<BranchSalesChartProps> = ({ salesByBranch }) => {
-  const formatCurrency = (amount: string | number) => {
+  const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('es-AR', {
       style: 'currency',
       currency: 'ARS'
-    }).format(typeof amount === 'string' ? parseFloat(amount) : amount);
+    }).format(amount);
   };
 
   return (

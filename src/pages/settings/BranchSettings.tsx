@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useAppDispatch, useAppSelector } from '../../store/hooks';
+import { useAppDispatch, useAppSelector } from '../../store';
 import { updateBranchSettings } from '../../store/slices/authSlice';
 
 const BranchSettings: React.FC = () => {

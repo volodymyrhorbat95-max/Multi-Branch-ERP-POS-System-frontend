@@ -2,8 +2,8 @@ import React from 'react';
 
 interface Discrepancy {
   branch_id: string;
-  count: string;
-  total_discrepancy: string;
+  count: number;
+  total_discrepancy: number;
   branch: {
     name: string;
     code: string;
@@ -15,11 +15,11 @@ interface CashDiscrepanciesProps {
 }
 
 const CashDiscrepancies: React.FC<CashDiscrepanciesProps> = ({ discrepancies }) => {
-  const formatCurrency = (amount: string | number) => {
+  const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('es-AR', {
       style: 'currency',
       currency: 'ARS'
-    }).format(typeof amount === 'string' ? parseFloat(amount) : amount);
+    }).format(amount);
   };
 
   return (
@@ -39,11 +39,11 @@ const CashDiscrepancies: React.FC<CashDiscrepanciesProps> = ({ discrepancies }) 
               {discrepancies.map((disc) => (
                 <tr
                   key={disc.branch_id}
-                  className={`hover:bg-gray-50 dark:hover:bg-gray-700 ${parseFloat(disc.total_discrepancy) !== 0 ? 'bg-warning-50 dark:bg-warning-900/10' : ''}`}
+                  className={`hover:bg-gray-50 dark:hover:bg-gray-700 ${disc.total_discrepancy !== 0 ? 'bg-warning-50 dark:bg-warning-900/10' : ''}`}
                 >
                   <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">{disc.branch?.name}</td>
                   <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">{disc.count}</td>
-                  <td className={`px-4 py-3 whitespace-nowrap text-sm font-medium ${parseFloat(disc.total_discrepancy) < 0 ? 'text-danger-600 dark:text-danger-400' : 'text-success-600 dark:text-success-400'}`}>
+                  <td className={`px-4 py-3 whitespace-nowrap text-sm font-medium ${disc.total_discrepancy < 0 ? 'text-danger-600 dark:text-danger-400' : 'text-success-600 dark:text-success-400'}`}>
                     {formatCurrency(disc.total_discrepancy)}
                   </td>
                 </tr>

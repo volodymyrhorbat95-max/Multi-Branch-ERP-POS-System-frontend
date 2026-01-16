@@ -6,6 +6,7 @@ import saleService from '../../services/api/sale.service';
 import { printReceipt } from '../../services/printer/thermalPrinter';
 import CancelSaleModal from './CancelSaleModal';
 import type { Sale, Invoice, UUID } from '../../types';
+import { MdClose, MdCheck, MdRefresh, MdError, MdPrint, MdDescription, MdAdd } from 'react-icons/md';
 
 interface SaleSuccessModalProps {
   isOpen: boolean;
@@ -133,9 +134,7 @@ const SaleSuccessModal: React.FC<SaleSuccessModalProps> = ({
         {cancelSuccess ? (
           <div className="text-center p-6 bg-red-50 dark:bg-red-900/20 rounded-sm animate-zoom-in duration-fast">
             <div className="w-16 h-16 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg className="w-8 h-8 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
+              <MdClose className="w-8 h-8 text-red-600 dark:text-red-400" />
             </div>
             <h3 className="text-2xl font-bold text-red-700 dark:text-red-300 mb-2 animate-fade-down duration-normal">
               Venta Cancelada
@@ -147,9 +146,7 @@ const SaleSuccessModal: React.FC<SaleSuccessModalProps> = ({
         ) : (
           <div className="text-center p-6 bg-success-50 dark:bg-success-900/20 rounded-sm animate-zoom-in duration-fast">
             <div className="w-16 h-16 bg-success-100 dark:bg-success-900/30 rounded-full flex items-center justify-center mx-auto mb-4 animate-pulse-slow">
-              <svg className="w-8 h-8 text-success-600 dark:text-success-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
+              <MdCheck className="w-8 h-8 text-success-600 dark:text-success-400" />
             </div>
             <h3 className="text-2xl font-bold text-success-700 dark:text-success-300 mb-2 animate-fade-down duration-normal">
               ¡Venta Exitosa!
@@ -269,9 +266,7 @@ const SaleSuccessModal: React.FC<SaleSuccessModalProps> = ({
                 {invoice.status === 'PENDING' && (
                   <div className="pt-3 border-t border-gray-200 dark:border-gray-600">
                     <div className="flex items-center gap-2">
-                      <svg className="w-5 h-5 text-warning-500 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                      </svg>
+                      <MdRefresh className="w-5 h-5 text-warning-500 animate-spin" />
                       <p className="text-sm text-warning-600 dark:text-warning-400">
                         Pendiente de envío a AFIP
                       </p>
@@ -282,9 +277,7 @@ const SaleSuccessModal: React.FC<SaleSuccessModalProps> = ({
                 {invoice.status === 'FAILED' && (
                   <div className="pt-3 border-t border-gray-200 dark:border-gray-600">
                     <div className="flex items-start gap-2">
-                      <svg className="w-5 h-5 text-danger-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
+                      <MdError className="w-5 h-5 text-danger-500 flex-shrink-0 mt-0.5" />
                       <div>
                         <p className="text-sm text-danger-600 dark:text-danger-400 font-medium">
                           Error al generar factura
@@ -324,9 +317,7 @@ const SaleSuccessModal: React.FC<SaleSuccessModalProps> = ({
                   printing ? (
                     <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
                   ) : (
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
-                    </svg>
+                    <MdPrint className="w-5 h-5" />
                   )
                 }
                 iconPosition="left"
@@ -338,11 +329,7 @@ const SaleSuccessModal: React.FC<SaleSuccessModalProps> = ({
                 <Button
                   variant="secondary"
                   onClick={handlePrintInvoice}
-                  icon={
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
-                  }
+                  icon={<MdDescription className="w-5 h-5" />}
                   iconPosition="left"
                 >
                   Ver Factura PDF
@@ -352,11 +339,7 @@ const SaleSuccessModal: React.FC<SaleSuccessModalProps> = ({
               <Button
                 variant="danger"
                 onClick={() => setCancelModalOpen(true)}
-                icon={
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                }
+                icon={<MdClose className="w-5 h-5" />}
                 iconPosition="left"
               >
                 Cancelar Venta
@@ -368,11 +351,7 @@ const SaleSuccessModal: React.FC<SaleSuccessModalProps> = ({
             variant="primary"
             onClick={handleNewSale}
             fullWidth
-            icon={
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-              </svg>
-            }
+            icon={<MdAdd className="w-5 h-5" />}
             iconPosition="left"
           >
             Nueva Venta

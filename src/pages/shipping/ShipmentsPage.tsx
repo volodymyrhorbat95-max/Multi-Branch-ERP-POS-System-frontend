@@ -1,8 +1,12 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useAppDispatch, useAppSelector } from '../../store';
 import { loadShipments, loadZones } from '../../store/slices/shippingSlice';
-import { Card } from '../../components/ui';
+import { Card, Pagination } from '../../components/ui';
+import { MdLocalShipping } from 'react-icons/md';
+import type { PaginationState } from '../../components/ui/Pagination';
 import type { DeliveryStatus } from '../../types';
+
+const PAGE_SIZE_OPTIONS = [5, 10, 20, 50];
 
 const ShipmentsPage: React.FC = () => {
   const dispatch = useAppDispatch();
@@ -12,6 +16,53 @@ const ShipmentsPage: React.FC = () => {
     status?: DeliveryStatus;
     zone_id?: string;
   }>({});
+
+  // Client-side pagination state
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
+
+  // Calculate paginated data
+  const { paginatedData, pagination } = useMemo(() => {
+    const total_items = shipments.length;
+    const total_pages = Math.ceil(total_items / limit);
+    const startIndex = (page - 1) * limit;
+    const endIndex = startIndex + limit;
+
+    return {
+      paginatedData: shipments.slice(startIndex, endIndex),
+      pagination: {
+        page,
+        limit,
+        total_items,
+        total_pages,
+      } as PaginationState,
+    };
+  }, [shipments, page, limit]);
+
+  // Reset page when filters change
+  useEffect(() => {
+    setPage(1);
+  }, [filters]);
+
+  // Pagination handlers
+  const handlePageChange = (newPage: number) => setPage(newPage);
+  const handlePageSizeChange = (newLimit: number) => {
+    setLimit(newLimit);
+    setPage(1);
+  };
+
+  // Reusable pagination component
+  const PaginationNav = () => (
+    <Pagination
+      pagination={pagination}
+      onPageChange={handlePageChange}
+      onPageSizeChange={handlePageSizeChange}
+      loading={loading}
+      variant="extended"
+      showPageSize
+      pageSizeOptions={PAGE_SIZE_OPTIONS}
+    />
+  );
 
   useEffect(() => {
     dispatch(loadShipments(filters));
@@ -132,98 +183,98 @@ const ShipmentsPage: React.FC = () => {
       </div>
 
       {/* Shipments Table */}
-      <Card className="animate-fade-up duration-normal">
+      <Card className="animate-fade-up duration-normal overflow-hidden">
         {loading && shipments.length === 0 ? (
           <div className="flex justify-center items-center py-12">
             <div className="w-8 h-8 border-4 border-primary-200 border-t-primary-500 rounded-full animate-spin" />
           </div>
         ) : shipments.length === 0 ? (
           <div className="text-center py-12">
-            <svg
-              className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-600"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
-              />
-            </svg>
+            <MdLocalShipping className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-600" />
             <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-white">No hay envíos</h3>
             <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
               Los envíos aparecerán aquí cuando se realicen ventas con entrega
             </p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-              <thead className="bg-gray-50 dark:bg-gray-800">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Dirección
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Barrio
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Costo
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Estado
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Fecha Estimada
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
-                {shipments.map((shipment) => (
-                  <tr
-                    key={shipment.id}
-                    className="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors duration-fast animate-fade-up"
-                  >
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900 dark:text-white">
-                        {shipment.delivery_address}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900 dark:text-white">
-                        {shipment.delivery_neighborhood}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900 dark:text-white">
-                        {shipment.free_shipping_applied ? (
-                          <span className="text-green-600 dark:text-green-400 font-medium">GRATIS</span>
-                        ) : (
-                          formatCurrency(shipment.total_shipping_cost)
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {getStatusBadge(shipment.delivery_status)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900 dark:text-white">
-                        {shipment.estimated_delivery_date ? (
-                          new Date(shipment.estimated_delivery_date).toLocaleDateString('es-AR', {
-                            day: '2-digit',
-                            month: '2-digit',
-                            year: 'numeric',
-                          })
-                        ) : (
-                          <span className="text-gray-400 dark:text-gray-600">—</span>
-                        )}
-                      </div>
-                    </td>
+          <div>
+            {/* Top Pagination */}
+            <div className="border-b border-gray-200 dark:border-gray-700">
+              <PaginationNav />
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                <thead className="bg-primary-600 dark:bg-primary-700">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
+                      Dirección
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
+                      Barrio
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
+                      Costo
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
+                      Estado
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
+                      Fecha Estimada
+                    </th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
+                  {paginatedData.map((shipment) => (
+                    <tr
+                      key={shipment.id}
+                      className="hover:bg-gray-50 dark:hover:bg-gray-800"
+                    >
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-900 dark:text-white">
+                          {shipment.delivery_address}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-900 dark:text-white">
+                          {shipment.delivery_neighborhood}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-900 dark:text-white">
+                          {shipment.free_shipping_applied ? (
+                            <span className="text-green-600 dark:text-green-400 font-medium">GRATIS</span>
+                          ) : (
+                            formatCurrency(shipment.total_shipping_cost)
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {getStatusBadge(shipment.delivery_status)}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-900 dark:text-white">
+                          {shipment.estimated_delivery_date ? (
+                            new Date(shipment.estimated_delivery_date).toLocaleDateString('es-AR', {
+                              day: '2-digit',
+                              month: '2-digit',
+                              year: 'numeric',
+                            })
+                          ) : (
+                            <span className="text-gray-400 dark:text-gray-600">—</span>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Bottom Pagination */}
+            <div className="border-t border-gray-200 dark:border-gray-700">
+              <PaginationNav />
+            </div>
           </div>
         )}
       </Card>

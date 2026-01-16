@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import reportService from '../../services/api/report.service';
+import { MdCheck } from 'react-icons/md';
 
 interface StockSummary {
   total_items: number;
@@ -160,9 +161,7 @@ const StockLevelOverview: React.FC = () => {
       {criticalItems.length === 0 && summary && summary.low_stock_count === 0 && (
         <div className="text-center py-4">
           <div className="inline-flex items-center justify-center w-12 h-12 bg-green-100 dark:bg-green-900/30 rounded-full mb-2">
-            <svg className="w-6 h-6 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-            </svg>
+            <MdCheck className="w-6 h-6 text-green-600 dark:text-green-400" />
           </div>
           <p className="text-sm text-gray-600 dark:text-gray-400">
             Todo el stock está dentro de los niveles normales

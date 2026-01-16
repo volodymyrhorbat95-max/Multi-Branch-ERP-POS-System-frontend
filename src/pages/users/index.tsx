@@ -1,24 +1,36 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useAppDispatch, useAppSelector } from '../../store';
 import { fetchUsers, setFilters } from '../../store/slices/usersSlice';
 import { Button } from '../../components/ui';
 import UserList from './UserList';
 import UserFormModal from './UserFormModal';
 import type { User } from '../../types';
+import type { PaginationState } from '../../components/ui/Pagination';
+import { MdLock, MdAdd } from 'react-icons/md';
 
 const UsersPage: React.FC = () => {
   const dispatch = useAppDispatch();
-  const { users, pagination, filters } = useAppSelector((state) => state.users);
+  const { users, pagination: reduxPagination, filters } = useAppSelector((state) => state.users);
   const { user: currentUser } = useAppSelector((state) => state.auth);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  // Map Redux pagination to PaginationState format
+  const pagination: PaginationState = useMemo(() => ({
+    page: reduxPagination.page,
+    limit: reduxPagination.limit,
+    total_items: reduxPagination.total,
+    total_pages: reduxPagination.pages,
+  }), [reduxPagination]);
 
   // Check if user has permission to manage users
   const canManageUsers = currentUser?.role?.can_manage_users || false;
 
   useEffect(() => {
-    dispatch(fetchUsers(filters));
+    setLoading(true);
+    dispatch(fetchUsers(filters)).finally(() => setLoading(false));
   }, [dispatch, filters]);
 
   const handleSearch = (e: React.FormEvent) => {
@@ -32,6 +44,10 @@ const UsersPage: React.FC = () => {
 
   const handlePageChange = (page: number) => {
     dispatch(setFilters({ ...filters, page }));
+  };
+
+  const handlePageSizeChange = (limit: number) => {
+    dispatch(setFilters({ ...filters, limit, page: 1 }));
   };
 
   const handleCreateUser = () => {
@@ -58,19 +74,7 @@ const UsersPage: React.FC = () => {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <svg
-            className="w-16 h-16 text-gray-400 mx-auto mb-4"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-            />
-          </svg>
+          <MdLock className="w-16 h-16 text-gray-400 mx-auto mb-4" />
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
             Acceso Denegado
           </h2>
@@ -96,16 +100,7 @@ const UsersPage: React.FC = () => {
         </div>
         <Button
           onClick={handleCreateUser}
-          icon={
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 4v16m8-8H4"
-              />
-            </svg>
-          }
+          icon={<MdAdd className="w-5 h-5" />}
           iconPosition="left"
         >
           Nuevo Usuario
@@ -187,8 +182,10 @@ const UsersPage: React.FC = () => {
         users={users}
         pagination={pagination}
         onPageChange={handlePageChange}
+        onPageSizeChange={handlePageSizeChange}
         onEditUser={handleEditUser}
         onRefresh={() => dispatch(fetchUsers(filters))}
+        loading={loading}
       />
 
       {/* Create/Edit Modal */}

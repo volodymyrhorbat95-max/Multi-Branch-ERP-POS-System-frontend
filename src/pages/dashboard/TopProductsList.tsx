@@ -2,8 +2,8 @@ import React from 'react';
 
 interface TopProduct {
   product_id: string;
-  total_quantity: string;
-  total_revenue: string;
+  total_quantity: number;
+  total_revenue: number;
   product: {
     name: string;
     sku: string;
@@ -15,11 +15,11 @@ interface TopProductsListProps {
 }
 
 const TopProductsList: React.FC<TopProductsListProps> = ({ products }) => {
-  const formatCurrency = (amount: string | number) => {
+  const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('es-AR', {
       style: 'currency',
       currency: 'ARS'
-    }).format(typeof amount === 'string' ? parseFloat(amount) : amount);
+    }).format(amount);
   };
 
   return (
@@ -43,8 +43,8 @@ const TopProductsList: React.FC<TopProductsListProps> = ({ products }) => {
                   <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">{index + 1}</td>
                   <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">{product.product?.name}</td>
                   <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">{product.product?.sku}</td>
-                  <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">{parseFloat(product.total_quantity).toFixed(2)}</td>
-                  <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-success-600 dark:text-success-400">{formatCurrency(product.total_revenue)}</td>
+                  <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">{Number(product.total_quantity).toFixed(2)}</td>
+                  <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-success-600 dark:text-success-400">{formatCurrency(Number(product.total_revenue))}</td>
                 </tr>
               ))
             ) : (

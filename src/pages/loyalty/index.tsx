@@ -8,6 +8,8 @@ import {
   adjustCredit,
   loadConfig,
   updateConfig,
+  setTransactionsPage,
+  setTransactionsLimit,
 } from '../../store/slices/loyaltySlice';
 import type { LoyaltyAccount } from '../../services/api/loyalty.service';
 import CustomersGrid from './CustomersGrid';
@@ -22,7 +24,7 @@ type LoyaltyTab = 'customers' | 'transactions' | 'settings';
 const LoyaltyPage: React.FC = () => {
   const dispatch = useAppDispatch();
   const { user } = useAppSelector((state) => state.auth);
-  const { accounts, pointsTransactions, creditTransactions, config: loyaltyConfig, loading } = useAppSelector((state) => state.loyalty);
+  const { accounts, pointsTransactions, creditTransactions, config: loyaltyConfig, loading, transactionsPagination } = useAppSelector((state) => state.loyalty);
 
   const isOwner = user?.role?.can_view_all_branches;
 
@@ -53,12 +55,18 @@ const LoyaltyPage: React.FC = () => {
     if (activeTab === 'customers') {
       dispatch(loadAccounts());
     } else if (activeTab === 'transactions') {
-      dispatch(loadPointsTransactions());
-      dispatch(loadCreditTransactions());
+      dispatch(loadPointsTransactions({
+        page: transactionsPagination.page,
+        limit: transactionsPagination.limit,
+      }));
+      dispatch(loadCreditTransactions({
+        page: transactionsPagination.page,
+        limit: transactionsPagination.limit,
+      }));
     } else if (activeTab === 'settings') {
       dispatch(loadConfig());
     }
-  }, [activeTab, dispatch]);
+  }, [activeTab, dispatch, transactionsPagination.page, transactionsPagination.limit]);
 
   // Handle points adjustment
   const handleAdjustPoints = async () => {
@@ -200,6 +208,9 @@ const LoyaltyPage: React.FC = () => {
             loading={loading}
             formatCurrency={formatCurrency}
             formatDateTime={formatDateTime}
+            pagination={transactionsPagination}
+            onPageChange={(page) => dispatch(setTransactionsPage(page))}
+            onPageSizeChange={(limit) => dispatch(setTransactionsLimit(limit))}
           />
         )}
 

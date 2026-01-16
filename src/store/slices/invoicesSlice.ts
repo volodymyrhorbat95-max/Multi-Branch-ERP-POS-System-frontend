@@ -178,9 +178,18 @@ const invoicesSlice = createSlice({
   reducers: {
     setFilters: (state, action: PayloadAction<InvoiceFilters>) => {
       state.filters = action.payload;
+      state.pagination.page = 1;
     },
     resetFilters: (state) => {
       state.filters = {};
+      state.pagination.page = 1;
+    },
+    setPage: (state, action: PayloadAction<number>) => {
+      state.pagination.page = action.payload;
+    },
+    setLimit: (state, action: PayloadAction<number>) => {
+      state.pagination.limit = action.payload;
+      state.pagination.page = 1;
     },
     clearCurrentInvoice: (state) => {
       state.currentInvoice = null;
@@ -239,6 +248,6 @@ const invoicesSlice = createSlice({
   },
 });
 
-export const { setFilters, resetFilters, clearCurrentInvoice, clearError } = invoicesSlice.actions;
+export const { setFilters, resetFilters, setPage, setLimit, clearCurrentInvoice, clearError } = invoicesSlice.actions;
 
 export default invoicesSlice.reducer;

@@ -1,6 +1,10 @@
-import React from 'react';
-import { Card, Input } from '../../components/ui';
+import React, { useState, useMemo } from 'react';
+import { Card, Input, Pagination } from '../../components/ui';
+import type { PaginationState } from '../../components/ui/Pagination';
 import type { StockItem } from '../../services/api/stock.service';
+import { MdSearch, MdEdit, MdRemove } from 'react-icons/md';
+
+const PAGE_SIZE_OPTIONS = [5, 10, 20, 50];
 
 interface StockInventoryListProps {
   stock: StockItem[];
@@ -21,20 +25,65 @@ const StockInventoryList: React.FC<StockInventoryListProps> = ({
   onShowLowStockChange,
   onAdjust,
   onShrinkage,
-  loading
+  loading,
 }) => {
+  // Client-side pagination state
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
+
   const formatNumber = (num: number) => {
     return new Intl.NumberFormat('es-AR').format(num);
   };
 
-  const filteredStock = stock.filter((item) => {
-    if (!search) return true;
-    const searchLower = search.toLowerCase();
-    return (
-      item.product_name.toLowerCase().includes(searchLower) ||
-      item.product_sku?.toLowerCase().includes(searchLower)
-    );
-  });
+  // Client-side search filtering
+  const filteredStock = useMemo(() => {
+    return stock.filter((item) => {
+      if (!search) return true;
+      const searchLower = search.toLowerCase();
+      return (
+        item.product_name.toLowerCase().includes(searchLower) ||
+        item.product_sku?.toLowerCase().includes(searchLower)
+      );
+    });
+  }, [stock, search]);
+
+  // Calculate paginated data
+  const { paginatedData, pagination } = useMemo(() => {
+    const total_items = filteredStock.length;
+    const total_pages = Math.ceil(total_items / limit);
+    const startIndex = (page - 1) * limit;
+    const endIndex = startIndex + limit;
+
+    return {
+      paginatedData: filteredStock.slice(startIndex, endIndex),
+      pagination: {
+        page,
+        limit,
+        total_items,
+        total_pages,
+      } as PaginationState,
+    };
+  }, [filteredStock, page, limit]);
+
+  // Pagination handlers
+  const handlePageChange = (newPage: number) => setPage(newPage);
+  const handlePageSizeChange = (newLimit: number) => {
+    setLimit(newLimit);
+    setPage(1);
+  };
+
+  // Reusable pagination component
+  const PaginationNav = () => (
+    <Pagination
+      pagination={pagination}
+      onPageChange={handlePageChange}
+      onPageSizeChange={handlePageSizeChange}
+      loading={loading}
+      variant="extended"
+      showPageSize
+      pageSizeOptions={PAGE_SIZE_OPTIONS}
+    />
+  );
 
   return (
     <>
@@ -46,11 +95,7 @@ const StockInventoryList: React.FC<StockInventoryListProps> = ({
               placeholder="Buscar producto..."
               value={search}
               onChange={(e) => onSearchChange(e.target.value)}
-              leftIcon={
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-              }
+              leftIcon={<MdSearch className="w-5 h-5" />}
             />
           </div>
           <label className="flex items-center gap-2 animate-fade-left duration-normal">
@@ -69,96 +114,104 @@ const StockInventoryList: React.FC<StockInventoryListProps> = ({
 
       {/* Stock Table */}
       <Card className="overflow-hidden animate-fade-up duration-normal">
-        {loading ? (
+        {loading && stock.length === 0 ? (
           <div className="flex justify-center py-12">
             <div className="w-8 h-8 border-4 border-primary-200 border-t-primary-500 rounded-full animate-spin" />
           </div>
-        ) : filteredStock.length === 0 ? (
+        ) : paginatedData.length === 0 ? (
           <div className="text-center py-12 text-gray-500 animate-zoom-in duration-normal">
             <p>No hay productos en el inventario</p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-50 dark:bg-gray-800 animate-fade-down duration-fast">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Producto</th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Stock Actual</th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Mín / Máx</th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Merma %</th>
-                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Estado</th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Acciones</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                {filteredStock.map((item) => (
-                  <tr
-                    key={item.id}
-                    className="hover:bg-gray-50 dark:hover:bg-gray-800/50 animate-fade-up duration-fast"
-                  >
-                    <td className="px-6 py-4">
-                      <div>
-                        <p className="font-medium text-gray-900 dark:text-white">
-                          {item.product_name}
-                        </p>
-                        <p className="text-sm text-gray-500">SKU: {item.product_sku}</p>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                      <span className={`text-lg font-bold ${
-                        item.quantity <= 0 ? 'text-danger-500' :
-                        item.quantity <= 0 ? 'text-warning-500' : 'text-gray-900 dark:text-white'
-                      }`}>
-                        {formatNumber(item.quantity)}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-right text-sm text-gray-500">
-                      {0} / {999}
-                    </td>
-                    <td className="px-6 py-4 text-right text-sm text-gray-500">
-                      {item.expected_shrinkage ? `${item.expected_shrinkage}%` : '-'}
-                    </td>
-                    <td className="px-6 py-4 text-center">
-                      {item.quantity <= 0 ? (
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-danger-100 text-danger-800 dark:bg-danger-900/20 dark:text-danger-400">
-                          Sin stock
-                        </span>
-                      ) : item.quantity <= 0 ? (
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-warning-100 text-warning-800 dark:bg-warning-900/20 dark:text-warning-400">
-                          Stock bajo
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400">
-                          OK
-                        </span>
-                      )}
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                      <div className="flex justify-end gap-2">
-                        <button
-                          onClick={() => onAdjust(item)}
-                          className="p-2 text-gray-400 hover:text-primary-500 animate-fade-left duration-very-fast"
-                          title="Ajustar stock"
-                        >
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                          </svg>
-                        </button>
-                        <button
-                          onClick={() => onShrinkage(item)}
-                          className="p-2 text-gray-400 hover:text-warning-500 animate-fade-left duration-fast"
-                          title="Registrar merma"
-                        >
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
-                          </svg>
-                        </button>
-                      </div>
-                    </td>
+          <div>
+            {/* Top Pagination */}
+            <div className="border-b border-gray-200 dark:border-gray-700">
+              <PaginationNav />
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full divide-y divide-gray-200 dark:divide-gray-700">
+                <thead className="bg-primary-600 dark:bg-primary-700">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Producto</th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-white uppercase tracking-wider">Stock Actual</th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-white uppercase tracking-wider">Mín / Máx</th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-white uppercase tracking-wider">Merma %</th>
+                    <th className="px-6 py-3 text-center text-xs font-medium text-white uppercase tracking-wider">Estado</th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-white uppercase tracking-wider">Acciones</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
+                  {paginatedData.map((item) => (
+                    <tr
+                      key={item.id}
+                      className="hover:bg-gray-50 dark:hover:bg-gray-800"
+                    >
+                      <td className="px-6 py-4">
+                        <div>
+                          <p className="font-medium text-gray-900 dark:text-white">
+                            {item.product_name}
+                          </p>
+                          <p className="text-sm text-gray-500">SKU: {item.product_sku}</p>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        <span className={`text-lg font-bold ${
+                          item.quantity <= 0 ? 'text-danger-500' :
+                          item.quantity <= 0 ? 'text-warning-500' : 'text-gray-900 dark:text-white'
+                        }`}>
+                          {formatNumber(item.quantity)}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-right text-sm text-gray-500">
+                        {0} / {999}
+                      </td>
+                      <td className="px-6 py-4 text-right text-sm text-gray-500">
+                        {item.expected_shrinkage ? `${item.expected_shrinkage}%` : '-'}
+                      </td>
+                      <td className="px-6 py-4 text-center">
+                        {item.quantity <= 0 ? (
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-danger-100 text-danger-800 dark:bg-danger-900/20 dark:text-danger-400">
+                            Sin stock
+                          </span>
+                        ) : item.quantity <= 0 ? (
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-warning-100 text-warning-800 dark:bg-warning-900/20 dark:text-warning-400">
+                            Stock bajo
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400">
+                            OK
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        <div className="flex justify-end gap-2">
+                          <button
+                            onClick={() => onAdjust(item)}
+                            className="p-2 text-gray-400 hover:text-primary-500"
+                            title="Ajustar stock"
+                          >
+                            <MdEdit className="w-5 h-5" />
+                          </button>
+                          <button
+                            onClick={() => onShrinkage(item)}
+                            className="p-2 text-gray-400 hover:text-warning-500"
+                            title="Registrar merma"
+                          >
+                            <MdRemove className="w-5 h-5" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Bottom Pagination */}
+            <div className="border-t border-gray-200 dark:border-gray-700">
+              <PaginationNav />
+            </div>
           </div>
         )}
       </Card>

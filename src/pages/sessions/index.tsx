@@ -2,28 +2,52 @@ import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch, RootState } from '../../store';
 import { fetchSessions } from '../../store/slices/registersSlice';
+import { usePagination } from '../../hooks';
 import SessionsList from './SessionsList';
 import SessionFilters from './SessionFilters';
 
 const SessionsPage: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
-  const { sessions, loading, error } = useSelector((state: RootState) => state.registers);
+  const { sessions, totalSessions, loading, error } = useSelector((state: RootState) => state.registers);
+
+  // Pagination hook
+  const {
+    pagination,
+    setPage,
+    setLimit,
+    updateFromResponse,
+  } = usePagination({ initialPage: 1, initialLimit: 20 });
 
   const [filters, setFilters] = useState({
     branch_id: '',
     status: '',
     start_date: '',
     end_date: '',
-    page: 1,
-    limit: 20
   });
 
   useEffect(() => {
-    dispatch(fetchSessions(filters));
-  }, [dispatch, filters]);
+    dispatch(fetchSessions({
+      ...filters,
+      page: pagination.page,
+      limit: pagination.limit,
+    }));
+  }, [dispatch, filters, pagination.page, pagination.limit]);
+
+  // Update pagination from Redux state
+  useEffect(() => {
+    if (totalSessions > 0) {
+      updateFromResponse({
+        page: pagination.page,
+        limit: pagination.limit,
+        total_items: totalSessions,
+        total_pages: Math.ceil(totalSessions / pagination.limit),
+      });
+    }
+  }, [totalSessions, pagination.page, pagination.limit, updateFromResponse]);
 
   const handleFilterChange = (newFilters: Partial<typeof filters>) => {
-    setFilters({ ...filters, ...newFilters, page: 1 });
+    setFilters({ ...filters, ...newFilters });
+    setPage(1);
   };
 
   return (
@@ -48,7 +72,10 @@ const SessionsPage: React.FC = () => {
         <div className="animate-fade-up duration-light-slow">
           <SessionsList
             sessions={sessions}
-            // onPageChange={handlePageChange}
+            loading={loading}
+            pagination={pagination}
+            onPageChange={setPage}
+            onPageSizeChange={setLimit}
           />
         </div>
       )}

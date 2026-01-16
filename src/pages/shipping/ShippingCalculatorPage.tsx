@@ -3,6 +3,7 @@ import { useAppDispatch, useAppSelector } from '../../store';
 import { calculateShipping, loadZones, loadNeighborhoods, clearCalculation } from '../../store/slices/shippingSlice';
 import { Card, Button } from '../../components/ui';
 import { ShippingCostDisplay } from './components/ShippingCostDisplay';
+import { MdCalculate, MdInfo } from 'react-icons/md';
 
 const ShippingCalculatorPage: React.FC = () => {
   const dispatch = useAppDispatch();
@@ -278,19 +279,7 @@ const ShippingCalculatorPage: React.FC = () => {
           ) : (
             <Card>
               <div className="text-center py-12">
-                <svg
-                  className="mx-auto h-16 w-16 text-gray-400 dark:text-gray-600 animate-bounce"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={1.5}
-                    d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"
-                  />
-                </svg>
+                <MdCalculate className="mx-auto h-16 w-16 text-gray-400 dark:text-gray-600 animate-bounce" />
                 <h3 className="mt-4 text-lg font-medium text-gray-900 dark:text-white">
                   Completa el formulario para calcular
                 </h3>
@@ -305,19 +294,7 @@ const ShippingCalculatorPage: React.FC = () => {
           <Card>
             <div className="bg-blue-50 dark:bg-blue-900/20 rounded-sm p-4">
               <div className="flex gap-3">
-                <svg
-                  className="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
-                </svg>
+                <MdInfo className="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
                 <div className="text-sm text-blue-700 dark:text-blue-300">
                   <p className="font-medium mb-2">Información sobre los cálculos:</p>
                   <ul className="list-disc list-inside space-y-1 text-xs">

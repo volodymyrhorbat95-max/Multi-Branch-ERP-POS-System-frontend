@@ -1,7 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch, RootState } from '../../store';
 import { fetchPaymentMethodReport } from '../../store/slices/reportsSlice';
+import Pagination, { type PaginationState } from '../../components/ui/Pagination';
+
+const PAGE_SIZE_OPTIONS = [5, 10, 20, 50];
 
 const PaymentMethodReport: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -12,6 +15,46 @@ const PaymentMethodReport: React.FC = () => {
     start_date: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
     end_date: new Date().toISOString().split('T')[0]
   });
+
+  // Client-side pagination for daily breakdown
+  const [dailyPage, setDailyPage] = useState(1);
+  const [dailyLimit, setDailyLimit] = useState(10);
+
+  const { paginatedDailyData, dailyPagination } = useMemo(() => {
+    const data = paymentMethodReport?.daily_breakdown || [];
+    const total_items = data.length;
+    const total_pages = Math.ceil(total_items / dailyLimit);
+    const startIndex = (dailyPage - 1) * dailyLimit;
+    const endIndex = startIndex + dailyLimit;
+
+    return {
+      paginatedDailyData: data.slice(startIndex, endIndex),
+      dailyPagination: {
+        page: dailyPage,
+        limit: dailyLimit,
+        total_items,
+        total_pages,
+      } as PaginationState,
+    };
+  }, [paymentMethodReport?.daily_breakdown, dailyPage, dailyLimit]);
+
+  // Reset page when filters change
+  useEffect(() => {
+    setDailyPage(1);
+  }, [filters]);
+
+  // Pagination component for daily breakdown
+  const DailyPaginationNav = () => (
+    <Pagination
+      pagination={dailyPagination}
+      onPageChange={setDailyPage}
+      onPageSizeChange={(limit) => { setDailyLimit(limit); setDailyPage(1); }}
+      loading={loading}
+      variant="extended"
+      showPageSize
+      pageSizeOptions={PAGE_SIZE_OPTIONS}
+    />
+  );
 
   useEffect(() => {
     dispatch(fetchPaymentMethodReport(filters));
@@ -100,21 +143,21 @@ const PaymentMethodReport: React.FC = () => {
             </div>
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                <thead className="bg-gray-50 dark:bg-gray-700 animate-fade-down duration-fast">
+                <thead className="bg-primary-600 dark:bg-primary-700">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Método</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Tipo</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Transacciones</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Total</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Promedio</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Mínimo</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Máximo</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">% Total</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Método</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Tipo</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Transacciones</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Total</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Promedio</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Mínimo</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Máximo</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">% Total</th>
                   </tr>
                 </thead>
                 <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                  {paymentMethodReport.payments?.map((payment: any, idx: number) => (
-                    <tr key={payment.payment_method_id} className={`hover:bg-gray-50 dark:hover:bg-gray-700 animate-zoom-in ${idx % 3 === 0 ? 'duration-fast' : idx % 3 === 1 ? 'duration-normal' : 'duration-light-slow'}`}>
+                  {paymentMethodReport.payments?.map((payment: any) => (
+                    <tr key={payment.payment_method_id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm font-medium text-gray-900 dark:text-white">{payment.payment_method}</div>
                         <div className="text-sm text-gray-500 dark:text-gray-400">{payment.code}</div>
@@ -165,18 +208,24 @@ const PaymentMethodReport: React.FC = () => {
               <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Desglose Diario</h3>
               </div>
-              <div className="overflow-x-auto max-h-96">
+
+              {/* Top Pagination */}
+              <div className="border-b border-gray-200 dark:border-gray-700">
+                <DailyPaginationNav />
+              </div>
+
+              <div className="overflow-x-auto">
                 <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                  <thead className="bg-gray-50 dark:bg-gray-700 sticky top-0">
+                  <thead className="bg-primary-600 dark:bg-primary-700">
                     <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Fecha</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Método</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Transacciones</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Total</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Fecha</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Método</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Transacciones</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Total</th>
                     </tr>
                   </thead>
                   <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                    {paymentMethodReport.daily_breakdown.map((day: any, idx: number) => (
+                    {paginatedDailyData.map((day: any) => (
                       <tr key={`${day.date}-${day.code}`} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
                           {new Date(day.date).toLocaleDateString('es-AR')}
@@ -196,6 +245,11 @@ const PaymentMethodReport: React.FC = () => {
                     ))}
                   </tbody>
                 </table>
+              </div>
+
+              {/* Bottom Pagination */}
+              <div className="border-t border-gray-200 dark:border-gray-700">
+                <DailyPaginationNav />
               </div>
             </div>
           )}

@@ -1,7 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch, RootState } from '../../store';
 import { fetchShrinkageReport } from '../../store/slices/reportsSlice';
+import Pagination, { type PaginationState } from '../../components/ui/Pagination';
+
+const PAGE_SIZE_OPTIONS = [5, 10, 20, 50];
 
 const ShrinkageReport: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -12,6 +15,54 @@ const ShrinkageReport: React.FC = () => {
     start_date: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
     end_date: new Date().toISOString().split('T')[0]
   });
+
+  // Client-side pagination state for shrinkage records
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
+
+  // Calculate paginated data for shrinkage records
+  const { paginatedRecords, pagination } = useMemo(() => {
+    const records = shrinkageReport?.shrinkage_records || [];
+    const total_items = records.length;
+    const total_pages = Math.ceil(total_items / limit);
+    const startIndex = (page - 1) * limit;
+    const endIndex = startIndex + limit;
+
+    return {
+      paginatedRecords: records.slice(startIndex, endIndex),
+      pagination: {
+        page,
+        limit,
+        total_items,
+        total_pages,
+      } as PaginationState,
+    };
+  }, [shrinkageReport?.shrinkage_records, page, limit]);
+
+  // Reset page when filters change
+  useEffect(() => {
+    setPage(1);
+  }, [filters]);
+
+  // Pagination handlers
+  const handlePageChange = (newPage: number) => setPage(newPage);
+  const handlePageSizeChange = (newLimit: number) => {
+    setLimit(newLimit);
+    setPage(1);
+  };
+
+  // Reusable pagination component
+  const PaginationNav = () => (
+    <Pagination
+      pagination={pagination}
+      onPageChange={handlePageChange}
+      onPageSizeChange={handlePageSizeChange}
+      loading={loading}
+      variant="extended"
+      showPageSize
+      pageSizeOptions={PAGE_SIZE_OPTIONS}
+    />
+  );
 
   useEffect(() => {
     dispatch(fetchShrinkageReport(filters));
@@ -129,19 +180,19 @@ const ShrinkageReport: React.FC = () => {
               </div>
               <div className="overflow-x-auto">
                 <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                  <thead className="bg-gray-50 dark:bg-gray-700">
+                  <thead className="bg-primary-600 dark:bg-primary-700">
                     <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Producto</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">SKU</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Categoría</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Cantidad</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Ocurrencias</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Pérdida Costo</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Pérdida Venta</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Producto</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">SKU</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Categoría</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Cantidad</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Ocurrencias</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Pérdida Costo</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Pérdida Venta</th>
                     </tr>
                   </thead>
                   <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                    {shrinkageReport.top_products.slice(0, 10).map((product: any, idx: number) => (
+                    {shrinkageReport.top_products.slice(0, 10).map((product: any) => (
                       <tr key={product.product_id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
                           {product.product_name}
@@ -177,22 +228,28 @@ const ShrinkageReport: React.FC = () => {
             <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Registros de Mermas</h3>
             </div>
-            <div className="overflow-x-auto max-h-96">
+
+            {/* Top Pagination */}
+            <div className="border-b border-gray-200 dark:border-gray-700">
+              <PaginationNav />
+            </div>
+
+            <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                <thead className="bg-gray-50 dark:bg-gray-700 sticky top-0">
+                <thead className="bg-primary-600 dark:bg-primary-700">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Fecha</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Sucursal</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Producto</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Cantidad</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Razón</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Pérdida Costo</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Pérdida Venta</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Creado Por</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Fecha</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Sucursal</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Producto</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Cantidad</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Razón</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Pérdida Costo</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Pérdida Venta</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Creado Por</th>
                   </tr>
                 </thead>
                 <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                  {shrinkageReport.shrinkage_records?.map((record: any, idx: number) => (
+                  {paginatedRecords.map((record: any) => (
                     <tr key={record.movement_id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
                         {formatDateTime(record.created_at)}
@@ -228,6 +285,11 @@ const ShrinkageReport: React.FC = () => {
                   ))}
                 </tbody>
               </table>
+            </div>
+
+            {/* Bottom Pagination */}
+            <div className="border-t border-gray-200 dark:border-gray-700">
+              <PaginationNav />
             </div>
           </div>
         </>

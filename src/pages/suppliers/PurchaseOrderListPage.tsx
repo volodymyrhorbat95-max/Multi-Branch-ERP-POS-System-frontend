@@ -1,11 +1,14 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../../store';
 import { loadPurchaseOrders, loadSuppliers, setCurrentPurchaseOrder } from '../../store/slices/supplierSlice';
-import { Card, Button, Input } from '../../components/ui';
+import { Card, Button, Input, Pagination } from '../../components/ui';
+import type { PaginationState } from '../../components/ui/Pagination';
 import { PurchaseOrderFormModal } from './PurchaseOrderFormModal';
 import { PurchaseOrderDetailModal } from './PurchaseOrderDetailModal';
 import type { PurchaseOrder } from '../../services/api/supplier.service';
+
+const PAGE_SIZE_OPTIONS = [5, 10, 20, 50];
 
 export const PurchaseOrderListPage: React.FC = () => {
   const dispatch = useAppDispatch();
@@ -19,6 +22,10 @@ export const PurchaseOrderListPage: React.FC = () => {
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<PurchaseOrder | null>(null);
+
+  // Client-side pagination state
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
 
   useEffect(() => {
     dispatch(loadPurchaseOrders());
@@ -96,16 +103,61 @@ export const PurchaseOrderListPage: React.FC = () => {
     return new Date(dateString).toLocaleDateString('es-AR');
   };
 
-  const filteredOrders = purchaseOrders.filter((order) => {
-    if (searchTerm) {
-      const term = searchTerm.toLowerCase();
-      return (
-        order.order_number.toLowerCase().includes(term) ||
-        order.supplier?.name.toLowerCase().includes(term)
-      );
-    }
-    return true;
-  });
+  const filteredOrders = useMemo(() => {
+    return purchaseOrders.filter((order) => {
+      if (searchTerm) {
+        const term = searchTerm.toLowerCase();
+        return (
+          order.order_number.toLowerCase().includes(term) ||
+          order.supplier?.name.toLowerCase().includes(term)
+        );
+      }
+      return true;
+    });
+  }, [purchaseOrders, searchTerm]);
+
+  // Calculate paginated data
+  const { paginatedData, pagination } = useMemo(() => {
+    const total_items = filteredOrders.length;
+    const total_pages = Math.ceil(total_items / limit);
+    const startIndex = (page - 1) * limit;
+    const endIndex = startIndex + limit;
+
+    return {
+      paginatedData: filteredOrders.slice(startIndex, endIndex),
+      pagination: {
+        page,
+        limit,
+        total_items,
+        total_pages,
+      } as PaginationState,
+    };
+  }, [filteredOrders, page, limit]);
+
+  // Reset page when filters change
+  useEffect(() => {
+    setPage(1);
+  }, [searchTerm, selectedSupplier, selectedStatus]);
+
+  // Pagination handlers
+  const handlePageChange = (newPage: number) => setPage(newPage);
+  const handlePageSizeChange = (newLimit: number) => {
+    setLimit(newLimit);
+    setPage(1);
+  };
+
+  // Reusable pagination component
+  const PaginationNav = () => (
+    <Pagination
+      pagination={pagination}
+      onPageChange={handlePageChange}
+      onPageSizeChange={handlePageSizeChange}
+      loading={loading}
+      variant="extended"
+      showPageSize
+      pageSizeOptions={PAGE_SIZE_OPTIONS}
+    />
+  );
 
   return (
     <>
@@ -176,97 +228,103 @@ export const PurchaseOrderListPage: React.FC = () => {
 
         {/* Orders Table */}
         <Card className="overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-50 dark:bg-gray-800">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                    Número
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                    Proveedor
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                    Sucursal
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                    Fecha Creación
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                    Fecha Esperada
-                  </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">
-                    Total
-                  </th>
-                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">
-                    Estado
-                  </th>
-                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">
-                    Acciones
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                {loading ? (
-                  <tr>
-                    <td colSpan={8} className="px-6 py-12 text-center">
-                      <div className="flex justify-center">
-                        <div className="animate-spin h-8 w-8 border-4 border-primary-500 border-t-transparent rounded-full" />
-                      </div>
-                    </td>
-                  </tr>
-                ) : filteredOrders.length === 0 ? (
-                  <tr>
-                    <td colSpan={8} className="px-6 py-12 text-center text-gray-500">
-                      No se encontraron órdenes de compra
-                    </td>
-                  </tr>
-                ) : (
-                  filteredOrders.map((order) => (
-                    <tr
-                      key={order.id}
-                      className="hover:bg-gray-50 dark:hover:bg-gray-800/50 cursor-pointer"
-                      onClick={() => handleViewDetail(order)}
-                    >
-                      <td className="px-6 py-4 text-sm font-medium text-gray-900 dark:text-white">
-                        {order.order_number}
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-900 dark:text-white">
-                        {order.supplier?.name || '-'}
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-500">
-                        {order.branch?.name || '-'}
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-500">
-                        {formatDate(order.created_at)}
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-500">
-                        {order.expected_date ? formatDate(order.expected_date) : '-'}
-                      </td>
-                      <td className="px-6 py-4 text-sm text-right font-medium text-gray-900 dark:text-white">
-                        {formatCurrency(order.total_amount)}
-                      </td>
-                      <td className="px-6 py-4 text-center">
-                        {getStatusBadge(order.status)}
-                      </td>
-                      <td className="px-6 py-4 text-center">
-                        <Button
-                          variant="secondary"
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleViewDetail(order);
-                          }}
-                        >
-                          Ver Detalle
-                        </Button>
-                      </td>
+          {loading && purchaseOrders.length === 0 ? (
+            <div className="flex justify-center py-12">
+              <div className="w-8 h-8 border-4 border-primary-200 border-t-primary-500 rounded-full animate-spin" />
+            </div>
+          ) : paginatedData.length === 0 ? (
+            <div className="text-center py-12 text-gray-500">
+              No se encontraron órdenes de compra
+            </div>
+          ) : (
+            <div>
+              {/* Top Pagination */}
+              <div className="border-b border-gray-200 dark:border-gray-700">
+                <PaginationNav />
+              </div>
+
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-primary-600 dark:bg-primary-700">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
+                        Número
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
+                        Proveedor
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
+                        Sucursal
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
+                        Fecha Creación
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
+                        Fecha Esperada
+                      </th>
+                      <th className="px-6 py-3 text-right text-xs font-medium text-white uppercase tracking-wider">
+                        Total
+                      </th>
+                      <th className="px-6 py-3 text-center text-xs font-medium text-white uppercase tracking-wider">
+                        Estado
+                      </th>
+                      <th className="px-6 py-3 text-center text-xs font-medium text-white uppercase tracking-wider">
+                        Acciones
+                      </th>
                     </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+                  </thead>
+                  <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
+                    {paginatedData.map((order) => (
+                      <tr
+                        key={order.id}
+                        className="hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer"
+                        onClick={() => handleViewDetail(order)}
+                      >
+                        <td className="px-6 py-4 text-sm font-medium text-gray-900 dark:text-white">
+                          {order.order_number}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-900 dark:text-white">
+                          {order.supplier?.name || '-'}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-500">
+                          {order.branch?.name || '-'}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-500">
+                          {formatDate(order.created_at)}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-500">
+                          {order.expected_date ? formatDate(order.expected_date) : '-'}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-right font-medium text-gray-900 dark:text-white">
+                          {formatCurrency(order.total_amount)}
+                        </td>
+                        <td className="px-6 py-4 text-center">
+                          {getStatusBadge(order.status)}
+                        </td>
+                        <td className="px-6 py-4 text-center">
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleViewDetail(order);
+                            }}
+                          >
+                            Ver Detalle
+                          </Button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Bottom Pagination */}
+              <div className="border-t border-gray-200 dark:border-gray-700">
+                <PaginationNav />
+              </div>
+            </div>
+          )}
         </Card>
       </div>
 

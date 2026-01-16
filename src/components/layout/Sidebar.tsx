@@ -22,6 +22,7 @@ import {
   MdDarkMode,
   MdLogout,
   MdClose,
+  MdStore,
 } from 'react-icons/md';
 
 interface SidebarProps {
@@ -163,9 +164,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
         <div className="lg:hidden flex items-center justify-between p-4 border-b border-primary-600/30 bg-primary-600/50 backdrop-blur-sm">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-white/20 rounded-md flex items-center justify-center backdrop-blur-sm">
-              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-              </svg>
+              <MdStore className="w-6 h-6 text-white" />
             </div>
             <span className="font-bold text-white text-lg">POS Multi</span>
           </div>

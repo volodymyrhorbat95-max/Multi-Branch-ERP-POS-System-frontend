@@ -8,7 +8,14 @@ interface ProductsState {
   // Products list
   products: Product[];
   posProducts: POSProduct[];
-  totalProducts: number;
+
+  // Pagination
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    pages: number;
+  };
 
   // Categories
   categories: Category[];
@@ -21,11 +28,9 @@ interface ProductsState {
     category_id?: UUID;
     is_active?: boolean;
     is_weighable?: boolean;
+    page?: number;
+    limit?: number;
   };
-
-  // Pagination
-  page: number;
-  limit: number;
 
   // Loading states
   loading: boolean;
@@ -35,14 +40,17 @@ interface ProductsState {
 const initialState: ProductsState = {
   products: [],
   posProducts: [],
-  totalProducts: 0,
+  pagination: {
+    page: 1,
+    limit: 20,
+    total: 0,
+    pages: 0,
+  },
   categories: [],
   categoryTree: [],
   selectedCategory: null,
   searchQuery: '',
   filters: {},
-  page: 1,
-  limit: 50,
   loading: false,
   error: null,
 };
@@ -273,6 +281,33 @@ export const updateProduct = createAsyncThunk<
   }
 );
 
+export const deleteProduct = createAsyncThunk<
+  UUID,
+  UUID,
+  { rejectValue: string }
+>(
+  'products/delete',
+  async (id, { dispatch, rejectWithValue }) => {
+    try {
+      dispatch(startLoading('Eliminando producto...'));
+      const response = await productService.deactivate(id);
+
+      if (!response.success) {
+        throw new Error(response.error || 'Failed to delete product');
+      }
+
+      dispatch(showToast({ type: 'success', message: 'Producto eliminado' }));
+      return id;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Error deleting product';
+      dispatch(showToast({ type: 'error', message }));
+      return rejectWithValue(message);
+    } finally {
+      dispatch(stopLoading());
+    }
+  }
+);
+
 const productsSlice = createSlice({
   name: 'products',
   initialState,
@@ -290,13 +325,27 @@ const productsSlice = createSlice({
     },
 
     setPage: (state, action: PayloadAction<number>) => {
-      state.page = action.payload;
+      state.pagination.page = action.payload;
+    },
+
+    setLimit: (state, action: PayloadAction<number>) => {
+      state.pagination.limit = action.payload;
+      state.pagination.page = 1;
+    },
+
+    setPagination: (state, action: PayloadAction<{ page?: number; limit?: number }>) => {
+      if (action.payload.page !== undefined) {
+        state.pagination.page = action.payload.page;
+      }
+      if (action.payload.limit !== undefined) {
+        state.pagination.limit = action.payload.limit;
+      }
     },
 
     clearProducts: (state) => {
       state.products = [];
       state.posProducts = [];
-      state.totalProducts = 0;
+      state.pagination = { page: 1, limit: 20, total: 0, pages: 0 };
     },
 
     clearError: (state) => {
@@ -313,7 +362,8 @@ const productsSlice = createSlice({
       })
       .addCase(loadProducts.fulfilled, (state, action) => {
         state.products = action.payload.products;
-        state.totalProducts = action.payload.total;
+        state.pagination.total = action.payload.total;
+        state.pagination.pages = Math.ceil(action.payload.total / state.pagination.limit);
         state.loading = false;
       })
       .addCase(loadProducts.rejected, (state, action) => {
@@ -354,7 +404,8 @@ const productsSlice = createSlice({
     // Create Product
     builder.addCase(createProduct.fulfilled, (state, action) => {
       state.products.unshift(action.payload);
-      state.totalProducts += 1;
+      state.pagination.total += 1;
+      state.pagination.pages = Math.ceil(state.pagination.total / state.pagination.limit);
     });
 
     // Update Product
@@ -364,6 +415,13 @@ const productsSlice = createSlice({
         state.products[index] = action.payload;
       }
     });
+
+    // Delete Product
+    builder.addCase(deleteProduct.fulfilled, (state, action) => {
+      state.products = state.products.filter((p) => p.id !== action.payload);
+      state.pagination.total -= 1;
+      state.pagination.pages = Math.ceil(state.pagination.total / state.pagination.limit);
+    });
   },
 });
 
@@ -372,6 +430,8 @@ export const {
   setSelectedCategory,
   setFilters,
   setPage,
+  setLimit,
+  setPagination,
   clearProducts,
   clearError,
 } = productsSlice.actions;

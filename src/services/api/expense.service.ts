@@ -1,6 +1,7 @@
 import { get, post, put, del } from './client';
 import type {
   ApiResponse,
+  PaginatedResponse,
   UUID,
   Expense,
   ExpenseCategory,
@@ -14,7 +15,7 @@ export const expenseService = {
   // ==================== EXPENSES ====================
 
   /**
-   * Get all expenses with optional filters
+   * Get all expenses with optional filters and pagination
    */
   getAll: (filters?: {
     from_date?: string;
@@ -23,8 +24,10 @@ export const expenseService = {
     branch_id?: UUID;
     status?: ExpenseStatus;
     search?: string;
-  }): Promise<ApiResponse<Expense[]>> => {
-    return get<Expense[]>('/expenses', filters);
+    page?: number;
+    limit?: number;
+  }): Promise<PaginatedResponse<Expense>> => {
+    return get<Expense[]>('/expenses', filters) as unknown as Promise<PaginatedResponse<Expense>>;
   },
 
   /**

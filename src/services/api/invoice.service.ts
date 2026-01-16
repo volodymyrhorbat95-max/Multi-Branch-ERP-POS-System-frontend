@@ -127,8 +127,8 @@ const invoiceService = {
   createCreditNote: async (
     id: string,
     data: { reason: string; items?: Array<{ amount: number }> }
-  ): Promise<ApiResponse<Invoice>> => {
-    const response = await apiClient.post<ApiResponse<Invoice>>(
+  ): Promise<ApiResponse<CreditNote>> => {
+    const response = await apiClient.post<ApiResponse<CreditNote>>(
       `/invoices/${id}/credit-note`,
       data
     );

@@ -1,6 +1,7 @@
 import React from 'react';
 import { Modal } from '../../components/ui';
 import type { NeighborhoodMappingFormData, ShippingZone } from '../../types';
+import { MdInfo } from 'react-icons/md';
 
 interface NeighborhoodMappingFormModalProps {
   show: boolean;
@@ -120,19 +121,7 @@ export const NeighborhoodMappingFormModal: React.FC<NeighborhoodMappingFormModal
         {/* Info Box */}
         <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-sm p-4 animate-fade-up duration-normal">
           <div className="flex gap-3">
-            <svg
-              className="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-              />
-            </svg>
+            <MdInfo className="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
             <div className="text-sm text-blue-700 dark:text-blue-300">
               <p className="font-medium mb-1">Información sobre el mapeo:</p>
               <ul className="list-disc list-inside space-y-1 text-xs">

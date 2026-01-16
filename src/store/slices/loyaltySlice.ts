@@ -31,6 +31,12 @@ interface LoyaltyState {
     limit: number;
     total: number;
   };
+  transactionsPagination: {
+    page: number;
+    limit: number;
+    total_items: number;
+    total_pages: number;
+  };
 }
 
 const initialState: LoyaltyState = {
@@ -46,6 +52,12 @@ const initialState: LoyaltyState = {
     page: 1,
     limit: 20,
     total: 0,
+  },
+  transactionsPagination: {
+    page: 1,
+    limit: 20,
+    total_items: 0,
+    total_pages: 0,
   },
 };
 
@@ -342,7 +354,7 @@ export const adjustCredit = createAsyncThunk<
 );
 
 export const loadPointsTransactions = createAsyncThunk<
-  { transactions: PointsTransaction[]; total: number },
+  { transactions: PointsTransaction[]; pagination: { page: number; limit: number; total_items: number; total_pages: number } },
   {
     loyalty_account_id?: UUID;
     transaction_type?: string;
@@ -366,7 +378,12 @@ export const loadPointsTransactions = createAsyncThunk<
 
       return {
         transactions: response.data,
-        total: response.pagination?.total_items || response.data.length,
+        pagination: response.pagination || {
+          page: params?.page || 1,
+          limit: params?.limit || 20,
+          total_items: response.data.length,
+          total_pages: Math.ceil(response.data.length / (params?.limit || 20)),
+        },
       };
     } catch (error) {
       return rejectWithValue('Error al cargar transacciones de puntos');
@@ -377,7 +394,7 @@ export const loadPointsTransactions = createAsyncThunk<
 );
 
 export const loadCreditTransactions = createAsyncThunk<
-  { transactions: CreditTransaction[]; total: number },
+  { transactions: CreditTransaction[]; pagination: { page: number; limit: number; total_items: number; total_pages: number } },
   {
     loyalty_account_id?: UUID;
     transaction_type?: string;
@@ -401,7 +418,12 @@ export const loadCreditTransactions = createAsyncThunk<
 
       return {
         transactions: response.data,
-        total: response.pagination?.total_items || response.data.length,
+        pagination: response.pagination || {
+          page: params?.page || 1,
+          limit: params?.limit || 20,
+          total_items: response.data.length,
+          total_pages: Math.ceil(response.data.length / (params?.limit || 20)),
+        },
       };
     } catch (error) {
       return rejectWithValue('Error al cargar transacciones de crédito');
@@ -523,6 +545,15 @@ const loyaltySlice = createSlice({
     clearError: (state) => {
       state.error = null;
     },
+
+    setTransactionsPage: (state, action: PayloadAction<number>) => {
+      state.transactionsPagination.page = action.payload;
+    },
+
+    setTransactionsLimit: (state, action: PayloadAction<number>) => {
+      state.transactionsPagination.limit = action.payload;
+      state.transactionsPagination.page = 1; // Reset to page 1 when limit changes
+    },
   },
 
   extraReducers: (builder) => {
@@ -621,11 +652,13 @@ const loyaltySlice = createSlice({
     // Load Points Transactions
     builder.addCase(loadPointsTransactions.fulfilled, (state, action) => {
       state.pointsTransactions = action.payload.transactions;
+      state.transactionsPagination = action.payload.pagination;
     });
 
     // Load Credit Transactions
     builder.addCase(loadCreditTransactions.fulfilled, (state, action) => {
       state.creditTransactions = action.payload.transactions;
+      // Note: Points transactions pagination takes precedence since both share the same table
     });
 
     // Load Config
@@ -650,6 +683,8 @@ export const {
   updateAccountBalance,
   clearLoyaltyState,
   clearError,
+  setTransactionsPage,
+  setTransactionsLimit,
 } = loyaltySlice.actions;
 
 export default loyaltySlice.reducer;

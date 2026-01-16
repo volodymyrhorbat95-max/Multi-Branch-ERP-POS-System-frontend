@@ -1,25 +1,26 @@
 import React, { useState } from 'react';
 import { Button } from '../../components/ui';
+import Pagination, { type PaginationState } from '../../components/ui/Pagination';
 import InvoiceDetailModal from './InvoiceDetailModal';
 import type { Invoice } from '../../types';
+import { MdDescription } from 'react-icons/md';
 
 interface InvoicesListProps {
   invoices: Invoice[];
   loading: boolean;
-  pagination: {
-    page: number;
-    limit: number;
-    total_items: number;
-    total_pages: number;
-  };
+  pagination: PaginationState;
   onPageChange: (page: number) => void;
+  onPageSizeChange: (limit: number) => void;
 }
+
+const PAGE_SIZE_OPTIONS = [5, 10, 20, 50];
 
 const InvoicesList: React.FC<InvoicesListProps> = ({
   invoices,
   loading,
   pagination,
   onPageChange,
+  onPageSizeChange,
 }) => {
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
 
@@ -97,42 +98,59 @@ const InvoicesList: React.FC<InvoicesListProps> = ({
   if (invoices.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-20 text-gray-500 animate-fade-up duration-normal">
-        <svg className="w-16 h-16 mb-4 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-        </svg>
+        <MdDescription className="w-16 h-16 mb-4 opacity-50" />
         <p>No se encontraron facturas</p>
       </div>
     );
   }
 
+  // Pagination component to be rendered at top and bottom
+  const PaginationNav = () => (
+    <Pagination
+      pagination={pagination}
+      onPageChange={onPageChange}
+      onPageSizeChange={onPageSizeChange}
+      loading={loading}
+      variant="extended"
+      showPageSize
+      pageSizeOptions={PAGE_SIZE_OPTIONS}
+    />
+  );
+
   return (
     <>
+      {/* Top Pagination */}
+      <div className="border-b border-gray-200 dark:border-gray-700">
+        <PaginationNav />
+      </div>
+
+      {/* Table */}
       <div className="overflow-x-auto">
-        <table className="w-full">
-          <thead className="bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600">
+        <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+          <thead className="bg-primary-600 dark:bg-primary-700">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
                 Número
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
                 Tipo
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
                 Cliente
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
                 Fecha
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
                 Monto
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
                 CAE
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
                 Estado
               </th>
-              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+              <th className="px-6 py-3 text-right text-xs font-medium text-white uppercase tracking-wider">
                 Acciones
               </th>
             </tr>
@@ -219,62 +237,10 @@ const InvoicesList: React.FC<InvoicesListProps> = ({
         </table>
       </div>
 
-      {/* Pagination */}
-      {pagination.total_pages > 1 && (
-        <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between animate-fade-up duration-normal">
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            Mostrando {((pagination.page - 1) * pagination.limit) + 1} a{' '}
-            {Math.min(pagination.page * pagination.limit, pagination.total_items)} de{' '}
-            {pagination.total_items} facturas
-          </p>
-          <div className="flex gap-2">
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={() => onPageChange(pagination.page - 1)}
-              disabled={pagination.page === 1}
-            >
-              Anterior
-            </Button>
-            <div className="flex items-center gap-2">
-              {Array.from({ length: Math.min(5, pagination.total_pages) }, (_, i) => {
-                let pageNumber;
-                if (pagination.total_pages <= 5) {
-                  pageNumber = i + 1;
-                } else if (pagination.page <= 3) {
-                  pageNumber = i + 1;
-                } else if (pagination.page >= pagination.total_pages - 2) {
-                  pageNumber = pagination.total_pages - 4 + i;
-                } else {
-                  pageNumber = pagination.page - 2 + i;
-                }
-
-                return (
-                  <button
-                    key={pageNumber}
-                    onClick={() => onPageChange(pageNumber)}
-                    className={`px-3 py-1 rounded-sm text-sm ${
-                      pagination.page === pageNumber
-                        ? 'bg-primary-600 text-white'
-                        : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
-                    }`}
-                  >
-                    {pageNumber}
-                  </button>
-                );
-              })}
-            </div>
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={() => onPageChange(pagination.page + 1)}
-              disabled={pagination.page === pagination.total_pages}
-            >
-              Siguiente
-            </Button>
-          </div>
-        </div>
-      )}
+      {/* Bottom Pagination */}
+      <div className="border-t border-gray-200 dark:border-gray-700">
+        <PaginationNav />
+      </div>
 
       {/* Invoice Detail Modal */}
       {selectedInvoice && (

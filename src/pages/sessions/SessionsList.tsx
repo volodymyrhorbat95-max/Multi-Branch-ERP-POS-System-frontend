@@ -1,16 +1,30 @@
 import React, { useState } from 'react';
-import type { RegisterSession, UUID } from '../../types';
+import type { RegisterSession } from '../../types';
+import { Pagination } from '../../components/ui';
+import type { PaginationState } from '../../components/ui/Pagination';
 import ReopenSessionModal from './ReopenSessionModal';
 import Button from '../../components/ui/Button';
 import LockOpenIcon from '@mui/icons-material/LockOpen';
 
+const PAGE_SIZE_OPTIONS = [5, 10, 20, 50];
+
 interface SessionsListProps {
   sessions: RegisterSession[];
   onSessionsUpdate?: () => void;
-  // onPageChange: (page: number) => void;
+  loading?: boolean;
+  pagination: PaginationState;
+  onPageChange: (page: number) => void;
+  onPageSizeChange?: (limit: number) => void;
 }
 
-const SessionsList: React.FC<SessionsListProps> = ({ sessions, onSessionsUpdate }) => {
+const SessionsList: React.FC<SessionsListProps> = ({
+  sessions,
+  onSessionsUpdate,
+  loading = false,
+  pagination,
+  onPageChange,
+  onPageSizeChange,
+}) => {
   const [showReopenModal, setShowReopenModal] = useState(false);
   const [selectedSession, setSelectedSession] = useState<RegisterSession | null>(null);
 
@@ -70,23 +84,41 @@ const SessionsList: React.FC<SessionsListProps> = ({ sessions, onSessionsUpdate 
     return labels[shiftType] || shiftType;
   };
 
+  // Reusable pagination component
+  const PaginationNav = () => (
+    <Pagination
+      pagination={pagination}
+      onPageChange={onPageChange}
+      onPageSizeChange={onPageSizeChange}
+      loading={loading}
+      variant="extended"
+      showPageSize
+      pageSizeOptions={PAGE_SIZE_OPTIONS}
+    />
+  );
+
   return (
     <div className="animate-fade-up duration-normal">
       {sessions && sessions.length > 0 ? (
         <div className="bg-white dark:bg-gray-800 rounded-sm shadow-md overflow-hidden animate-zoom-in duration-light-slow">
+          {/* Top Pagination */}
+          <div className="border-b border-gray-200 dark:border-gray-700">
+            <PaginationNav />
+          </div>
+
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-              <thead className="bg-gray-50 dark:bg-gray-700 animate-fade-down duration-fast">
+              <thead className="bg-primary-600 dark:bg-primary-700">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider animate-fade-right duration-very-fast">#</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider animate-fade-right duration-fast">Sucursal</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider animate-fade-right duration-normal">Turno</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider animate-fade-right duration-normal">Cajero Apertura</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider animate-fade-right duration-light-slow">Abierto</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider animate-fade-right duration-slow">Cerrado</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider animate-fade-right duration-very-slow">Estado</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider animate-fade-left duration-normal">Discrepancia</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider animate-fade-left duration-slow">Acciones</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">#</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Sucursal</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Turno</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Cajero Apertura</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Abierto</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Cerrado</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Estado</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Discrepancia</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Acciones</th>
                 </tr>
               </thead>
               <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
@@ -94,24 +126,24 @@ const SessionsList: React.FC<SessionsListProps> = ({ sessions, onSessionsUpdate 
                   const statusColors = getStatusColors(session.status);
                   const hasDiscrepancy = session.discrepancy_cash && Number(session.discrepancy_cash) !== 0;
                   return (
-                    <tr key={session.id} className="hover:bg-gray-50 dark:hover:bg-gray-700 animate-fade-up duration-normal">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white animate-flip-up duration-fast">{session.id}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white animate-fade-left duration-fast">{session.branch?.name}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white animate-fade-left duration-fast">
+                    <tr key={session.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">{session.id}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">{session.branch?.name}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
                         <span className="px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded text-xs font-medium">
                           {getShiftLabel(session.shift_type)}
                         </span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white animate-fade-left duration-normal">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
                         {session.opener ? `${session.opener.first_name} ${session.opener.last_name}` : '-'}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white animate-fade-left duration-light-slow">{formatDateTime(session.opened_at)}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white animate-fade-left duration-slow">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">{formatDateTime(session.opened_at)}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
                         {session.closed_at ? formatDateTime(session.closed_at) : 'Abierto'}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap animate-zoom-in duration-normal">
+                      <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex flex-col gap-1">
-                          <span className={`px-3 py-1 rounded-full text-xs font-semibold ${statusColors.bg} ${statusColors.text} animate-flip-down duration-fast inline-block`}>
+                          <span className={`px-3 py-1 rounded-full text-xs font-semibold ${statusColors.bg} ${statusColors.text} inline-block`}>
                             {getStatusLabel(session.status)}
                           </span>
                           {session.status === 'REOPENED' && session.reopened_at && (
@@ -121,10 +153,10 @@ const SessionsList: React.FC<SessionsListProps> = ({ sessions, onSessionsUpdate 
                           )}
                         </div>
                       </td>
-                      <td className={`px-6 py-4 whitespace-nowrap text-sm font-medium ${hasDiscrepancy ? 'text-red-600 dark:text-red-400' : 'text-gray-900 dark:text-white'} animate-fade-right duration-light-slow`}>
+                      <td className={`px-6 py-4 whitespace-nowrap text-sm font-medium ${hasDiscrepancy ? 'text-red-600 dark:text-red-400' : 'text-gray-900 dark:text-white'}`}>
                         {formatCurrency(session.discrepancy_cash ? Number(session.discrepancy_cash) : 0)}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm animate-fade-left duration-normal">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm">
                         {session.status === 'CLOSED' && (
                           <Button
                             size="sm"
@@ -147,6 +179,11 @@ const SessionsList: React.FC<SessionsListProps> = ({ sessions, onSessionsUpdate 
                 })}
               </tbody>
             </table>
+          </div>
+
+          {/* Bottom Pagination */}
+          <div className="border-t border-gray-200 dark:border-gray-700">
+            <PaginationNav />
           </div>
         </div>
       ) : (

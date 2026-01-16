@@ -1,7 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch, RootState } from '../../store';
 import { fetchHourlyReport } from '../../store/slices/reportsSlice';
+import Pagination, { type PaginationState } from '../../components/ui/Pagination';
+
+const PAGE_SIZE_OPTIONS = [5, 10, 20, 50];
 
 const HourlyReport: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -12,6 +15,46 @@ const HourlyReport: React.FC = () => {
     start_date: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
     end_date: new Date().toISOString().split('T')[0]
   });
+
+  // Client-side pagination for hourly data
+  const [hourlyPage, setHourlyPage] = useState(1);
+  const [hourlyLimit, setHourlyLimit] = useState(10);
+
+  const { paginatedHourlyData, hourlyPagination } = useMemo(() => {
+    const data = hourlyReport?.hourly_data || [];
+    const total_items = data.length;
+    const total_pages = Math.ceil(total_items / hourlyLimit);
+    const startIndex = (hourlyPage - 1) * hourlyLimit;
+    const endIndex = startIndex + hourlyLimit;
+
+    return {
+      paginatedHourlyData: data.slice(startIndex, endIndex),
+      hourlyPagination: {
+        page: hourlyPage,
+        limit: hourlyLimit,
+        total_items,
+        total_pages,
+      } as PaginationState,
+    };
+  }, [hourlyReport?.hourly_data, hourlyPage, hourlyLimit]);
+
+  // Reset page when filters change
+  useEffect(() => {
+    setHourlyPage(1);
+  }, [filters]);
+
+  // Pagination component for hourly data
+  const HourlyPaginationNav = () => (
+    <Pagination
+      pagination={hourlyPagination}
+      onPageChange={setHourlyPage}
+      onPageSizeChange={(limit) => { setHourlyLimit(limit); setHourlyPage(1); }}
+      loading={loading}
+      variant="extended"
+      showPageSize
+      pageSizeOptions={PAGE_SIZE_OPTIONS}
+    />
+  );
 
   useEffect(() => {
     dispatch(fetchHourlyReport(filters));
@@ -106,7 +149,7 @@ const HourlyReport: React.FC = () => {
             <div className="bg-white dark:bg-gray-800 rounded-sm shadow-md p-6 animate-fade-up duration-normal">
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Horas Pico</h3>
               <div className="space-y-3">
-                {hourlyReport.peak_hours?.slice(0, 5).map((hour: any, idx: number) => (
+                {hourlyReport.peak_hours?.slice(0, 5).map((hour: any) => (
                   <div key={hour.hour} className="flex items-center justify-between p-3 bg-green-50 dark:bg-green-900/20 rounded-sm">
                     <div>
                       <span className="text-sm font-medium text-gray-900 dark:text-white">{hour.hour_label}</span>
@@ -124,7 +167,7 @@ const HourlyReport: React.FC = () => {
             <div className="bg-white dark:bg-gray-800 rounded-sm shadow-md p-6 animate-fade-up duration-normal">
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Horas Bajas</h3>
               <div className="space-y-3">
-                {hourlyReport.slow_hours?.slice(0, 5).map((hour: any, idx: number) => (
+                {hourlyReport.slow_hours?.slice(0, 5).map((hour: any) => (
                   <div key={hour.hour} className="flex items-center justify-between p-3 bg-red-50 dark:bg-red-900/20 rounded-sm">
                     <div>
                       <span className="text-sm font-medium text-gray-900 dark:text-white">{hour.hour_label}</span>
@@ -144,23 +187,29 @@ const HourlyReport: React.FC = () => {
             <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Desglose por Hora</h3>
             </div>
+
+            {/* Top Pagination */}
+            <div className="border-b border-gray-200 dark:border-gray-700">
+              <HourlyPaginationNav />
+            </div>
+
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                <thead className="bg-gray-50 dark:bg-gray-700 animate-fade-down duration-fast">
+                <thead className="bg-primary-600 dark:bg-primary-700">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Hora</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Ventas</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Ingresos</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Ticket Prom.</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Mín.</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Máx.</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">% Ventas</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">% Ingresos</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Hora</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Ventas</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Ingresos</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Ticket Prom.</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Mín.</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Máx.</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">% Ventas</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">% Ingresos</th>
                   </tr>
                 </thead>
                 <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                  {hourlyReport.hourly_data?.map((hour: any, idx: number) => (
-                    <tr key={hour.hour} className={`hover:bg-gray-50 dark:hover:bg-gray-700 animate-zoom-in ${idx % 3 === 0 ? 'duration-fast' : idx % 3 === 1 ? 'duration-normal' : 'duration-light-slow'}`}>
+                  {paginatedHourlyData.map((hour: any) => (
+                    <tr key={hour.hour} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className="text-sm font-medium text-gray-900 dark:text-white">{hour.hour_label}</span>
                       </td>
@@ -210,6 +259,11 @@ const HourlyReport: React.FC = () => {
                 </tbody>
               </table>
             </div>
+
+            {/* Bottom Pagination */}
+            <div className="border-t border-gray-200 dark:border-gray-700">
+              <HourlyPaginationNav />
+            </div>
           </div>
 
           {/* Day of Week Data */}
@@ -220,12 +274,12 @@ const HourlyReport: React.FC = () => {
               </div>
               <div className="overflow-x-auto">
                 <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                  <thead className="bg-gray-50 dark:bg-gray-700">
+                  <thead className="bg-primary-600 dark:bg-primary-700">
                     <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Día</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Ventas</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Ingresos</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Ticket Promedio</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Día</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Ventas</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Ingresos</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Ticket Promedio</th>
                     </tr>
                   </thead>
                   <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">

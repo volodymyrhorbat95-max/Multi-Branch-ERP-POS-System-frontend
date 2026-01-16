@@ -54,8 +54,9 @@ export const fetchCreditNotes = createAsyncThunk<
   { rejectValue: string }
 >(
   'creditNotes/fetchAll',
-  async (filters = {}, { dispatch, rejectWithValue }) => {
+  async (params, { dispatch, rejectWithValue }) => {
     try {
+      const filters = params || {};
       const response = await invoiceService.getCreditNotes({
         page: filters.page || 1,
         limit: filters.limit || 10,

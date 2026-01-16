@@ -3,6 +3,7 @@ import { useSelector } from 'react-redux';
 import type { RootState } from '../../store';
 import { Modal, Button, Input } from '../../components/ui';
 import ManagerPinModal from './ManagerPinModal';
+import { MdWarning, MdLocalOffer, MdAttachMoney } from 'react-icons/md';
 
 interface DiscountModalProps {
   isOpen: boolean;
@@ -162,9 +163,7 @@ const DiscountModal: React.FC<DiscountModalProps> = ({
           {!canGiveDiscount && (
             <div className="bg-danger-50 dark:bg-danger-900/20 border border-danger-200 dark:border-danger-700 rounded-sm p-4 animate-fade-down duration-fast">
               <div className="flex items-start gap-3">
-                <svg className="w-6 h-6 text-danger-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                </svg>
+                <MdWarning className="w-6 h-6 text-danger-500 flex-shrink-0" />
                 <div>
                   <p className="text-sm font-medium text-danger-800 dark:text-danger-200">
                     Sin permisos para aplicar descuentos
@@ -203,9 +202,7 @@ const DiscountModal: React.FC<DiscountModalProps> = ({
                 }`}
               >
                 <div className="flex items-center justify-center gap-2">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
-                  </svg>
+                  <MdLocalOffer className="w-5 h-5" />
                   <span className="font-medium">Porcentaje (%)</span>
                 </div>
               </button>
@@ -219,9 +216,7 @@ const DiscountModal: React.FC<DiscountModalProps> = ({
                 }`}
               >
                 <div className="flex items-center justify-center gap-2">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
+                  <MdAttachMoney className="w-5 h-5" />
                   <span className="font-medium">Monto Fijo ($)</span>
                 </div>
               </button>

@@ -1,20 +1,57 @@
-import React, { useState } from 'react';
-import DailyReport from './DailyReport';
-import SalesReport from './SalesReport';
-import ProductReport from './ProductReport';
-import CashierReport from './CashierReport';
-import InventoryReport from './InventoryReport';
-import CategoryReport from './CategoryReport';
-import DiscrepancyReport from './DiscrepancyReport';
-import PaymentMethodReport from './PaymentMethodReport';
-import ShrinkageReport from './ShrinkageReport';
-import HourlyReport from './HourlyReport';
-import BranchComparisonReport from './BranchComparisonReport';
+import React, { useState, lazy, Suspense, useMemo, useCallback } from 'react';
+
+// Lazy load report components for better initial load performance
+const DailyReport = lazy(() => import('./DailyReport'));
+const SalesReport = lazy(() => import('./SalesReport'));
+const ProductReport = lazy(() => import('./ProductReport'));
+const CashierReport = lazy(() => import('./CashierReport'));
+const InventoryReport = lazy(() => import('./InventoryReport'));
+const CategoryReport = lazy(() => import('./CategoryReport'));
+const DiscrepancyReport = lazy(() => import('./DiscrepancyReport'));
+const PaymentMethodReport = lazy(() => import('./PaymentMethodReport'));
+const ShrinkageReport = lazy(() => import('./ShrinkageReport'));
+const HourlyReport = lazy(() => import('./HourlyReport'));
+const BranchComparisonReport = lazy(() => import('./BranchComparisonReport'));
 
 type TabType = 'daily' | 'sales' | 'products' | 'cashiers' | 'inventory' | 'categories' | 'discrepancies' | 'payments' | 'shrinkage' | 'hourly' | 'comparison';
 
+interface TabConfig {
+  id: TabType;
+  label: string;
+  component: React.LazyExoticComponent<React.FC>;
+}
+
+const TABS: TabConfig[] = [
+  { id: 'daily', label: 'Reporte Diario', component: DailyReport },
+  { id: 'sales', label: 'Ventas', component: SalesReport },
+  { id: 'products', label: 'Productos', component: ProductReport },
+  { id: 'cashiers', label: 'Cajeros', component: CashierReport },
+  { id: 'inventory', label: 'Inventario', component: InventoryReport },
+  { id: 'categories', label: 'Categorías', component: CategoryReport },
+  { id: 'discrepancies', label: 'Discrepancias', component: DiscrepancyReport },
+  { id: 'payments', label: 'Métodos de Pago', component: PaymentMethodReport },
+  { id: 'shrinkage', label: 'Mermas', component: ShrinkageReport },
+  { id: 'hourly', label: 'Por Hora', component: HourlyReport },
+  { id: 'comparison', label: 'Comparación', component: BranchComparisonReport },
+];
+
+const LoadingFallback: React.FC = () => (
+  <div className="flex items-center justify-center p-12">
+    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500"></div>
+  </div>
+);
+
 const ReportsPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<TabType>('daily');
+
+  const handleTabClick = useCallback((tabId: TabType) => {
+    setActiveTab(tabId);
+  }, []);
+
+  const ActiveComponent = useMemo(() => {
+    const tab = TABS.find(t => t.id === activeTab);
+    return tab?.component || DailyReport;
+  }, [activeTab]);
 
   return (
     <div className="p-6 space-y-6">
@@ -24,131 +61,26 @@ const ReportsPage: React.FC = () => {
 
       <div className="bg-white dark:bg-gray-800 rounded-sm shadow-md animate-fade-up duration-normal">
         <div className="flex flex-col sm:flex-row border-b border-gray-200 dark:border-gray-700">
-          <button
-            className={`px-6 py-3 text-sm font-medium transition-colors animate-fade-down duration-very-fast ${
-              activeTab === 'daily'
-                ? 'text-primary-600 dark:text-primary-400 border-b-2 border-primary-500'
-                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-            }`}
-            onClick={() => setActiveTab('daily')}
-          >
-            Reporte Diario
-          </button>
-          <button
-            className={`px-6 py-3 text-sm font-medium transition-colors animate-fade-down duration-fast ${
-              activeTab === 'sales'
-                ? 'text-primary-600 dark:text-primary-400 border-b-2 border-primary-500'
-                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-            }`}
-            onClick={() => setActiveTab('sales')}
-          >
-            Ventas
-          </button>
-          <button
-            className={`px-6 py-3 text-sm font-medium transition-colors animate-fade-down duration-normal ${
-              activeTab === 'products'
-                ? 'text-primary-600 dark:text-primary-400 border-b-2 border-primary-500'
-                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-            }`}
-            onClick={() => setActiveTab('products')}
-          >
-            Productos
-          </button>
-          <button
-            className={`px-6 py-3 text-sm font-medium transition-colors animate-fade-down duration-light-slow ${
-              activeTab === 'cashiers'
-                ? 'text-primary-600 dark:text-primary-400 border-b-2 border-primary-500'
-                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-            }`}
-            onClick={() => setActiveTab('cashiers')}
-          >
-            Cajeros
-          </button>
-          <button
-            className={`px-6 py-3 text-sm font-medium transition-colors animate-fade-down duration-slow ${
-              activeTab === 'inventory'
-                ? 'text-primary-600 dark:text-primary-400 border-b-2 border-primary-500'
-                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-            }`}
-            onClick={() => setActiveTab('inventory')}
-          >
-            Inventario
-          </button>
-          <button
-            className={`px-6 py-3 text-sm font-medium transition-colors animate-fade-down duration-slow ${
-              activeTab === 'categories'
-                ? 'text-primary-600 dark:text-primary-400 border-b-2 border-primary-500'
-                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-            }`}
-            onClick={() => setActiveTab('categories')}
-          >
-            Categorías
-          </button>
-          <button
-            className={`px-6 py-3 text-sm font-medium transition-colors animate-fade-down duration-slow ${
-              activeTab === 'discrepancies'
-                ? 'text-primary-600 dark:text-primary-400 border-b-2 border-primary-500'
-                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-            }`}
-            onClick={() => setActiveTab('discrepancies')}
-          >
-            Discrepancias
-          </button>
-          <button
-            className={`px-6 py-3 text-sm font-medium transition-colors animate-fade-down duration-slow ${
-              activeTab === 'payments'
-                ? 'text-primary-600 dark:text-primary-400 border-b-2 border-primary-500'
-                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-            }`}
-            onClick={() => setActiveTab('payments')}
-          >
-            Métodos de Pago
-          </button>
-          <button
-            className={`px-6 py-3 text-sm font-medium transition-colors animate-fade-down duration-slow ${
-              activeTab === 'shrinkage'
-                ? 'text-primary-600 dark:text-primary-400 border-b-2 border-primary-500'
-                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-            }`}
-            onClick={() => setActiveTab('shrinkage')}
-          >
-            Mermas
-          </button>
-          <button
-            className={`px-6 py-3 text-sm font-medium transition-colors animate-fade-down duration-slow ${
-              activeTab === 'hourly'
-                ? 'text-primary-600 dark:text-primary-400 border-b-2 border-primary-500'
-                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-            }`}
-            onClick={() => setActiveTab('hourly')}
-          >
-            Por Hora
-          </button>
-          <button
-            className={`px-6 py-3 text-sm font-medium transition-colors animate-fade-down duration-slow ${
-              activeTab === 'comparison'
-                ? 'text-primary-600 dark:text-primary-400 border-b-2 border-primary-500'
-                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-            }`}
-            onClick={() => setActiveTab('comparison')}
-          >
-            Comparación
-          </button>
+          {TABS.map((tab) => (
+            <button
+              key={tab.id}
+              className={`px-6 py-3 text-sm font-medium transition-colors ${
+                activeTab === tab.id
+                  ? 'text-primary-600 dark:text-primary-400 border-b-2 border-primary-500'
+                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+              }`}
+              onClick={() => handleTabClick(tab.id)}
+            >
+              {tab.label}
+            </button>
+          ))}
         </div>
       </div>
 
       <div className="animate-zoom-in duration-normal">
-        {activeTab === 'daily' && <DailyReport />}
-        {activeTab === 'sales' && <SalesReport />}
-        {activeTab === 'products' && <ProductReport />}
-        {activeTab === 'cashiers' && <CashierReport />}
-        {activeTab === 'inventory' && <InventoryReport />}
-        {activeTab === 'categories' && <CategoryReport />}
-        {activeTab === 'discrepancies' && <DiscrepancyReport />}
-        {activeTab === 'payments' && <PaymentMethodReport />}
-        {activeTab === 'shrinkage' && <ShrinkageReport />}
-        {activeTab === 'hourly' && <HourlyReport />}
-        {activeTab === 'comparison' && <BranchComparisonReport />}
+        <Suspense fallback={<LoadingFallback />}>
+          <ActiveComponent />
+        </Suspense>
       </div>
     </div>
   );

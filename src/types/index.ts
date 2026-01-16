@@ -655,6 +655,7 @@ export interface ShiftReportData {
   opened_by: string | null;
   closed_by: string | null;
   status: SessionStatus;
+  opening_cash: number | null;
   sales_count: number;
   total_revenue: number;
   expected_cash: number;

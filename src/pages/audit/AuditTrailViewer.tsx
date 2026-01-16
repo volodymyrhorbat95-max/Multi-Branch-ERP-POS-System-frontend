@@ -1,13 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { auditService, type AuditLog, type AuditFilters } from '../../services/api/audit.service';
 import { useAppDispatch, useAppSelector } from '../../store';
 import { showToast } from '../../store/slices/uiSlice';
 import Button from '../../components/ui/Button';
 import Modal from '../../components/ui/Modal';
+import { Card, Pagination } from '../../components/ui';
+import type { PaginationState } from '../../components/ui/Pagination';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import SearchIcon from '@mui/icons-material/Search';
+
+const PAGE_SIZE_OPTIONS = [5, 10, 20, 50];
 
 const AuditTrailViewer: React.FC = () => {
   const dispatch = useAppDispatch();
@@ -16,7 +20,7 @@ const AuditTrailViewer: React.FC = () => {
   const [logs, setLogs] = useState<AuditLog[]>([]);
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(1);
-  const [limit] = useState(50);
+  const [limit, setLimit] = useState(10);
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
 
@@ -24,7 +28,7 @@ const AuditTrailViewer: React.FC = () => {
   const [filters, setFilters] = useState<AuditFilters>({
     branch_id: currentBranch?.id,
     page: 1,
-    limit: 50
+    limit: 10
   });
   const [showFilters, setShowFilters] = useState(false);
 
@@ -37,9 +41,37 @@ const AuditTrailViewer: React.FC = () => {
     branch_id: currentBranch?.id
   });
 
+  // Calculate pagination state for the Pagination component
+  const pagination = useMemo<PaginationState>(() => ({
+    page,
+    limit,
+    total_items: total,
+    total_pages: totalPages,
+  }), [page, limit, total, totalPages]);
+
+  // Pagination handlers
+  const handlePageChange = (newPage: number) => setPage(newPage);
+  const handlePageSizeChange = (newLimit: number) => {
+    setLimit(newLimit);
+    setPage(1);
+  };
+
+  // Reusable pagination component
+  const PaginationNav = () => (
+    <Pagination
+      pagination={pagination}
+      onPageChange={handlePageChange}
+      onPageSizeChange={handlePageSizeChange}
+      loading={loading}
+      variant="extended"
+      showPageSize
+      pageSizeOptions={PAGE_SIZE_OPTIONS}
+    />
+  );
+
   useEffect(() => {
     fetchAuditLogs();
-  }, [page, filters]);
+  }, [page, limit, filters]);
 
   const fetchAuditLogs = async () => {
     setLoading(true);
@@ -81,7 +113,7 @@ const AuditTrailViewer: React.FC = () => {
     const clearedFilters = {
       branch_id: currentBranch?.id,
       page: 1,
-      limit: 50
+      limit: 10
     };
     setFilterForm(clearedFilters);
     setFilters(clearedFilters);
@@ -187,7 +219,7 @@ const AuditTrailViewer: React.FC = () => {
         </div>
 
         {/* Stats */}
-        <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="bg-blue-50 dark:bg-blue-900/20 rounded-md p-3">
             <p className="text-sm text-blue-600 dark:text-blue-400">Total Registros</p>
             <p className="text-2xl font-bold text-blue-900 dark:text-blue-300">{total}</p>
@@ -195,10 +227,6 @@ const AuditTrailViewer: React.FC = () => {
           <div className="bg-green-50 dark:bg-green-900/20 rounded-md p-3">
             <p className="text-sm text-green-600 dark:text-green-400">Página Actual</p>
             <p className="text-2xl font-bold text-green-900 dark:text-green-300">{page} de {totalPages}</p>
-          </div>
-          <div className="bg-purple-50 dark:bg-purple-900/20 rounded-md p-3">
-            <p className="text-sm text-purple-600 dark:text-purple-400">Registros/Página</p>
-            <p className="text-2xl font-bold text-purple-900 dark:text-purple-300">{limit}</p>
           </div>
         </div>
       </div>
@@ -291,10 +319,10 @@ const AuditTrailViewer: React.FC = () => {
       )}
 
       {/* Audit Logs Table */}
-      <div className="bg-white dark:bg-gray-800 rounded-md shadow-md overflow-hidden">
-        {loading ? (
+      <Card className="overflow-hidden">
+        {loading && logs.length === 0 ? (
           <div className="flex items-center justify-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+            <div className="w-8 h-8 border-4 border-primary-200 border-t-primary-500 rounded-full animate-spin" />
             <span className="ml-3 text-gray-600 dark:text-gray-400">Cargando registros...</span>
           </div>
         ) : logs.length === 0 ? (
@@ -305,41 +333,46 @@ const AuditTrailViewer: React.FC = () => {
             </p>
           </div>
         ) : (
-          <>
+          <div>
+            {/* Top Pagination */}
+            <div className="border-b border-gray-200 dark:border-gray-700">
+              <PaginationNav />
+            </div>
+
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                <thead className="bg-gray-50 dark:bg-gray-700">
+                <thead className="bg-primary-600 dark:bg-primary-700">
                   <tr>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
                       Fecha/Hora
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
                       Usuario
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
                       Acción
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
                       Entidad
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
                       Descripción
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
                       IP
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
                       Acciones
                     </th>
                   </tr>
                 </thead>
-                <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
                   {logs.map((log) => (
-                    <tr key={log.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
-                      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                    <tr key={log.id} className="hover:bg-gray-50 dark:hover:bg-gray-800">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
                         {formatDateTime(log.created_at)}
                       </td>
-                      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
                         {log.user ? (
                           <div>
                             <p className="font-medium">{log.user.first_name} {log.user.last_name}</p>
@@ -349,21 +382,21 @@ const AuditTrailViewer: React.FC = () => {
                           <span className="text-gray-500 dark:text-gray-400">{log.user_email || 'Sistema'}</span>
                         )}
                       </td>
-                      <td className="px-4 py-3 whitespace-nowrap">
+                      <td className="px-6 py-4 whitespace-nowrap">
                         <span className={`px-2 py-1 rounded text-xs font-semibold ${getActionColor(log.action)}`}>
                           {getActionLabel(log.action)}
                         </span>
                       </td>
-                      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
                         {getEntityTypeLabel(log.entity_type)}
                       </td>
-                      <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300 max-w-xs truncate">
+                      <td className="px-6 py-4 text-sm text-gray-700 dark:text-gray-300 max-w-xs truncate">
                         {log.description || '-'}
                       </td>
-                      <td className="px-4 py-3 whitespace-nowrap text-xs text-gray-500 dark:text-gray-400">
+                      <td className="px-6 py-4 whitespace-nowrap text-xs text-gray-500 dark:text-gray-400">
                         {log.ip_address || '-'}
                       </td>
-                      <td className="px-4 py-3 whitespace-nowrap text-sm">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm">
                         <Button
                           size="sm"
                           variant="secondary"
@@ -380,33 +413,13 @@ const AuditTrailViewer: React.FC = () => {
               </table>
             </div>
 
-            {/* Pagination */}
-            <div className="bg-gray-50 dark:bg-gray-700 px-4 py-3 flex items-center justify-between border-t border-gray-200 dark:border-gray-600">
-              <div className="text-sm text-gray-700 dark:text-gray-300">
-                Mostrando {((page - 1) * limit) + 1} - {Math.min(page * limit, total)} de {total} registros
-              </div>
-              <div className="flex gap-2">
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => setPage(page - 1)}
-                  disabled={page === 1}
-                >
-                  Anterior
-                </Button>
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => setPage(page + 1)}
-                  disabled={page === totalPages}
-                >
-                  Siguiente
-                </Button>
-              </div>
+            {/* Bottom Pagination */}
+            <div className="border-t border-gray-200 dark:border-gray-700">
+              <PaginationNav />
             </div>
-          </>
+          </div>
         )}
-      </div>
+      </Card>
 
       {/* Detail Modal */}
       {selectedLog && (

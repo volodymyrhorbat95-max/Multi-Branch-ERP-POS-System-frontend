@@ -1,5 +1,6 @@
 import React from 'react';
 import type { InvoiceStats } from '../../services/api/invoice.service';
+import { MdDescription, MdAttachMoney, MdCalculate, MdSchedule } from 'react-icons/md';
 
 interface InvoiceStatsCardsProps {
   stats: InvoiceStats;
@@ -26,9 +27,7 @@ const InvoiceStatsCards: React.FC<InvoiceStatsCardsProps> = ({ stats }) => {
             </p>
           </div>
           <div className="p-3 bg-primary-100 dark:bg-primary-900/30 rounded-full">
-            <svg className="w-6 h-6 text-primary-600 dark:text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </svg>
+            <MdDescription className="w-6 h-6 text-primary-600 dark:text-primary-400" />
           </div>
         </div>
       </div>
@@ -43,9 +42,7 @@ const InvoiceStatsCards: React.FC<InvoiceStatsCardsProps> = ({ stats }) => {
             </p>
           </div>
           <div className="p-3 bg-success-100 dark:bg-success-900/30 rounded-full">
-            <svg className="w-6 h-6 text-success-600 dark:text-success-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
+            <MdAttachMoney className="w-6 h-6 text-success-600 dark:text-success-400" />
           </div>
         </div>
       </div>
@@ -60,9 +57,7 @@ const InvoiceStatsCards: React.FC<InvoiceStatsCardsProps> = ({ stats }) => {
             </p>
           </div>
           <div className="p-3 bg-info-100 dark:bg-info-900/30 rounded-full">
-            <svg className="w-6 h-6 text-info-600 dark:text-info-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-            </svg>
+            <MdCalculate className="w-6 h-6 text-info-600 dark:text-info-400" />
           </div>
         </div>
       </div>
@@ -85,13 +80,11 @@ const InvoiceStatsCards: React.FC<InvoiceStatsCardsProps> = ({ stats }) => {
               ? 'bg-warning-100 dark:bg-warning-900/30'
               : 'bg-gray-100 dark:bg-gray-700'
           }`}>
-            <svg className={`w-6 h-6 ${
+            <MdSchedule className={`w-6 h-6 ${
               stats.pending_count > 0
                 ? 'text-warning-600 dark:text-warning-400'
                 : 'text-gray-400'
-            }`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
+            }`} />
           </div>
         </div>
       </div>

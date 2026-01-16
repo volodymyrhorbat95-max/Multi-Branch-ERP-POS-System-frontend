@@ -1,9 +1,12 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { useAppDispatch, useAppSelector } from '../../store';
 import {
   loadCustomers,
   createCustomer,
   updateCustomer,
+  deleteCustomer,
+  setPage,
+  setLimit,
 } from '../../store/slices/customersSlice';
 import { Card, Button, Input } from '../../components/ui';
 import { CustomersTable } from './CustomersTable';
@@ -11,6 +14,8 @@ import { CustomerFormModal } from './CustomerFormModal';
 import { CustomerDetailModal } from './CustomerDetailModal';
 import type { Customer } from '../../types';
 import type { CustomerFormData } from './CustomerFormModal';
+import type { PaginationState } from '../../components/ui/Pagination';
+import { MdAdd, MdSearch } from 'react-icons/md';
 
 const initialFormData: CustomerFormData = {
   first_name: '',
@@ -29,25 +34,41 @@ const initialFormData: CustomerFormData = {
 
 const CustomersPage: React.FC = () => {
   const dispatch = useAppDispatch();
-  const { customers, loading, totalCustomers, limit } = useAppSelector((state) => state.customers);
+  const { customers, loading, pagination: reduxPagination } = useAppSelector((state) => state.customers);
+
+  // Map Redux pagination to PaginationState format
+  const pagination: PaginationState = useMemo(() => ({
+    page: reduxPagination.page,
+    limit: reduxPagination.limit,
+    total_items: reduxPagination.total,
+    total_pages: reduxPagination.pages,
+  }), [reduxPagination]);
 
   // Local state
   const [search, setSearch] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
   const [formData, setFormData] = useState<CustomerFormData>(initialFormData);
-  const [currentPage, setCurrentPage] = useState(1);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
 
-  // Load customers
+  // Load customers when pagination or search changes
   useEffect(() => {
     dispatch(loadCustomers({
-      page: currentPage,
-      limit: 20,
+      page: reduxPagination.page,
+      limit: reduxPagination.limit,
       search: search || undefined,
     }));
-  }, [dispatch, currentPage, search]);
+  }, [dispatch, reduxPagination.page, reduxPagination.limit, search]);
+
+  // Pagination handlers
+  const handlePageChange = (page: number) => {
+    dispatch(setPage(page));
+  };
+
+  const handlePageSizeChange = (limit: number) => {
+    dispatch(setLimit(limit));
+  };
 
   // Handle form changes
   const handleFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
@@ -121,10 +142,9 @@ const CustomersPage: React.FC = () => {
   }, [dispatch, editingCustomer, formData]);
 
   // Delete customer
-  const handleDelete = useCallback(async (_id: string) => {
+  const handleDelete = useCallback(async (id: string) => {
     if (window.confirm('¿Estás seguro de eliminar este cliente?')) {
-      // TODO: Implement deleteCustomer in customersSlice
-      console.error('Delete customer not implemented yet');
+      await dispatch(deleteCustomer(id));
     }
   }, [dispatch]);
 
@@ -151,11 +171,7 @@ const CustomersPage: React.FC = () => {
           <Button
             variant="primary"
             onClick={handleCreate}
-            icon={
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-              </svg>
-            }
+            icon={<MdAdd className="w-5 h-5" />}
             iconPosition="left"
           >
             Nuevo Cliente
@@ -169,13 +185,9 @@ const CustomersPage: React.FC = () => {
             value={search}
             onChange={(e) => {
               setSearch(e.target.value);
-              setCurrentPage(1);
+              handlePageChange(1);
             }}
-            leftIcon={
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-            }
+            leftIcon={<MdSearch className="w-5 h-5" />}
           />
         </Card>
 
@@ -188,34 +200,10 @@ const CustomersPage: React.FC = () => {
             onDelete={handleDelete}
             onViewDetails={handleViewDetails}
             onCreate={handleCreate}
+            pagination={pagination}
+            onPageChange={handlePageChange}
+            onPageSizeChange={handlePageSizeChange}
           />
-
-          {/* Pagination */}
-          {!loading && customers.length > 0 && totalCustomers > limit && (
-            <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between">
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                Mostrando {((currentPage - 1) * limit) + 1} a {Math.min(currentPage * limit, totalCustomers)} de {totalCustomers}
-              </p>
-              <div className="flex gap-2">
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                  disabled={currentPage === 1}
-                >
-                  Anterior
-                </Button>
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => setCurrentPage((p) => Math.min(Math.ceil(totalCustomers / limit), p + 1))}
-                  disabled={currentPage === Math.ceil(totalCustomers / limit)}
-                >
-                  Siguiente
-                </Button>
-              </div>
-            </div>
-          )}
         </Card>
       </div>
 

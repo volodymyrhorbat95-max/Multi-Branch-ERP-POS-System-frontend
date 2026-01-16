@@ -32,6 +32,7 @@ import PaymentModal from './PaymentModal';
 import SaleSuccessModal from './SaleSuccessModal';
 import { withdrawalService } from '../../services/api';
 import type { CreateWithdrawalData } from '../../types';
+import { MdPayment, MdLock } from 'react-icons/md';
 
 // Debounce hook
 const useDebounce = <T,>(value: T, delay: number): T => {
@@ -518,18 +519,14 @@ const POSPage: React.FC = () => {
           onClick={() => setShowWithdrawalModal(true)}
           className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center gap-2"
         >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
-          </svg>
+          <MdPayment className="w-4 h-4" />
           Retiro de Efectivo
         </button>
         <button
           onClick={() => setShowCloseSessionModal(true)}
           className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-sm transition-colors flex items-center gap-2"
         >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-          </svg>
+          <MdLock className="w-4 h-4" />
           Cerrar Caja
         </button>
       </div>
@@ -645,7 +642,7 @@ const POSPage: React.FC = () => {
       <SaleSuccessModal
         isOpen={showSuccessModal}
         onClose={() => setShowSuccessModal(false)}
-        sale={lastSale}
+        sale={lastSale && 'sale_number' in lastSale ? lastSale : null}
       />
 
       <CloseSessionModal

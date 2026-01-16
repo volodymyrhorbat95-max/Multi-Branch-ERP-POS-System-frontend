@@ -1,6 +1,7 @@
 import React from 'react';
 import { Button } from '../../components/ui';
 import type { CartItem, Customer } from '../../types';
+import { MdClose, MdPerson, MdShoppingCart, MdRemove, MdAdd, MdDelete, MdLocalOffer } from 'react-icons/md';
 
 interface Totals {
   subtotal: number;
@@ -65,9 +66,7 @@ const CartSection: React.FC<CartSectionProps> = ({
               onClick={onRemoveCustomer}
               className="p-2 text-gray-400 hover:text-danger-500 animate-fade-left duration-light-slow"
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
+              <MdClose className="w-5 h-5" />
             </button>
           </div>
         ) : (
@@ -75,9 +74,7 @@ const CartSection: React.FC<CartSectionProps> = ({
             onClick={onAddCustomer}
             className="w-full flex items-center gap-3 px-4 py-3 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-sm hover:border-primary-500 hover:bg-primary-50 dark:hover:bg-primary-900/10 transition-colors animate-fade-up duration-normal"
           >
-            <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-            </svg>
+            <MdPerson className="w-5 h-5 text-gray-400" />
             <span className="text-gray-500 dark:text-gray-400">Agregar cliente</span>
           </button>
         )}
@@ -87,9 +84,7 @@ const CartSection: React.FC<CartSectionProps> = ({
       <div className="flex-1 overflow-y-auto p-4">
         {cart.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-gray-500 animate-fade-up duration-normal">
-            <svg className="w-16 h-16 mb-4 opacity-50 animate-zoom-in duration-light-slow" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-            </svg>
+            <MdShoppingCart className="w-16 h-16 mb-4 opacity-50 animate-zoom-in duration-light-slow" />
             <p className="animate-fade-up duration-slow">Carrito vacío</p>
             <p className="text-sm animate-fade-up duration-very-slow">Agrega productos para comenzar</p>
           </div>
@@ -115,9 +110,7 @@ const CartSection: React.FC<CartSectionProps> = ({
                     onClick={() => onQuantityChange(item.id, item.quantity - 1)}
                     className="w-8 h-8 flex items-center justify-center bg-gray-200 dark:bg-gray-600 rounded-sm hover:bg-gray-300 dark:hover:bg-gray-500"
                   >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
-                    </svg>
+                    <MdRemove className="w-4 h-4" />
                   </button>
                   <span className="w-8 text-center font-medium text-gray-900 dark:text-white">
                     {item.quantity}
@@ -126,9 +119,7 @@ const CartSection: React.FC<CartSectionProps> = ({
                     onClick={() => onQuantityChange(item.id, item.quantity + 1)}
                     className="w-8 h-8 flex items-center justify-center bg-gray-200 dark:bg-gray-600 rounded-sm hover:bg-gray-300 dark:hover:bg-gray-500"
                   >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                    </svg>
+                    <MdAdd className="w-4 h-4" />
                   </button>
                 </div>
 
@@ -142,9 +133,7 @@ const CartSection: React.FC<CartSectionProps> = ({
                   onClick={() => onRemoveItem(item.id)}
                   className="p-2 text-gray-400 hover:text-danger-500"
                 >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                  </svg>
+                  <MdDelete className="w-4 h-4" />
                 </button>
               </div>
             ))}
@@ -172,9 +161,7 @@ const CartSection: React.FC<CartSectionProps> = ({
                     className="p-1 text-gray-400 hover:text-danger-500 transition-colors"
                     title="Quitar descuento"
                   >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                    </svg>
+                    <MdClose className="w-4 h-4" />
                   </button>
                 )}
               </div>
@@ -188,9 +175,7 @@ const CartSection: React.FC<CartSectionProps> = ({
                 onClick={onApplyDiscount}
                 className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/20 border border-primary-300 dark:border-primary-700 rounded-sm transition-colors animate-fade-right duration-normal"
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
-                </svg>
+                <MdLocalOffer className="w-4 h-4" />
                 <span>Aplicar descuento</span>
               </button>
             )

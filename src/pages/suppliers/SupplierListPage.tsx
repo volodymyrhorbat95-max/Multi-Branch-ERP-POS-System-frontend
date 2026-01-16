@@ -1,10 +1,13 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../../store';
 import { loadSuppliers, setCurrentSupplier } from '../../store/slices/supplierSlice';
-import { Card, Button, Input } from '../../components/ui';
+import { Card, Button, Input, Pagination } from '../../components/ui';
+import type { PaginationState } from '../../components/ui/Pagination';
 import { SupplierFormModal } from './SupplierFormModal';
 import type { Supplier } from '../../services/api/supplier.service';
+
+const PAGE_SIZE_OPTIONS = [5, 10, 20, 50];
 
 export const SupplierListPage: React.FC = () => {
   const dispatch = useAppDispatch();
@@ -15,6 +18,10 @@ export const SupplierListPage: React.FC = () => {
   const [showActiveOnly, setShowActiveOnly] = useState(true);
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [editingSupplier, setEditingSupplier] = useState<Supplier | null>(null);
+
+  // Client-side pagination state
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
 
   useEffect(() => {
     dispatch(loadSuppliers({ is_active: showActiveOnly }));
@@ -41,11 +48,56 @@ export const SupplierListPage: React.FC = () => {
     dispatch(loadSuppliers({ is_active: showActiveOnly }));
   };
 
-  const filteredSuppliers = suppliers.filter((supplier) =>
-    searchTerm
-      ? supplier.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        supplier.code.toLowerCase().includes(searchTerm.toLowerCase())
-      : true
+  const filteredSuppliers = useMemo(() => {
+    return suppliers.filter((supplier) =>
+      searchTerm
+        ? supplier.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          supplier.code.toLowerCase().includes(searchTerm.toLowerCase())
+        : true
+    );
+  }, [suppliers, searchTerm]);
+
+  // Calculate paginated data
+  const { paginatedData, pagination } = useMemo(() => {
+    const total_items = filteredSuppliers.length;
+    const total_pages = Math.ceil(total_items / limit);
+    const startIndex = (page - 1) * limit;
+    const endIndex = startIndex + limit;
+
+    return {
+      paginatedData: filteredSuppliers.slice(startIndex, endIndex),
+      pagination: {
+        page,
+        limit,
+        total_items,
+        total_pages,
+      } as PaginationState,
+    };
+  }, [filteredSuppliers, page, limit]);
+
+  // Reset page when filters change
+  useEffect(() => {
+    setPage(1);
+  }, [searchTerm, showActiveOnly]);
+
+  // Pagination handlers
+  const handlePageChange = (newPage: number) => setPage(newPage);
+  const handlePageSizeChange = (newLimit: number) => {
+    setLimit(newLimit);
+    setPage(1);
+  };
+
+  // Reusable pagination component
+  const PaginationNav = () => (
+    <Pagination
+      pagination={pagination}
+      onPageChange={handlePageChange}
+      onPageSizeChange={handlePageSizeChange}
+      loading={loading}
+      variant="extended"
+      showPageSize
+      pageSizeOptions={PAGE_SIZE_OPTIONS}
+    />
   );
 
   return (
@@ -105,108 +157,114 @@ export const SupplierListPage: React.FC = () => {
 
         {/* Suppliers Table */}
         <Card className="overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-50 dark:bg-gray-800">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                    Código
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                    Nombre
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                    Contacto
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                    Email
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                    Teléfono
-                  </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">
-                    Margen %
-                  </th>
-                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">
-                    Estado
-                  </th>
-                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">
-                    Acciones
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                {loading ? (
-                  <tr>
-                    <td colSpan={8} className="px-6 py-12 text-center">
-                      <div className="flex justify-center">
-                        <div className="animate-spin h-8 w-8 border-4 border-primary-500 border-t-transparent rounded-full" />
-                      </div>
-                    </td>
-                  </tr>
-                ) : filteredSuppliers.length === 0 ? (
-                  <tr>
-                    <td colSpan={8} className="px-6 py-12 text-center text-gray-500">
-                      No se encontraron proveedores
-                    </td>
-                  </tr>
-                ) : (
-                  filteredSuppliers.map((supplier) => (
-                    <tr
-                      key={supplier.id}
-                      className="hover:bg-gray-50 dark:hover:bg-gray-800/50"
-                    >
-                      <td className="px-6 py-4 text-sm font-medium text-gray-900 dark:text-white">
-                        {supplier.code}
-                      </td>
-                      <td className="px-6 py-4">
-                        <div>
-                          <p className="text-sm font-medium text-gray-900 dark:text-white">
-                            {supplier.name}
-                          </p>
-                          {supplier.legal_name && (
-                            <p className="text-xs text-gray-500">{supplier.legal_name}</p>
-                          )}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-500">
-                        {supplier.contact_name || '-'}
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-500">
-                        {supplier.email || '-'}
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-500">
-                        {supplier.phone || '-'}
-                      </td>
-                      <td className="px-6 py-4 text-sm text-right text-gray-900 dark:text-white">
-                        {supplier.default_margin_percent.toFixed(1)}%
-                      </td>
-                      <td className="px-6 py-4 text-center">
-                        {supplier.is_active ? (
-                          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400">
-                            Activo
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300">
-                            Inactivo
-                          </span>
-                        )}
-                      </td>
-                      <td className="px-6 py-4 text-center">
-                        <Button
-                          variant="secondary"
-                          size="sm"
-                          onClick={() => handleEdit(supplier)}
-                        >
-                          Editar
-                        </Button>
-                      </td>
+          {loading && suppliers.length === 0 ? (
+            <div className="flex justify-center py-12">
+              <div className="w-8 h-8 border-4 border-primary-200 border-t-primary-500 rounded-full animate-spin" />
+            </div>
+          ) : paginatedData.length === 0 ? (
+            <div className="text-center py-12 text-gray-500">
+              No se encontraron proveedores
+            </div>
+          ) : (
+            <div>
+              {/* Top Pagination */}
+              <div className="border-b border-gray-200 dark:border-gray-700">
+                <PaginationNav />
+              </div>
+
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-primary-600 dark:bg-primary-700">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
+                        Código
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
+                        Nombre
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
+                        Contacto
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
+                        Email
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
+                        Teléfono
+                      </th>
+                      <th className="px-6 py-3 text-right text-xs font-medium text-white uppercase tracking-wider">
+                        Margen %
+                      </th>
+                      <th className="px-6 py-3 text-center text-xs font-medium text-white uppercase tracking-wider">
+                        Estado
+                      </th>
+                      <th className="px-6 py-3 text-center text-xs font-medium text-white uppercase tracking-wider">
+                        Acciones
+                      </th>
                     </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+                  </thead>
+                  <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
+                    {paginatedData.map((supplier) => (
+                      <tr
+                        key={supplier.id}
+                        className="hover:bg-gray-50 dark:hover:bg-gray-800"
+                      >
+                        <td className="px-6 py-4 text-sm font-medium text-gray-900 dark:text-white">
+                          {supplier.code}
+                        </td>
+                        <td className="px-6 py-4">
+                          <div>
+                            <p className="text-sm font-medium text-gray-900 dark:text-white">
+                              {supplier.name}
+                            </p>
+                            {supplier.legal_name && (
+                              <p className="text-xs text-gray-500">{supplier.legal_name}</p>
+                            )}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-500">
+                          {supplier.contact_name || '-'}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-500">
+                          {supplier.email || '-'}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-500">
+                          {supplier.phone || '-'}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-right text-gray-900 dark:text-white">
+                          {supplier.default_margin_percent.toFixed(1)}%
+                        </td>
+                        <td className="px-6 py-4 text-center">
+                          {supplier.is_active ? (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400">
+                              Activo
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300">
+                              Inactivo
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-6 py-4 text-center">
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            onClick={() => handleEdit(supplier)}
+                          >
+                            Editar
+                          </Button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Bottom Pagination */}
+              <div className="border-t border-gray-200 dark:border-gray-700">
+                <PaginationNav />
+              </div>
+            </div>
+          )}
         </Card>
       </div>
 

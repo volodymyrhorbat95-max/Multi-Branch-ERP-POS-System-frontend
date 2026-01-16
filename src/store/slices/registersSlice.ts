@@ -35,6 +35,7 @@ interface RegistersState {
   currentSession: RegisterSession | null;
   sessionSummary: SessionSummary | null;
   sessions: RegisterSession[];
+  totalSessions: number;
   loading: boolean;
   error: string | null;
 }
@@ -45,6 +46,7 @@ const initialState: RegistersState = {
   currentSession: null,
   sessionSummary: null,
   sessions: [],
+  totalSessions: 0,
   loading: false,
   error: null,
 };
@@ -370,6 +372,7 @@ const registersSlice = createSlice({
     // Load Session History
     builder.addCase(loadSessionHistory.fulfilled, (state, action) => {
       state.sessions = action.payload.sessions;
+      state.totalSessions = action.payload.total;
     });
 
     // Force Close Session

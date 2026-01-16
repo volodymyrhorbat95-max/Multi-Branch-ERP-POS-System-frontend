@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { useAppDispatch } from '../../store/hooks';
+import { useAppDispatch } from '../../store';
 import { retryInvoice } from '../../store/slices/invoicesSlice';
 import { Modal, Button } from '../../components/ui';
 import type { Invoice } from '../../types';
+import { MdRefresh, MdPrint } from 'react-icons/md';
 
 interface InvoiceDetailModalProps {
   invoice: Invoice;
@@ -241,11 +242,7 @@ const InvoiceDetailModal: React.FC<InvoiceDetailModalProps> = ({
               variant="primary"
               onClick={handleRetry}
               disabled={retrying}
-              icon={
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                </svg>
-              }
+              icon={<MdRefresh className="w-5 h-5" />}
               iconPosition="left"
             >
               {retrying ? 'Reintentando...' : 'Reintentar'}
@@ -257,11 +254,7 @@ const InvoiceDetailModal: React.FC<InvoiceDetailModalProps> = ({
             <Button
               variant="secondary"
               onClick={handlePrintPDF}
-              icon={
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
-                </svg>
-              }
+              icon={<MdPrint className="w-5 h-5" />}
               iconPosition="left"
             >
               Descargar PDF

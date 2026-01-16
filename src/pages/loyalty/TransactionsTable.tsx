@@ -1,5 +1,6 @@
 import React from 'react';
 import { Card } from '../../components/ui';
+import Pagination, { type PaginationState } from '../../components/ui/Pagination';
 import type { PointsTransaction, CreditTransaction } from '../../services/api/loyalty.service';
 
 type LoyaltyTransaction = PointsTransaction | CreditTransaction;
@@ -9,14 +10,34 @@ interface TransactionsTableProps {
   loading: boolean;
   formatCurrency: (amount: number) => string;
   formatDateTime: (date: string) => string;
+  pagination: PaginationState;
+  onPageChange: (page: number) => void;
+  onPageSizeChange: (limit: number) => void;
 }
+
+const PAGE_SIZE_OPTIONS = [5, 10, 20, 50];
 
 const TransactionsTable: React.FC<TransactionsTableProps> = ({
   transactions,
   loading,
   formatCurrency,
   formatDateTime,
+  pagination,
+  onPageChange,
+  onPageSizeChange,
 }) => {
+  // Reusable pagination component for top and bottom
+  const PaginationNav = () => (
+    <Pagination
+      pagination={pagination}
+      onPageChange={onPageChange}
+      onPageSizeChange={onPageSizeChange}
+      loading={loading}
+      variant="extended"
+      showPageSize
+      pageSizeOptions={PAGE_SIZE_OPTIONS}
+    />
+  );
   const isPointsTransaction = (tx: LoyaltyTransaction): tx is PointsTransaction => {
     return 'points' in tx;
   };
@@ -37,30 +58,46 @@ const TransactionsTable: React.FC<TransactionsTableProps> = ({
     return styles[type] || { label: type, color: 'text-gray-500' };
   };
 
-  return (
-    <Card className="overflow-hidden animate-fade-up duration-normal">
-      {loading ? (
+  if (loading && transactions.length === 0) {
+    return (
+      <Card className="overflow-hidden animate-fade-up duration-normal">
         <div className="flex justify-center py-12 animate-zoom-in duration-fast">
           <div className="w-8 h-8 border-4 border-primary-200 border-t-primary-500 rounded-full animate-spin" />
         </div>
-      ) : transactions.length === 0 ? (
+      </Card>
+    );
+  }
+
+  if (transactions.length === 0) {
+    return (
+      <Card className="overflow-hidden animate-fade-up duration-normal">
         <div className="text-center py-12 text-gray-500 animate-fade-down duration-normal">
           <p>No hay transacciones registradas</p>
         </div>
-      ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-gray-50 dark:bg-gray-800 animate-fade-down duration-fast">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase animate-fade-right duration-very-fast">Fecha</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase animate-fade-right duration-fast">Cliente</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase animate-fade-right duration-normal">Tipo</th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase animate-fade-right duration-light-slow">Puntos</th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase animate-fade-right duration-slow">Crédito</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase animate-fade-right duration-very-slow">Descripción</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+      </Card>
+    );
+  }
+
+  return (
+    <Card className="overflow-hidden animate-fade-up duration-normal">
+      {/* Top Pagination */}
+      <div className="border-b border-gray-200 dark:border-gray-700">
+        <PaginationNav />
+      </div>
+
+      <div className="overflow-x-auto">
+        <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+          <thead className="bg-primary-600 dark:bg-primary-700">
+            <tr>
+              <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Fecha</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Cliente</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Tipo</th>
+              <th className="px-6 py-3 text-right text-xs font-medium text-white uppercase tracking-wider">Puntos</th>
+              <th className="px-6 py-3 text-right text-xs font-medium text-white uppercase tracking-wider">Crédito</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Descripción</th>
+            </tr>
+          </thead>
+          <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
               {transactions.map((tx, index) => {
                 const style = getTransactionStyle(tx.transaction_type);
                 return (
@@ -108,10 +145,14 @@ const TransactionsTable: React.FC<TransactionsTableProps> = ({
                   </tr>
                 );
               })}
-            </tbody>
-          </table>
-        </div>
-      )}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Bottom Pagination */}
+      <div className="border-t border-gray-200 dark:border-gray-700">
+        <PaginationNav />
+      </div>
     </Card>
   );
 };

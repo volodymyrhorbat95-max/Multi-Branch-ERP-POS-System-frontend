@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useAppSelector } from '../../store';
 import { DailyReportData, ShiftReportData } from '../../types';
 import reportService from '../../services/api/report.service';
@@ -9,13 +9,7 @@ const DailyReport: React.FC = () => {
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    if (currentBranch?.id) {
-      loadReport();
-    }
-  }, [currentBranch?.id, selectedDate]);
-
-  const loadReport = async () => {
+  const loadReport = useCallback(async () => {
     if (!currentBranch?.id) return;
 
     setLoading(true);
@@ -29,7 +23,13 @@ const DailyReport: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentBranch?.id, selectedDate]);
+
+  useEffect(() => {
+    if (currentBranch?.id) {
+      loadReport();
+    }
+  }, [currentBranch?.id, loadReport]);
 
   const formatCurrency = (amount: number | null) => {
     if (amount === null) return '-';

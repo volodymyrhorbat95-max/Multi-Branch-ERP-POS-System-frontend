@@ -11,6 +11,7 @@ import { Card, Button, Input } from '../../components/ui';
 import { NeighborhoodMappingsTable } from './NeighborhoodMappingsTable';
 import { NeighborhoodMappingFormModal } from './NeighborhoodMappingFormModal';
 import type { NeighborhoodMapping, NeighborhoodMappingFormData } from '../../types';
+import { MdHome, MdDescription, MdLocationOn } from 'react-icons/md';
 
 const initialFormData: NeighborhoodMappingFormData = {
   neighborhood_name: '',
@@ -169,9 +170,7 @@ const NeighborhoodMappingsPage: React.FC = () => {
           <Card className="animate-fade-right duration-fast">
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 bg-primary-100 dark:bg-primary-900 rounded-sm flex items-center justify-center">
-                <svg className="w-6 h-6 text-primary-600 dark:text-primary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                </svg>
+                <MdHome className="w-6 h-6 text-primary-600 dark:text-primary-400" />
               </div>
               <div>
                 <p className="text-sm text-gray-500 dark:text-gray-400">Total Barrios</p>
@@ -185,9 +184,7 @@ const NeighborhoodMappingsPage: React.FC = () => {
           <Card className="animate-fade-up duration-light-slow">
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900 rounded-sm flex items-center justify-center">
-                <svg className="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
+                <MdDescription className="w-6 h-6 text-blue-600 dark:text-blue-400" />
               </div>
               <div>
                 <p className="text-sm text-gray-500 dark:text-gray-400">Con Código Postal</p>
@@ -201,10 +198,7 @@ const NeighborhoodMappingsPage: React.FC = () => {
           <Card className="animate-fade-left duration-normal">
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 bg-green-100 dark:bg-green-900 rounded-sm flex items-center justify-center">
-                <svg className="w-6 h-6 text-green-600 dark:text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
+                <MdLocationOn className="w-6 h-6 text-green-600 dark:text-green-400" />
               </div>
               <div>
                 <p className="text-sm text-gray-500 dark:text-gray-400">Zonas Activas</p>

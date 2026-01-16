@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import type { WithdrawalType, CreateWithdrawalData } from '../../types';
+import { MdClose } from 'react-icons/md';
 
 interface WithdrawalModalProps {
   isOpen: boolean;
@@ -73,9 +74,7 @@ const WithdrawalModal: React.FC<WithdrawalModalProps> = ({ isOpen, onClose, onSu
             onClick={onClose}
             className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
           >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
+            <MdClose className="w-6 h-6" />
           </button>
         </div>
 

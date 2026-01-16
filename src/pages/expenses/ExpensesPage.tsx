@@ -1,25 +1,35 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { useAppDispatch, useAppSelector } from '../../store';
 import {
   loadExpenses,
   loadCategories,
   loadExpenseStats,
-  setFilters,
   clearFilters,
   approveExpense,
   rejectExpense,
   markExpenseAsPaid,
   deleteExpense,
+  setPage,
+  setLimit,
 } from '../../store/slices/expenseSlice';
 import { Card, Button } from '../../components/ui';
 import { ExpenseFormModal } from './ExpenseFormModal';
 import { ExpensesTable } from './ExpensesTable';
 import { ExpenseStatsCards } from './ExpenseStatsCards';
 import type { Expense, ExpenseStatus, UUID } from '../../types';
+import type { PaginationState } from '../../components/ui/Pagination';
 
 const ExpensesPage: React.FC = () => {
   const dispatch = useAppDispatch();
-  const { expenses, categories, stats, filters, loading } = useAppSelector((state) => state.expense);
+  const { expenses, categories, stats, loading, pagination: reduxPagination } = useAppSelector((state) => state.expense);
+
+  // Map Redux pagination to PaginationState format
+  const pagination: PaginationState = useMemo(() => ({
+    page: reduxPagination.page,
+    limit: reduxPagination.limit,
+    total_items: reduxPagination.total,
+    total_pages: reduxPagination.pages,
+  }), [reduxPagination]);
 
   // Local state
   const [showModal, setShowModal] = useState(false);
@@ -35,24 +45,44 @@ const ExpensesPage: React.FC = () => {
   const [dateTo, setDateTo] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
 
-  // Load expenses, categories, and stats
+  // Load categories and stats on mount
   useEffect(() => {
     dispatch(loadCategories());
     dispatch(loadExpenseStats());
   }, [dispatch]);
 
-  // Load expenses when filters change
+  // Load expenses when pagination or filters change
   useEffect(() => {
-    const filterParams: any = {};
-    if (statusFilter) filterParams.status = statusFilter;
-    if (categoryFilter) filterParams.category_id = categoryFilter;
-    if (dateFrom) filterParams.from_date = dateFrom;
-    if (dateTo) filterParams.to_date = dateTo;
-    if (searchTerm) filterParams.search = searchTerm;
+    dispatch(loadExpenses({
+      page: reduxPagination.page,
+      limit: reduxPagination.limit,
+      status: statusFilter || undefined,
+      category_id: categoryFilter || undefined,
+      from_date: dateFrom || undefined,
+      to_date: dateTo || undefined,
+      search: searchTerm || undefined,
+    }));
+  }, [dispatch, reduxPagination.page, reduxPagination.limit, statusFilter, categoryFilter, dateFrom, dateTo, searchTerm]);
 
-    dispatch(setFilters(filterParams));
-    dispatch(loadExpenses(filterParams));
-  }, [dispatch, statusFilter, categoryFilter, dateFrom, dateTo, searchTerm]);
+  // Pagination handlers
+  const handlePageChange = (page: number) => {
+    dispatch(setPage(page));
+  };
+
+  const handlePageSizeChange = (limit: number) => {
+    dispatch(setLimit(limit));
+  };
+
+  // Helper to get current filter params for reloading
+  const getCurrentFilterParams = useCallback(() => ({
+    page: reduxPagination.page,
+    limit: reduxPagination.limit,
+    status: statusFilter || undefined,
+    category_id: categoryFilter || undefined,
+    from_date: dateFrom || undefined,
+    to_date: dateTo || undefined,
+    search: searchTerm || undefined,
+  }), [reduxPagination.page, reduxPagination.limit, statusFilter, categoryFilter, dateFrom, dateTo, searchTerm]);
 
   // Open create modal
   const handleCreate = () => {
@@ -78,12 +108,12 @@ const ExpensesPage: React.FC = () => {
       if (window.confirm('¿Estás seguro de aprobar este gasto?')) {
         const result = await dispatch(approveExpense(id));
         if (approveExpense.fulfilled.match(result)) {
-          dispatch(loadExpenses(filters));
+          dispatch(loadExpenses(getCurrentFilterParams()));
           dispatch(loadExpenseStats());
         }
       }
     },
-    [dispatch, filters]
+    [dispatch, getCurrentFilterParams]
   );
 
   // Reject expense
@@ -103,11 +133,11 @@ const ExpensesPage: React.FC = () => {
         setShowRejectModal(false);
         setRejectingExpenseId(null);
         setRejectionReason('');
-        dispatch(loadExpenses(filters));
+        dispatch(loadExpenses(getCurrentFilterParams()));
         dispatch(loadExpenseStats());
       }
     },
-    [dispatch, rejectingExpenseId, rejectionReason, filters]
+    [dispatch, rejectingExpenseId, rejectionReason, getCurrentFilterParams]
   );
 
   // Mark as paid
@@ -116,12 +146,12 @@ const ExpensesPage: React.FC = () => {
       if (window.confirm('¿Estás seguro de marcar este gasto como pagado?')) {
         const result = await dispatch(markExpenseAsPaid({ id }));
         if (markExpenseAsPaid.fulfilled.match(result)) {
-          dispatch(loadExpenses(filters));
+          dispatch(loadExpenses(getCurrentFilterParams()));
           dispatch(loadExpenseStats());
         }
       }
     },
-    [dispatch, filters]
+    [dispatch, getCurrentFilterParams]
   );
 
   // Delete expense
@@ -130,12 +160,12 @@ const ExpensesPage: React.FC = () => {
       if (window.confirm('¿Estás seguro de eliminar este gasto? Esta acción no se puede deshacer.')) {
         const result = await dispatch(deleteExpense(id));
         if (deleteExpense.fulfilled.match(result)) {
-          dispatch(loadExpenses(filters));
+          dispatch(loadExpenses(getCurrentFilterParams()));
           dispatch(loadExpenseStats());
         }
       }
     },
-    [dispatch, filters]
+    [dispatch, getCurrentFilterParams]
   );
 
   // Clear all filters
@@ -182,7 +212,10 @@ const ExpensesPage: React.FC = () => {
               <input
                 type="text"
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                  dispatch(setPage(1));
+                }}
                 placeholder="Buscar por descripción..."
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-fast"
               />
@@ -194,7 +227,10 @@ const ExpensesPage: React.FC = () => {
               </label>
               <select
                 value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value as ExpenseStatus | '')}
+                onChange={(e) => {
+                  setStatusFilter(e.target.value as ExpenseStatus | '');
+                  dispatch(setPage(1));
+                }}
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-fast"
               >
                 <option value="">Todos los estados</option>
@@ -212,7 +248,10 @@ const ExpensesPage: React.FC = () => {
               </label>
               <select
                 value={categoryFilter}
-                onChange={(e) => setCategoryFilter(e.target.value)}
+                onChange={(e) => {
+                  setCategoryFilter(e.target.value);
+                  dispatch(setPage(1));
+                }}
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-fast"
               >
                 <option value="">Todas las categorías</option>
@@ -231,7 +270,10 @@ const ExpensesPage: React.FC = () => {
               <input
                 type="date"
                 value={dateFrom}
-                onChange={(e) => setDateFrom(e.target.value)}
+                onChange={(e) => {
+                  setDateFrom(e.target.value);
+                  dispatch(setPage(1));
+                }}
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-fast"
               />
             </div>
@@ -243,7 +285,10 @@ const ExpensesPage: React.FC = () => {
               <input
                 type="date"
                 value={dateTo}
-                onChange={(e) => setDateTo(e.target.value)}
+                onChange={(e) => {
+                  setDateTo(e.target.value);
+                  dispatch(setPage(1));
+                }}
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-fast"
               />
             </div>
@@ -263,6 +308,9 @@ const ExpensesPage: React.FC = () => {
           <ExpensesTable
             expenses={expenses}
             loading={loading}
+            pagination={pagination}
+            onPageChange={handlePageChange}
+            onPageSizeChange={handlePageSizeChange}
             onView={handleView}
             onEdit={handleEdit}
             onApprove={handleApprove}

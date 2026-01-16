@@ -1,28 +1,29 @@
 import React from 'react';
 import { useAppDispatch, useAppSelector } from '../../store';
 import { deactivateUser, unlockUser, resetUserPassword } from '../../store/slices/usersSlice';
-import { Button } from '../../components/ui';
+import { Button, Pagination } from '../../components/ui';
+import type { PaginationState } from '../../components/ui/Pagination';
 import type { User } from '../../types';
+import { MdGroup, MdLock, MdEdit, MdLockOpen, MdKey, MdBlock } from 'react-icons/md';
 
 interface UserListProps {
   users: User[];
-  pagination: {
-    page: number;
-    limit: number;
-    total: number;
-    pages: number;
-  };
+  pagination: PaginationState;
   onPageChange: (page: number) => void;
+  onPageSizeChange?: (limit: number) => void;
   onEditUser: (user: User) => void;
   onRefresh: () => void;
+  loading?: boolean;
 }
 
 const UserList: React.FC<UserListProps> = ({
   users,
   pagination,
   onPageChange,
+  onPageSizeChange,
   onEditUser,
   onRefresh,
+  loading = false,
 }) => {
   const dispatch = useAppDispatch();
   const { user: currentUser } = useAppSelector((state) => state.auth);
@@ -101,19 +102,7 @@ const UserList: React.FC<UserListProps> = ({
               <tr>
                 <td colSpan={7} className="px-6 py-12 text-center">
                   <div className="text-gray-500 dark:text-gray-400">
-                    <svg
-                      className="w-12 h-12 mx-auto mb-4 opacity-50"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
-                      />
-                    </svg>
+                    <MdGroup className="w-12 h-12 mx-auto mb-4 opacity-50" />
                     <p className="text-lg font-medium">No se encontraron usuarios</p>
                     <p className="text-sm mt-1">
                       Intenta ajustar los filtros o crea un nuevo usuario
@@ -170,13 +159,7 @@ const UserList: React.FC<UserListProps> = ({
                     <td className="px-6 py-4 whitespace-nowrap">
                       {locked ? (
                         <span className="px-2 py-1 text-xs font-medium rounded-sm bg-warning-100 dark:bg-warning-900/30 text-warning-800 dark:text-warning-300 flex items-center gap-1 w-fit">
-                          <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                            <path
-                              fillRule="evenodd"
-                              d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z"
-                              clipRule="evenodd"
-                            />
-                          </svg>
+                          <MdLock className="w-3 h-3" />
                           Bloqueado
                         </span>
                       ) : user.is_active ? (
@@ -199,14 +182,7 @@ const UserList: React.FC<UserListProps> = ({
                           className="text-primary-600 dark:text-primary-400 hover:text-primary-900 dark:hover:text-primary-300"
                           title="Editar"
                         >
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                            />
-                          </svg>
+                          <MdEdit className="w-5 h-5" />
                         </button>
 
                         {locked && (
@@ -215,14 +191,7 @@ const UserList: React.FC<UserListProps> = ({
                             className="text-warning-600 dark:text-warning-400 hover:text-warning-900 dark:hover:text-warning-300"
                             title="Desbloquear"
                           >
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z"
-                              />
-                            </svg>
+                            <MdLockOpen className="w-5 h-5" />
                           </button>
                         )}
 
@@ -233,14 +202,7 @@ const UserList: React.FC<UserListProps> = ({
                               className="text-blue-600 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300"
                               title="Restablecer contraseña"
                             >
-                              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"
-                                />
-                              </svg>
+                              <MdKey className="w-5 h-5" />
                             </button>
 
                             {user.is_active && (
@@ -249,14 +211,7 @@ const UserList: React.FC<UserListProps> = ({
                                 className="text-danger-600 dark:text-danger-400 hover:text-danger-900 dark:hover:text-danger-300"
                                 title="Desactivar"
                               >
-                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"
-                                  />
-                                </svg>
+                                <MdBlock className="w-5 h-5" />
                               </button>
                             )}
                           </>
@@ -272,67 +227,14 @@ const UserList: React.FC<UserListProps> = ({
       </div>
 
       {/* Pagination */}
-      {pagination.pages > 1 && (
-        <div className="bg-gray-50 dark:bg-gray-700 px-6 py-4 border-t border-gray-200 dark:border-gray-600">
-          <div className="flex items-center justify-between">
-            <div className="text-sm text-gray-700 dark:text-gray-300">
-              Mostrando{' '}
-              <span className="font-medium">
-                {(pagination.page - 1) * pagination.limit + 1}
-              </span>{' '}
-              a{' '}
-              <span className="font-medium">
-                {Math.min(pagination.page * pagination.limit, pagination.total)}
-              </span>{' '}
-              de <span className="font-medium">{pagination.total}</span> usuarios
-            </div>
-            <div className="flex items-center gap-2">
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={() => onPageChange(pagination.page - 1)}
-                disabled={pagination.page === 1}
-              >
-                Anterior
-              </Button>
-              <div className="flex items-center gap-1">
-                {Array.from({ length: pagination.pages }, (_, i) => i + 1)
-                  .filter(
-                    (page) =>
-                      page === 1 ||
-                      page === pagination.pages ||
-                      Math.abs(page - pagination.page) <= 1
-                  )
-                  .map((page, index, array) => (
-                    <React.Fragment key={page}>
-                      {index > 0 && array[index - 1] !== page - 1 && (
-                        <span className="px-2 text-gray-500">...</span>
-                      )}
-                      <button
-                        onClick={() => onPageChange(page)}
-                        className={`px-3 py-1 rounded-sm text-sm font-medium transition-colors ${
-                          page === pagination.page
-                            ? 'bg-primary-500 text-white'
-                            : 'bg-white dark:bg-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-500'
-                        }`}
-                      >
-                        {page}
-                      </button>
-                    </React.Fragment>
-                  ))}
-              </div>
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={() => onPageChange(pagination.page + 1)}
-                disabled={pagination.page === pagination.pages}
-              >
-                Siguiente
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
+      <Pagination
+        pagination={pagination}
+        onPageChange={onPageChange}
+        onPageSizeChange={onPageSizeChange}
+        loading={loading}
+        variant="extended"
+        showPageSize
+      />
     </div>
   );
 };

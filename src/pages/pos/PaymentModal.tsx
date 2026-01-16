@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Modal, Input, Button } from '../../components/ui';
 import type { SalePayment, Customer } from '../../types';
+import { MdAttachMoney, MdClose } from 'react-icons/md';
 
 interface PaymentModalProps {
   isOpen: boolean;
@@ -269,9 +270,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
         {customer && (Number(customer.loyalty_points) > 0 || Number(customer.credit_balance) > 0) && (
           <div className="p-4 bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 rounded-sm border border-purple-200 dark:border-purple-800 animate-fade-down duration-normal">
             <h3 className="font-medium text-gray-900 dark:text-white mb-3 flex items-center gap-2">
-              <svg className="w-5 h-5 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
+              <MdAttachMoney className="w-5 h-5 text-purple-500" />
               Puntos y Crédito
             </h3>
 
@@ -318,14 +317,14 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
               )}
 
               {/* Credit Usage */}
-              {customer.credit_balance > 0 && (
+              {Number(customer.credit_balance) > 0 && (
                 <div className="space-y-2 animate-fade-up duration-light-slow">
                   <div className="flex justify-between items-center">
                     <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
                       Usar Crédito
                     </label>
                     <span className="text-xs text-pink-600 dark:text-pink-400 font-medium">
-                      Disponible: {formatCurrency(customer.credit_balance)}
+                      Disponible: {formatCurrency(Number(customer.credit_balance))}
                     </span>
                   </div>
                   <Input
@@ -585,9 +584,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
                       onClick={() => onRemovePayment(index)}
                       className="p-1 text-gray-400 hover:text-danger-500 animate-zoom-in duration-normal"
                     >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                      </svg>
+                      <MdClose className="w-4 h-4" />
                     </button>
                   </div>
                 </div>

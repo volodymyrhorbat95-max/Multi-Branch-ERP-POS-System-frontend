@@ -1,6 +1,8 @@
 import React from 'react';
 import { Button } from '../../components/ui';
+import Pagination, { type PaginationState } from '../../components/ui/Pagination';
 import type { Product } from '../../types';
+import { MdInventory, MdEdit, MdDelete } from 'react-icons/md';
 
 interface ProductsTableProps {
   products: Product[];
@@ -8,7 +10,12 @@ interface ProductsTableProps {
   onEdit: (product: Product) => void;
   onDelete: (id: string) => void;
   onCreate: () => void;
+  pagination: PaginationState;
+  onPageChange: (page: number) => void;
+  onPageSizeChange: (limit: number) => void;
 }
+
+const PAGE_SIZE_OPTIONS = [5, 10, 20, 50];
 
 export const ProductsTable: React.FC<ProductsTableProps> = ({
   products,
@@ -16,7 +23,22 @@ export const ProductsTable: React.FC<ProductsTableProps> = ({
   onEdit,
   onDelete,
   onCreate,
+  pagination,
+  onPageChange,
+  onPageSizeChange,
 }) => {
+  // Reusable pagination component for top and bottom
+  const PaginationNav = () => (
+    <Pagination
+      pagination={pagination}
+      onPageChange={onPageChange}
+      onPageSizeChange={onPageSizeChange}
+      loading={loading}
+      variant="extended"
+      showPageSize
+      pageSizeOptions={PAGE_SIZE_OPTIONS}
+    />
+  );
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('es-AR', {
       style: 'currency',
@@ -48,9 +70,7 @@ export const ProductsTable: React.FC<ProductsTableProps> = ({
   if (products.length === 0) {
     return (
       <div className="text-center py-12 text-gray-500 dark:text-gray-400 animate-fade-up duration-normal">
-        <svg className="w-12 h-12 mx-auto mb-4 opacity-50 animate-zoom-in duration-fast" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-        </svg>
+        <MdInventory className="w-12 h-12 mx-auto mb-4 opacity-50 animate-zoom-in duration-fast" />
         <p className="animate-fade-up duration-light-slow">No hay productos</p>
         <Button variant="primary" className="mt-4 animate-zoom-in duration-slow" onClick={onCreate}>
           Crear primer producto
@@ -60,34 +80,40 @@ export const ProductsTable: React.FC<ProductsTableProps> = ({
   }
 
   return (
-    <div className="overflow-x-auto animate-fade-up duration-normal">
-      <table className="w-full">
-        <thead className="bg-gray-50 dark:bg-gray-800 animate-fade-down duration-fast">
-          <tr>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider animate-fade-right duration-very-fast">
-              Producto
-            </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider animate-fade-right duration-fast">
-              Categoría
-            </th>
-            <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider animate-fade-right duration-normal">
-              Costo
-            </th>
-            <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider animate-fade-right duration-light-slow">
-              Precio
-            </th>
-            <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider animate-fade-left duration-light-slow">
-              Stock
-            </th>
-            <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider animate-fade-left duration-normal">
-              Estado
-            </th>
-            <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider animate-fade-left duration-fast">
-              Acciones
-            </th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+    <>
+      {/* Top Pagination */}
+      <div className="border-b border-gray-200 dark:border-gray-700">
+        <PaginationNav />
+      </div>
+
+      <div className="overflow-x-auto">
+        <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+          <thead className="bg-primary-600 dark:bg-primary-700">
+            <tr>
+              <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
+                Producto
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
+                Categoría
+              </th>
+              <th className="px-6 py-3 text-right text-xs font-medium text-white uppercase tracking-wider">
+                Costo
+              </th>
+              <th className="px-6 py-3 text-right text-xs font-medium text-white uppercase tracking-wider">
+                Precio
+              </th>
+              <th className="px-6 py-3 text-center text-xs font-medium text-white uppercase tracking-wider">
+                Stock
+              </th>
+              <th className="px-6 py-3 text-center text-xs font-medium text-white uppercase tracking-wider">
+                Estado
+              </th>
+              <th className="px-6 py-3 text-right text-xs font-medium text-white uppercase tracking-wider">
+                Acciones
+              </th>
+            </tr>
+          </thead>
+          <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
           {products.map((product) => (
             <tr
               key={product.id}
@@ -103,9 +129,7 @@ export const ProductsTable: React.FC<ProductsTableProps> = ({
                         className="w-full h-full object-cover rounded-sm"
                       />
                     ) : (
-                      <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                      </svg>
+                      <MdInventory className="w-5 h-5 text-gray-400" />
                     )}
                   </div>
                   <div>
@@ -151,24 +175,26 @@ export const ProductsTable: React.FC<ProductsTableProps> = ({
                     onClick={() => onEdit(product)}
                     className="p-2 text-gray-400 hover:text-primary-500 animate-zoom-in duration-very-fast"
                   >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                    </svg>
+                    <MdEdit className="w-5 h-5" />
                   </button>
                   <button
                     onClick={() => onDelete(product.id)}
                     className="p-2 text-gray-400 hover:text-danger-500 animate-zoom-in duration-fast"
                   >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                    </svg>
+                    <MdDelete className="w-5 h-5" />
                   </button>
                 </div>
               </td>
             </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Bottom Pagination */}
+      <div className="border-t border-gray-200 dark:border-gray-700">
+        <PaginationNav />
+      </div>
+    </>
   );
 };

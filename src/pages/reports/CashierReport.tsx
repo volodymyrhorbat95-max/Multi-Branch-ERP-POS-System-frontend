@@ -1,7 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch, RootState } from '../../store';
 import { fetchCashierReport } from '../../store/slices/reportsSlice';
+import Pagination, { type PaginationState } from '../../components/ui/Pagination';
+
+const PAGE_SIZE_OPTIONS = [5, 10, 20, 50];
 
 const CashierReport: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -12,6 +15,54 @@ const CashierReport: React.FC = () => {
     start_date: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
     end_date: new Date().toISOString().split('T')[0]
   });
+
+  // Client-side pagination state
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
+
+  // Calculate paginated data
+  const { paginatedData, pagination } = useMemo(() => {
+    const cashiers = cashierReport?.cashiers || [];
+    const total_items = cashiers.length;
+    const total_pages = Math.ceil(total_items / limit);
+    const startIndex = (page - 1) * limit;
+    const endIndex = startIndex + limit;
+
+    return {
+      paginatedData: cashiers.slice(startIndex, endIndex),
+      pagination: {
+        page,
+        limit,
+        total_items,
+        total_pages,
+      } as PaginationState,
+    };
+  }, [cashierReport?.cashiers, page, limit]);
+
+  // Reset page when filters change
+  useEffect(() => {
+    setPage(1);
+  }, [filters]);
+
+  // Pagination handlers
+  const handlePageChange = (newPage: number) => setPage(newPage);
+  const handlePageSizeChange = (newLimit: number) => {
+    setLimit(newLimit);
+    setPage(1);
+  };
+
+  // Reusable pagination component
+  const PaginationNav = () => (
+    <Pagination
+      pagination={pagination}
+      onPageChange={handlePageChange}
+      onPageSizeChange={handlePageSizeChange}
+      loading={loading}
+      variant="extended"
+      showPageSize
+      pageSizeOptions={PAGE_SIZE_OPTIONS}
+    />
+  );
 
   useEffect(() => {
     dispatch(fetchCashierReport(filters));
@@ -61,20 +112,25 @@ const CashierReport: React.FC = () => {
         </div>
       ) : cashierReport ? (
         <div className="bg-white dark:bg-gray-800 rounded-sm shadow-md overflow-hidden animate-fade-up duration-normal">
+          {/* Top Pagination */}
+          <div className="border-b border-gray-200 dark:border-gray-700">
+            <PaginationNav />
+          </div>
+
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-              <thead className="bg-gray-50 dark:bg-gray-700 animate-fade-down duration-fast">
+              <thead className="bg-primary-600 dark:bg-primary-700">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Cajero</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Ventas</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Ingresos</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Ticket Promedio</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Discrepancia</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Cajero</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Ventas</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Ingresos</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Ticket Promedio</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Discrepancia</th>
                 </tr>
               </thead>
               <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                {cashierReport.cashiers?.map((cashier: any, idx: number) => (
-                  <tr key={cashier.cashier_id} className={`hover:bg-gray-50 dark:hover:bg-gray-700 animate-zoom-in ${idx % 3 === 0 ? 'duration-fast' : idx % 3 === 1 ? 'duration-normal' : 'duration-light-slow'}`}>
+                {paginatedData.map((cashier: any) => (
+                  <tr key={cashier.cashier_id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">{cashier.name}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">{cashier.total_sales}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">{formatCurrency(cashier.total_revenue)}</td>
@@ -84,6 +140,11 @@ const CashierReport: React.FC = () => {
                 ))}
               </tbody>
             </table>
+          </div>
+
+          {/* Bottom Pagination */}
+          <div className="border-t border-gray-200 dark:border-gray-700">
+            <PaginationNav />
           </div>
         </div>
       ) : null}

@@ -5,6 +5,7 @@ import { useNavigation } from '../../hooks';
 import { Button, Card } from '../../components/ui';
 import { userService } from '../../services/api';
 import type { User, Branch } from '../../types';
+import { MdQrCode2, MdArrowBack, MdBackspace, MdAlternateEmail } from 'react-icons/md';
 
 const PIN_LENGTH = 4;
 
@@ -203,19 +204,7 @@ const PINLoginPageNew: React.FC = () => {
           {/* Header */}
           <div className="text-center mb-8 animate-zoom-in duration-fast">
             <div className="w-16 h-16 bg-primary-500 rounded-sm mx-auto mb-4 flex items-center justify-center">
-              <svg
-                className="w-10 h-10 text-white"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"
-                />
-              </svg>
+              <MdQrCode2 className="w-10 h-10 text-white" />
             </div>
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
               Ingreso Rápido
@@ -277,9 +266,7 @@ const PINLoginPageNew: React.FC = () => {
                   onClick={handleBack}
                   className="text-sm text-gray-600 dark:text-gray-400 hover:text-primary-500 flex items-center gap-1"
                 >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                  </svg>
+                  <MdArrowBack className="w-4 h-4" />
                   Volver
                 </button>
                 <div className="text-sm text-gray-600 dark:text-gray-400">
@@ -321,9 +308,7 @@ const PINLoginPageNew: React.FC = () => {
                   onClick={handleBack}
                   className="text-sm text-gray-600 dark:text-gray-400 hover:text-primary-500 flex items-center gap-1"
                 >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                  </svg>
+                  <MdArrowBack className="w-4 h-4" />
                   Volver
                 </button>
                 <div className="text-right text-sm">
@@ -433,14 +418,7 @@ const PINLoginPageNew: React.FC = () => {
                     transition-all duration-150
                   "
                 >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2M3 12l6.414 6.414a2 2 0 001.414.586H19a2 2 0 002-2V7a2 2 0 00-2-2h-8.172a2 2 0 00-1.414.586L3 12z"
-                    />
-                  </svg>
+                  <MdBackspace className="w-6 h-6" />
                 </button>
               </div>
 
@@ -474,16 +452,7 @@ const PINLoginPageNew: React.FC = () => {
                 size="lg"
                 fullWidth
                 onClick={handleEmailLogin}
-                icon={
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207"
-                    />
-                  </svg>
-                }
+                icon={<MdAlternateEmail className="w-5 h-5" />}
                 iconPosition="left"
               >
                 Ingresar con Email

@@ -95,8 +95,8 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
   // Download data for offline use when authenticated
   useEffect(() => {
     const downloadOfflineData = async () => {
-      if (isAuthenticated && currentBranch) {
-        console.log('[App] Downloading data for offline use...');
+      if (isAuthenticated && currentBranch?.id) {
+        console.log('[App] Downloading data for offline use...', { branchId: currentBranch.id });
         try {
           const success = await downloadDataForOffline(currentBranch.id);
           if (success) {
@@ -166,7 +166,7 @@ const AppRouter: React.FC = () => {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <BrowserRouter>
+      <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <AuthProvider>
           <GlobalLoader />
           <Toast />

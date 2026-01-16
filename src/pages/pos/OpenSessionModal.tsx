@@ -4,6 +4,7 @@ import { openSession, loadRegisters } from '../../store/slices/registersSlice';
 import { detectShiftType, getShiftLabel, formatTime } from '../../utils/shiftDetection';
 import type { Register, OpenSessionData, DenominationBreakdown as DenominationValues } from '../../types';
 import DenominationBreakdown from '../../components/shared/DenominationBreakdown';
+import { MdClose } from 'react-icons/md';
 
 interface OpenSessionModalProps {
   isOpen: boolean;
@@ -123,9 +124,7 @@ const OpenSessionModal: React.FC<OpenSessionModalProps> = ({ isOpen, onClose }) 
             onClick={onClose}
             className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
           >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
+            <MdClose className="w-6 h-6" />
           </button>
         </div>
 

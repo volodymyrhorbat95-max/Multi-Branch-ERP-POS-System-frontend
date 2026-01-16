@@ -16,6 +16,7 @@ import {
   fetchTransferById
 } from '../../store/slices/transferSlice';
 import { Card, Button } from '../../components/ui';
+import { MdInventory } from 'react-icons/md';
 import StockInventoryList from './StockInventoryList';
 import StockMovementsList from './StockMovementsList';
 import AdjustStockModal from './AdjustStockModal';
@@ -33,7 +34,7 @@ const StockPage: React.FC = () => {
   const dispatch = useAppDispatch();
   const { currentBranch, user, availableBranches } = useAppSelector((state) => state.auth);
   const { items: stock, movements, loading } = useAppSelector((state) => state.stock);
-  const { transfers, currentTransfer, loading: transferLoading } = useAppSelector((state) => state.transfer);
+  const { transfers, loading: transferLoading } = useAppSelector((state) => state.transfer);
   const { products } = useAppSelector((state) => state.products);
 
   const isOwner = user?.role?.can_view_all_branches;
@@ -59,12 +60,12 @@ const StockPage: React.FC = () => {
     type: 'adjustment' as 'adjustment' | 'shrinkage' | 'count',
   });
 
-  // Load stock
+  // Load stock when tab changes
   useEffect(() => {
-    if (currentBranch?.id) {
+    if (activeTab === 'inventory' && currentBranch?.id) {
       loadStock();
     }
-  }, [currentBranch?.id, showLowStock]);
+  }, [activeTab, currentBranch?.id, showLowStock]);
 
   // Load movements when tab changes
   useEffect(() => {
@@ -312,7 +313,10 @@ const StockPage: React.FC = () => {
 
         {/* Movements Tab */}
         {activeTab === 'movements' && (
-          <StockMovementsList movements={movements} loading={loading} />
+          <StockMovementsList
+            movements={movements}
+            loading={loading}
+          />
         )}
 
         {/* Shrinkage Tab */}
@@ -320,9 +324,7 @@ const StockPage: React.FC = () => {
           <Card className="p-6 animate-zoom-in duration-normal">
             <div className="text-center py-8">
               <div className="w-16 h-16 bg-warning-100 dark:bg-warning-900/20 rounded-full mx-auto mb-4 flex items-center justify-center animate-flip-down duration-light-slow">
-                <svg className="w-8 h-8 text-warning-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                </svg>
+                <MdInventory className="w-8 h-8 text-warning-500" />
               </div>
               <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2 animate-fade-up duration-normal">
                 Control de Mermas
@@ -360,7 +362,6 @@ const StockPage: React.FC = () => {
               transfers={transfers}
               loading={transferLoading}
               onViewDetails={handleViewTransferDetails}
-              onApprove={handleApproveTransfer}
             />
           </div>
         )}

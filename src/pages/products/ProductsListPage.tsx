@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../../store';
 import {
@@ -6,12 +6,17 @@ import {
   loadCategories,
   createProduct,
   updateProduct,
+  deleteProduct,
+  setPage,
+  setLimit,
 } from '../../store/slices/productsSlice';
 import { Card, Button, Input } from '../../components/ui';
 import { ProductsTable } from './ProductsTable';
 import { ProductFormModal } from './ProductFormModal';
 import type { Product } from '../../types';
 import type { ProductFormData } from './ProductFormModal';
+import type { PaginationState } from '../../components/ui/Pagination';
+import { MdLocalOffer, MdAdd, MdSearch } from 'react-icons/md';
 
 const initialFormData: ProductFormData = {
   name: '',
@@ -35,7 +40,15 @@ const initialFormData: ProductFormData = {
 const ProductsListPage: React.FC = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
-  const { products, categories, loading, totalProducts, limit } = useAppSelector((state) => state.products);
+  const { products, categories, loading, pagination: reduxPagination } = useAppSelector((state) => state.products);
+
+  // Map Redux pagination to PaginationState format
+  const pagination: PaginationState = useMemo(() => ({
+    page: reduxPagination.page,
+    limit: reduxPagination.limit,
+    total_items: reduxPagination.total,
+    total_pages: reduxPagination.pages,
+  }), [reduxPagination]);
 
   // Local state
   const [search, setSearch] = useState('');
@@ -43,21 +56,30 @@ const ProductsListPage: React.FC = () => {
   const [showModal, setShowModal] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [formData, setFormData] = useState<ProductFormData>(initialFormData);
-  const [currentPage, setCurrentPage] = useState(1);
 
-  // Load products and categories
+  // Load categories on mount
   useEffect(() => {
     dispatch(loadCategories());
   }, [dispatch]);
 
+  // Load products when pagination or filters change
   useEffect(() => {
     dispatch(loadProducts({
-      page: currentPage,
-      limit: 20,
+      page: reduxPagination.page,
+      limit: reduxPagination.limit,
       search: search || undefined,
       category_id: selectedCategory || undefined,
     }));
-  }, [dispatch, currentPage, search, selectedCategory]);
+  }, [dispatch, reduxPagination.page, reduxPagination.limit, search, selectedCategory]);
+
+  // Pagination handlers
+  const handlePageChange = (page: number) => {
+    dispatch(setPage(page));
+  };
+
+  const handlePageSizeChange = (limit: number) => {
+    dispatch(setLimit(limit));
+  };
 
   // Handle form changes
   const handleFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
@@ -109,14 +131,13 @@ const ProductsListPage: React.FC = () => {
       barcode: formData.barcode || undefined,
       description: formData.description || undefined,
       category_id: formData.category_id || undefined,
-      cost_price: parseFloat(formData.cost_price) || 0,
-      sell_price: parseFloat(formData.sell_price) || 0,
-      tax_rate: parseFloat(formData.tax_rate) || 21,
-      unit_type: formData.unit_type,
+      cost_price: formData.cost_price || '0',
+      selling_price: formData.sell_price || '0',
+      tax_rate: formData.tax_rate || '21',
       is_active: formData.is_active,
       is_featured: formData.is_featured,
       track_stock: formData.track_stock,
-      min_stock: parseInt(formData.min_stock) || 5,
+      minimum_stock: formData.min_stock || '5',
       is_weighable: formData.is_weighable,
       scale_plu: formData.scale_plu ? parseInt(formData.scale_plu) : undefined,
       export_to_scale: formData.export_to_scale,
@@ -139,12 +160,11 @@ const ProductsListPage: React.FC = () => {
   }, [dispatch, editingProduct, formData]);
 
   // Delete product
-  const handleDelete = useCallback(async (_id: string) => {
+  const handleDelete = useCallback(async (id: string) => {
     if (window.confirm('¿Estás seguro de eliminar este producto?')) {
-      // TODO: Implement deleteProduct in productsSlice
-      console.error('Delete product not implemented yet');
+      await dispatch(deleteProduct(id));
     }
-  }, []);
+  }, [dispatch]);
 
   return (
     <>
@@ -165,11 +185,7 @@ const ProductsListPage: React.FC = () => {
               variant="secondary"
               onClick={() => navigate('/products/bulk-update')}
               className="animate-zoom-in duration-normal"
-              icon={
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
-                </svg>
-              }
+              icon={<MdLocalOffer className="w-5 h-5" />}
               iconPosition="left"
             >
               Actualización Masiva
@@ -179,11 +195,7 @@ const ProductsListPage: React.FC = () => {
               variant="primary"
               onClick={handleCreate}
               className="animate-zoom-in duration-normal"
-              icon={
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                </svg>
-              }
+              icon={<MdAdd className="w-5 h-5" />}
               iconPosition="left"
             >
               Nuevo Producto
@@ -200,20 +212,16 @@ const ProductsListPage: React.FC = () => {
                 value={search}
                 onChange={(e) => {
                   setSearch(e.target.value);
-                  setCurrentPage(1);
+                  handlePageChange(1);
                 }}
-                leftIcon={
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                  </svg>
-                }
+                leftIcon={<MdSearch className="w-5 h-5" />}
               />
             </div>
             <select
               value={selectedCategory}
               onChange={(e) => {
                 setSelectedCategory(e.target.value);
-                setCurrentPage(1);
+                handlePageChange(1);
               }}
               className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent animate-fade-right duration-fast"
             >
@@ -235,34 +243,10 @@ const ProductsListPage: React.FC = () => {
             onEdit={handleEdit}
             onDelete={handleDelete}
             onCreate={handleCreate}
+            pagination={pagination}
+            onPageChange={handlePageChange}
+            onPageSizeChange={handlePageSizeChange}
           />
-
-          {/* Pagination */}
-          {!loading && products.length > 0 && totalProducts > limit && (
-            <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between animate-fade-up duration-normal">
-              <p className="text-sm text-gray-500 dark:text-gray-400 animate-fade-right duration-fast">
-                Mostrando {((currentPage - 1) * limit) + 1} a {Math.min(currentPage * limit, totalProducts)} de {totalProducts}
-              </p>
-              <div className="flex gap-2 animate-fade-left duration-fast">
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                  disabled={currentPage === 1}
-                >
-                  Anterior
-                </Button>
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => setCurrentPage((p) => Math.min(Math.ceil(totalProducts / limit), p + 1))}
-                  disabled={currentPage === Math.ceil(totalProducts / limit)}
-                >
-                  Siguiente
-                </Button>
-              </div>
-            </div>
-          )}
         </Card>
       </div>
 

@@ -16,6 +16,14 @@ interface ExpenseState {
   expenses: Expense[];
   selectedExpense: Expense | null;
 
+  // Pagination
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    pages: number;
+  };
+
   // Categories
   categories: ExpenseCategory[];
 
@@ -33,6 +41,8 @@ interface ExpenseState {
     branch_id?: UUID;
     status?: ExpenseStatus;
     search?: string;
+    page?: number;
+    limit?: number;
   };
 
   // Loading states
@@ -43,6 +53,12 @@ interface ExpenseState {
 const initialState: ExpenseState = {
   expenses: [],
   selectedExpense: null,
+  pagination: {
+    page: 1,
+    limit: 20,
+    total: 0,
+    pages: 0,
+  },
   categories: [],
   stats: null,
   recurringExpenses: [],
@@ -53,8 +69,18 @@ const initialState: ExpenseState = {
 
 // ==================== ASYNC THUNKS - EXPENSES ====================
 
+interface LoadExpensesResult {
+  expenses: Expense[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    pages: number;
+  };
+}
+
 export const loadExpenses = createAsyncThunk<
-  Expense[],
+  LoadExpensesResult,
   {
     from_date?: string;
     to_date?: string;
@@ -62,6 +88,8 @@ export const loadExpenses = createAsyncThunk<
     branch_id?: UUID;
     status?: ExpenseStatus;
     search?: string;
+    page?: number;
+    limit?: number;
   } | void,
   { rejectValue: string }
 >(
@@ -75,7 +103,15 @@ export const loadExpenses = createAsyncThunk<
         throw new Error(response.error || 'Failed to load expenses');
       }
 
-      return response.data;
+      return {
+        expenses: response.data,
+        pagination: {
+          page: response.pagination?.page || 1,
+          limit: response.pagination?.limit || 20,
+          total: response.pagination?.total_items || 0,
+          pages: response.pagination?.total_pages || 0,
+        },
+      };
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Error loading expenses';
       return rejectWithValue(message);
@@ -533,8 +569,18 @@ const expenseSlice = createSlice({
       state.filters = action.payload;
     },
 
+    setPage: (state, action: PayloadAction<number>) => {
+      state.pagination.page = action.payload;
+    },
+
+    setLimit: (state, action: PayloadAction<number>) => {
+      state.pagination.limit = action.payload;
+      state.pagination.page = 1;
+    },
+
     clearFilters: (state) => {
       state.filters = {};
+      state.pagination.page = 1;
     },
 
     clearStats: (state) => {
@@ -565,7 +611,8 @@ const expenseSlice = createSlice({
         state.error = null;
       })
       .addCase(loadExpenses.fulfilled, (state, action) => {
-        state.expenses = action.payload;
+        state.expenses = action.payload.expenses;
+        state.pagination = action.payload.pagination;
         state.loading = false;
       })
       .addCase(loadExpenses.rejected, (state, action) => {
@@ -745,6 +792,8 @@ const expenseSlice = createSlice({
 export const {
   setSelectedExpense,
   setFilters,
+  setPage,
+  setLimit,
   clearFilters,
   clearStats,
   clearError,

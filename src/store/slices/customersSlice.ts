@@ -6,24 +6,30 @@ import { getCachedCustomers, getCachedCustomerById } from '../../services/offlin
 
 interface CustomersState {
   customers: Customer[];
-  totalCustomers: number;
   quickSearchResults: QuickSearchCustomer[];
   selectedCustomer: Customer | null;
   searchQuery: string;
-  page: number;
-  limit: number;
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    pages: number;
+  };
   loading: boolean;
   error: string | null;
 }
 
 const initialState: CustomersState = {
   customers: [],
-  totalCustomers: 0,
   quickSearchResults: [],
   selectedCustomer: null,
   searchQuery: '',
-  page: 1,
-  limit: 20,
+  pagination: {
+    page: 1,
+    limit: 20,
+    total: 0,
+    pages: 0,
+  },
   loading: false,
   error: null,
 };
@@ -291,6 +297,33 @@ export const addCredit = createAsyncThunk<
   }
 );
 
+export const deleteCustomer = createAsyncThunk<
+  UUID,
+  UUID,
+  { rejectValue: string }
+>(
+  'customers/delete',
+  async (id, { dispatch, rejectWithValue }) => {
+    try {
+      dispatch(startLoading('Eliminando cliente...'));
+      const response = await customerService.deactivate(id);
+
+      if (!response.success) {
+        throw new Error(response.error || 'Failed to delete customer');
+      }
+
+      dispatch(showToast({ type: 'success', message: 'Cliente eliminado' }));
+      return id;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Error deleting customer';
+      dispatch(showToast({ type: 'error', message }));
+      return rejectWithValue(message);
+    } finally {
+      dispatch(stopLoading());
+    }
+  }
+);
+
 const customersSlice = createSlice({
   name: 'customers',
   initialState,
@@ -308,7 +341,12 @@ const customersSlice = createSlice({
     },
 
     setPage: (state, action: PayloadAction<number>) => {
-      state.page = action.payload;
+      state.pagination.page = action.payload;
+    },
+
+    setLimit: (state, action: PayloadAction<number>) => {
+      state.pagination.limit = action.payload;
+      state.pagination.page = 1;
     },
 
     clearError: (state) => {
@@ -325,7 +363,8 @@ const customersSlice = createSlice({
       })
       .addCase(loadCustomers.fulfilled, (state, action) => {
         state.customers = action.payload.customers;
-        state.totalCustomers = action.payload.total;
+        state.pagination.total = action.payload.total;
+        state.pagination.pages = Math.ceil(action.payload.total / state.pagination.limit);
         state.loading = false;
       })
       .addCase(loadCustomers.rejected, (state, action) => {
@@ -351,7 +390,8 @@ const customersSlice = createSlice({
     // Create Customer
     builder.addCase(createCustomer.fulfilled, (state, action) => {
       state.customers.unshift(action.payload);
-      state.totalCustomers += 1;
+      state.pagination.total += 1;
+      state.pagination.pages = Math.ceil(state.pagination.total / state.pagination.limit);
       state.selectedCustomer = action.payload;
     });
 
@@ -376,7 +416,17 @@ const customersSlice = createSlice({
     // Add Credit
     builder.addCase(addCredit.fulfilled, (state, action) => {
       if (state.selectedCustomer) {
-        state.selectedCustomer.credit_balance = action.payload.new_balance;
+        state.selectedCustomer.credit_balance = String(action.payload.new_balance);
+      }
+    });
+
+    // Delete Customer
+    builder.addCase(deleteCustomer.fulfilled, (state, action) => {
+      state.customers = state.customers.filter((c) => c.id !== action.payload);
+      state.pagination.total -= 1;
+      state.pagination.pages = Math.ceil(state.pagination.total / state.pagination.limit);
+      if (state.selectedCustomer?.id === action.payload) {
+        state.selectedCustomer = null;
       }
     });
   },
@@ -387,6 +437,7 @@ export const {
   setSelectedCustomer,
   clearQuickSearchResults,
   setPage,
+  setLimit,
   clearError,
 } = customersSlice.actions;
 

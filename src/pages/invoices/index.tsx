@@ -6,11 +6,13 @@ import {
   retryPendingInvoices,
   setFilters,
   resetFilters,
+  setPage,
+  setLimit,
 } from '../../store/slices/invoicesSlice';
 import { Card, Button, Input } from '../../components/ui';
+import { MdRefresh, MdSearch } from 'react-icons/md';
 import InvoicesList from './InvoicesList';
 import InvoiceStatsCards from './InvoiceStatsCards';
-// import type { InvoiceStatus, InvoiceType } from '../../types';
 
 const InvoicesPage: React.FC = () => {
   const dispatch = useAppDispatch();
@@ -27,11 +29,12 @@ const InvoicesPage: React.FC = () => {
     end_date: filters.end_date || '',
   });
 
-  // Load invoices and stats on mount and filter changes
+  // Load invoices when pagination or filters change
   useEffect(() => {
     dispatch(fetchInvoices({ ...filters, page: pagination.page, limit: pagination.limit }));
   }, [dispatch, filters, pagination.page, pagination.limit]);
 
+  // Load stats when relevant filters change
   useEffect(() => {
     dispatch(fetchInvoiceStats({
       branch_id: filters.branch_id,
@@ -77,9 +80,13 @@ const InvoicesPage: React.FC = () => {
     }
   };
 
-  // Handle page change
+  // Pagination handlers
   const handlePageChange = (newPage: number) => {
-    dispatch(fetchInvoices({ ...filters, page: newPage, limit: pagination.limit }));
+    dispatch(setPage(newPage));
+  };
+
+  const handlePageSizeChange = (newLimit: number) => {
+    dispatch(setLimit(newLimit));
   };
 
   return (
@@ -101,11 +108,7 @@ const InvoicesPage: React.FC = () => {
             onClick={handleRetryPending}
             disabled={loading}
             className="animate-zoom-in duration-normal"
-            icon={
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-              </svg>
-            }
+            icon={<MdRefresh className="w-5 h-5" />}
             iconPosition="left"
           >
             Reintentar Pendientes ({stats.pending_count})
@@ -130,11 +133,7 @@ const InvoicesPage: React.FC = () => {
                 placeholder="Buscar por número, CAE o cliente..."
                 value={localFilters.search}
                 onChange={(e) => handleFilterChange('search', e.target.value)}
-                leftIcon={
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                  </svg>
-                }
+                leftIcon={<MdSearch className="w-5 h-5" />}
               />
             </div>
 
@@ -215,6 +214,7 @@ const InvoicesPage: React.FC = () => {
           loading={loading}
           pagination={pagination}
           onPageChange={handlePageChange}
+          onPageSizeChange={handlePageSizeChange}
         />
       </Card>
     </div>
