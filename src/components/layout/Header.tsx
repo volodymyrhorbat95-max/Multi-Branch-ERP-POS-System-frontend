@@ -13,7 +13,7 @@ const Header: React.FC<{ onMenuClick: () => void }> = ({ onMenuClick }) => {
       <div className="flex items-center gap-3">
         <button
           onClick={onMenuClick}
-          className="lg:hidden p-2 text-white/90 hover:text-white animate-fade-right duration-normal"
+          className="lg:hidden p-2 text-white/90 hover:text-white"
         >
           <MdMenu className="w-6 h-6" />
         </button>
@@ -27,7 +27,7 @@ const Header: React.FC<{ onMenuClick: () => void }> = ({ onMenuClick }) => {
         </div>
       </div>
 
-      <div className="flex-1 lg:flex-none animate-fade-right duration-normal">
+      <div className="flex-1 lg:flex-none">
         {!canAccessAllBranches && currentBranch && (
           <span className="text-sm font-medium text-white/95">
             {currentBranch.name}
@@ -36,7 +36,7 @@ const Header: React.FC<{ onMenuClick: () => void }> = ({ onMenuClick }) => {
       </div>
 
       {/* Right side actions */}
-      <div className="flex items-center gap-4 animate-fade-left duration-normal">
+      <div className="flex items-center gap-4">
         {/* Quick POS Access */}
         <button
           onClick={() => goTo('/pos')}

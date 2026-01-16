@@ -179,7 +179,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
 
         {/* Branch Selector (for owners) */}
         {canAccessAllBranches && availableBranches.length > 1 && (
-          <div className="px-4 py-3 border-b border-primary-600/30 animate-fade-right duration-light-slow">
+          <div className="px-4 py-3 border-b border-primary-600/30">
             <div className="relative" ref={branchDropdownRef}>
               <button
                 onClick={() => setBranchDropdownOpen(!branchDropdownOpen)}
@@ -196,7 +196,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
               </button>
 
               {branchDropdownOpen && (
-                <div className="absolute top-full left-0 right-0 mt-2 bg-primary-800/95 rounded-md shadow-2xl border border-primary-600/30 z-20 animate-fade-down duration-fast backdrop-blur-md overflow-hidden">
+                <div className="absolute top-full left-0 right-0 mt-2 bg-primary-800/95 rounded-md shadow-2xl border border-primary-600/30 z-20 backdrop-blur-md overflow-hidden">
                   <button
                     onClick={() => handleBranchChange('')}
                     className="w-full px-4 py-2.5 text-left text-sm text-white hover:bg-white/10 transition-colors"
@@ -234,7 +234,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
                 }}
                 className={`
                   w-full flex items-center gap-3 px-4 py-3 rounded-md text-sm font-medium
-                  transition-all duration-200 animate-fade-right
+                  transition-all duration-200
                   ${isActive(item.path)
                     ? 'bg-white/20 text-white shadow-lg backdrop-blur-sm scale-[1.02]'
                     : 'text-white/90 hover:bg-white/10 hover:text-white hover:scale-[1.01]'}
@@ -246,7 +246,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
                 </span>
                 <span className="flex-1 text-left">{item.name}</span>
                 {item.badge && item.badge > 0 && (
-                  <span className="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 text-xs font-bold text-white bg-danger-500 rounded-full animate-pulse">
+                  <span className="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 text-xs font-bold text-white bg-danger-500 rounded-full">
                     {item.badge > 9 ? '9+' : item.badge}
                   </span>
                 )}
@@ -283,7 +283,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
             </button>
 
             {userDropdownOpen && (
-              <div className="absolute bottom-full left-0 right-0 mb-2 bg-primary-800/95 rounded-md shadow-2xl border border-primary-600/30 animate-fade-up duration-fast backdrop-blur-md overflow-hidden">
+              <div className="absolute bottom-full left-0 right-0 mb-2 bg-primary-800/95 rounded-md shadow-2xl border border-primary-600/30 backdrop-blur-md overflow-hidden">
                 <button
                   onClick={() => {
                     dispatch(toggleTheme());
