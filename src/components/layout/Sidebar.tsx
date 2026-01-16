@@ -155,7 +155,6 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
         className={`
           fixed inset-y-0 left-0 z-50 w-64 bg-primary-500/95 dark:bg-primary-600/95
           backdrop-blur-md shadow-2xl flex flex-col
-          transition-transform duration-300 ease-in-out
           ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
           top-0 lg:top-16
         `}
@@ -170,7 +169,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
           </div>
           <button
             onClick={onClose}
-            className="p-2 text-white/90 hover:text-white hover:bg-white/10 rounded-md transition-all"
+            className="p-2 text-white/90 hover:text-white hover:bg-white/10 rounded-md"
             aria-label="Close menu"
           >
             <MdClose className="w-6 h-6" />
@@ -183,13 +182,13 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
             <div className="relative" ref={branchDropdownRef}>
               <button
                 onClick={() => setBranchDropdownOpen(!branchDropdownOpen)}
-                className="w-full flex items-center justify-between px-3 py-2.5 text-sm bg-white/10 rounded-md hover:bg-white/20 backdrop-blur-sm transition-all active:scale-95"
+                className="w-full flex items-center justify-between px-3 py-2.5 text-sm bg-white/10 rounded-md hover:bg-white/20 backdrop-blur-sm"
               >
                 <span className="font-medium text-white truncate">
                   {currentBranch?.name || 'Todas las sucursales'}
                 </span>
                 <MdKeyboardArrowDown
-                  className={`w-5 h-5 text-white/70 transition-transform duration-200 ${
+                  className={`w-5 h-5 text-white/70 ${
                     branchDropdownOpen ? 'rotate-180' : ''
                   }`}
                 />
@@ -199,7 +198,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
                 <div className="absolute top-full left-0 right-0 mt-2 bg-primary-800/95 rounded-md shadow-2xl border border-primary-600/30 z-20 backdrop-blur-md overflow-hidden">
                   <button
                     onClick={() => handleBranchChange('')}
-                    className="w-full px-4 py-2.5 text-left text-sm text-white hover:bg-white/10 transition-colors"
+                    className="w-full px-4 py-2.5 text-left text-sm text-white hover:bg-white/10"
                   >
                     Todas las sucursales
                   </button>
@@ -207,7 +206,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
                     <button
                       key={branch.id}
                       onClick={() => handleBranchChange(branch.id)}
-                      className={`w-full px-4 py-2.5 text-left text-sm transition-colors ${
+                      className={`w-full px-4 py-2.5 text-left text-sm ${
                         currentBranch?.id === branch.id
                           ? 'bg-primary-700 text-white font-semibold'
                           : 'text-white/90 hover:bg-white/10'
@@ -234,14 +233,12 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
                 }}
                 className={`
                   w-full flex items-center gap-3 px-4 py-3 rounded-md text-sm font-medium
-                  transition-all duration-200
                   ${isActive(item.path)
-                    ? 'bg-white/20 text-white shadow-lg backdrop-blur-sm scale-[1.02]'
-                    : 'text-white/90 hover:bg-white/10 hover:text-white hover:scale-[1.01]'}
-                  active:scale-95
+                    ? 'bg-white/20 text-white shadow-lg backdrop-blur-sm'
+                    : 'text-white/90 hover:bg-white/10 hover:text-white'}
                 `}
               >
-                <span className={`transition-all ${isActive(item.path) ? 'text-white scale-110' : 'text-white/70'}`}>
+                <span className={isActive(item.path) ? 'text-white' : 'text-white/70'}>
                   {item.icon}
                 </span>
                 <span className="flex-1 text-left">{item.name}</span>
@@ -260,7 +257,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
           <div className="relative" ref={userDropdownRef}>
             <button
               onClick={() => setUserDropdownOpen(!userDropdownOpen)}
-              className="w-full flex items-center gap-3 p-2.5 rounded-md hover:bg-white/10 transition-all active:scale-95"
+              className="w-full flex items-center gap-3 p-2.5 rounded-md hover:bg-white/10"
             >
               <div className="w-10 h-10 bg-gradient-to-br from-white/30 to-white/10 rounded-full flex items-center justify-center backdrop-blur-sm ring-2 ring-white/20">
                 <span className="text-white font-bold text-sm">
@@ -276,7 +273,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
                 </p>
               </div>
               <MdKeyboardArrowDown
-                className={`w-5 h-5 text-white/70 transition-transform duration-200 flex-shrink-0 ${
+                className={`w-5 h-5 text-white/70 flex-shrink-0 ${
                   userDropdownOpen ? 'rotate-180' : ''
                 }`}
               />
@@ -289,7 +286,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
                     dispatch(toggleTheme());
                     setUserDropdownOpen(false);
                   }}
-                  className="w-full px-4 py-3 text-left text-sm text-white hover:bg-white/10 flex items-center gap-3 transition-colors"
+                  className="w-full px-4 py-3 text-left text-sm text-white hover:bg-white/10 flex items-center gap-3"
                 >
                   {theme === 'dark' ? (
                     <>
@@ -305,7 +302,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
                 </button>
                 <button
                   onClick={handleLogout}
-                  className="w-full px-4 py-3 text-left text-sm text-red-300 hover:bg-red-500/20 hover:text-red-200 flex items-center gap-3 transition-colors"
+                  className="w-full px-4 py-3 text-left text-sm text-red-300 hover:bg-red-500/20 hover:text-red-200 flex items-center gap-3"
                 >
                   <MdLogout className="w-5 h-5" />
                   <span>Cerrar Sesión</span>

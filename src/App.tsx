@@ -35,9 +35,10 @@ const AlertSettingsPage = React.lazy(() => import('./pages/settings/AlertSetting
 
 // Loading fallback
 const PageLoader = () => (
-  <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900">
-    <div className="animate-spin rounded-full h-12 w-12 border-4 border-gray-300 border-t-primary-600"></div>
-  </div>
+  <></>
+  // <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900">
+  //   <div className="animate-spin rounded-full h-12 w-12 border-4 border-gray-300 border-t-primary-600"></div>
+  // </div>
 );
 
 // Protected Route wrapper component using Outlet
