@@ -23,7 +23,8 @@ const initialFormData: NeighborhoodMappingFormData = {
 
 const NeighborhoodMappingsPage: React.FC = () => {
   const dispatch = useAppDispatch();
-  const { neighborhoods, zones, loading } = useAppSelector((state) => state.shipping);
+  const { neighborhoods, zones } = useAppSelector((state) => state.shipping);
+  const loading = useAppSelector((state) => state.ui.loading);
 
   // Local state
   const [showModal, setShowModal] = useState(false);

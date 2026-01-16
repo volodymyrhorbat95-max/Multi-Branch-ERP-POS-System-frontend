@@ -1,14 +1,14 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { AppDispatch, RootState } from '../../store';
+import { useAppDispatch, useAppSelector } from '../../store';
 import { fetchCashierReport } from '../../store/slices/reportsSlice';
 import Pagination, { type PaginationState } from '../../components/ui/Pagination';
 
 const PAGE_SIZE_OPTIONS = [5, 10, 20, 50];
 
 const CashierReport: React.FC = () => {
-  const dispatch = useDispatch<AppDispatch>();
-  const { cashierReport, loading, error } = useSelector((state: RootState) => state.reports);
+  const dispatch = useAppDispatch();
+  const { cashierReport, error } = useAppSelector((state) => state.reports);
+  const loading = useAppSelector((state) => state.ui.loading);
 
   const [filters, setFilters] = useState({
     branch_id: '',

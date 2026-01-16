@@ -1,14 +1,14 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { AppDispatch, RootState } from '../../store';
+import { useAppDispatch, useAppSelector } from '../../store';
 import { fetchSalesReport } from '../../store/slices/reportsSlice';
 import Pagination, { type PaginationState } from '../../components/ui/Pagination';
 
 const PAGE_SIZE_OPTIONS = [5, 10, 20, 50];
 
 const SalesReport: React.FC = () => {
-  const dispatch = useDispatch<AppDispatch>();
-  const { salesReport, loading, error } = useSelector((state: RootState) => state.reports);
+  const dispatch = useAppDispatch();
+  const { salesReport, error } = useAppSelector((state) => state.reports);
+  const loading = useAppSelector((state) => state.ui.loading);
 
   const [filters, setFilters] = useState<{
     branch_id?: string;

@@ -33,9 +33,10 @@ type StockTab = 'inventory' | 'movements' | 'shrinkage' | 'transfers';
 const StockPage: React.FC = () => {
   const dispatch = useAppDispatch();
   const { currentBranch, availableBranches } = useAppSelector((state) => state.auth);
-  const { items: stock, movements, loading } = useAppSelector((state) => state.stock);
-  const { transfers, loading: transferLoading } = useAppSelector((state) => state.transfer);
+  const { items: stock, movements } = useAppSelector((state) => state.stock);
+  const { transfers } = useAppSelector((state) => state.transfer);
   const { products } = useAppSelector((state) => state.products);
+  const loading = useAppSelector((state) => state.ui.loading);
 
   // Local state
   const [activeTab, setActiveTab] = useState<StockTab>('inventory');
@@ -358,7 +359,7 @@ const StockPage: React.FC = () => {
             </div>
             <TransfersList
               transfers={transfers}
-              loading={transferLoading}
+              loading={loading}
               onViewDetails={handleViewTransferDetails}
             />
           </div>
@@ -399,7 +400,7 @@ const StockPage: React.FC = () => {
         isOpen={showCreateTransferModal}
         onClose={() => setShowCreateTransferModal(false)}
         onSubmit={handleCreateTransfer}
-        loading={transferLoading}
+        loading={loading}
         branches={availableBranches}
         products={products}
         currentBranchId={currentBranch?.id}
@@ -412,7 +413,7 @@ const StockPage: React.FC = () => {
         onApprove={handleApproveTransfer}
         onReceive={handleReceiveTransfer}
         onCancel={handleCancelTransfer}
-        loading={transferLoading}
+        loading={loading}
       />
     </>
   );

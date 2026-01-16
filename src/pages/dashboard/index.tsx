@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { AppDispatch, RootState } from '../../store';
+import { useAppDispatch, useAppSelector } from '../../store';
 import { fetchOwnerDashboard } from '../../store/slices/dashboardSlice';
 import OverallMetrics from './OverallMetrics';
 import BranchSalesChart from './BranchSalesChart';
@@ -13,8 +12,9 @@ import BranchShiftStatus from './BranchShiftStatus';
 import StockLevelOverview from './StockLevelOverview';
 
 const DashboardPage: React.FC = () => {
-  const dispatch = useDispatch<AppDispatch>();
-  const { data, loading, error } = useSelector((state: RootState) => state.dashboard);
+  const dispatch = useAppDispatch();
+  const { data, error } = useAppSelector((state) => state.dashboard);
+  const loading = useAppSelector((state) => state.ui.loading);
 
   const [dateRange, setDateRange] = useState({
     start_date: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],

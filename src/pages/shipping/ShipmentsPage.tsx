@@ -10,7 +10,8 @@ const PAGE_SIZE_OPTIONS = [5, 10, 20, 50];
 
 const ShipmentsPage: React.FC = () => {
   const dispatch = useAppDispatch();
-  const { shipments, zones, loading } = useAppSelector((state) => state.shipping);
+  const { shipments, zones } = useAppSelector((state) => state.shipping);
+  const loading = useAppSelector((state) => state.ui.loading);
 
   const [filters, setFilters] = useState<{
     status?: DeliveryStatus;

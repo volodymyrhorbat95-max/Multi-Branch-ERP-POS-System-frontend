@@ -12,10 +12,10 @@ const UsersPage: React.FC = () => {
   const dispatch = useAppDispatch();
   const { users, pagination: reduxPagination, filters } = useAppSelector((state) => state.users);
   const { user: currentUser } = useAppSelector((state) => state.auth);
+  const loading = useAppSelector((state) => state.ui.loading);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [loading, setLoading] = useState(false);
 
   // Map Redux pagination to PaginationState format
   const pagination: PaginationState = useMemo(() => ({
@@ -29,8 +29,7 @@ const UsersPage: React.FC = () => {
   const canManageUsers = currentUser?.role?.can_manage_users || false;
 
   useEffect(() => {
-    setLoading(true);
-    dispatch(fetchUsers(filters)).finally(() => setLoading(false));
+    dispatch(fetchUsers(filters));
   }, [dispatch, filters]);
 
   const handleSearch = (e: React.FormEvent) => {

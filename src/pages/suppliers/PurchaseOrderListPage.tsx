@@ -13,8 +13,9 @@ const PAGE_SIZE_OPTIONS = [5, 10, 20, 50];
 export const PurchaseOrderListPage: React.FC = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
-  const { purchaseOrders, suppliers, loading } = useAppSelector((state) => state.supplier);
+  const { purchaseOrders, suppliers } = useAppSelector((state) => state.supplier);
   const { currentBranch } = useAppSelector((state) => state.auth);
+  const loading = useAppSelector((state) => state.ui.loading);
 
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedSupplier, setSelectedSupplier] = useState('');

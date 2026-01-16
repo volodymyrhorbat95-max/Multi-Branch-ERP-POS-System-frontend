@@ -7,7 +7,8 @@ import { MdCalculate, MdInfo } from 'react-icons/md';
 
 const ShippingCalculatorPage: React.FC = () => {
   const dispatch = useAppDispatch();
-  const { calculation, zones, neighborhoods, loading } = useAppSelector((state) => state.shipping);
+  const { calculation, zones, neighborhoods } = useAppSelector((state) => state.shipping);
+  const loading = useAppSelector((state) => state.ui.loading);
 
   const [formData, setFormData] = useState({
     neighborhood: '',

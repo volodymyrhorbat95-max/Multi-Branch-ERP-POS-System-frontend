@@ -57,9 +57,10 @@ const POSPage: React.FC = () => {
 
   // Redux state
   const { cart, payments, searchResults, lastSale, paymentMethods } = useAppSelector((state) => state.pos);
-  const { products, loading: productsLoading } = useAppSelector((state) => state.products);
-  const { quickSearchResults: customerSearchResults, loading: customersLoading } = useAppSelector((state) => state.customers);
+  const { products } = useAppSelector((state) => state.products);
+  const { quickSearchResults: customerSearchResults } = useAppSelector((state) => state.customers);
   const { user, currentBranch, currentSession: activeSession } = useAppSelector((state) => state.auth);
+  const loading = useAppSelector((state) => state.ui.loading);
 
   // Local state
   const [searchQuery, setSearchQuery] = useState('');
@@ -537,7 +538,7 @@ const POSPage: React.FC = () => {
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
           products={displayProducts}
-          loading={productsLoading}
+          loading={loading}
           onProductClick={handleProductClick}
           formatCurrency={formatCurrency}
         />
@@ -586,7 +587,7 @@ const POSPage: React.FC = () => {
         searchQuery={customerSearch}
         onSearchChange={setCustomerSearch}
         customers={customerSearchResults}
-        loading={customersLoading}
+        loading={loading}
         onSelectCustomer={handleSelectCustomer}
         debouncedSearch={debouncedCustomerSearch}
       />

@@ -1,14 +1,14 @@
 import React, { useEffect, useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { AppDispatch, RootState } from '../../store';
+import { useAppDispatch, useAppSelector } from '../../store';
 import { fetchSessions } from '../../store/slices/registersSlice';
 import { usePagination } from '../../hooks';
 import SessionsList from './SessionsList';
 import SessionFilters from './SessionFilters';
 
 const SessionsPage: React.FC = () => {
-  const dispatch = useDispatch<AppDispatch>();
-  const { sessions, totalSessions, loading, error } = useSelector((state: RootState) => state.registers);
+  const dispatch = useAppDispatch();
+  const { sessions, totalSessions, error } = useAppSelector((state) => state.registers);
+  const loading = useAppSelector((state) => state.ui.loading);
 
   // Pagination hook
   const {

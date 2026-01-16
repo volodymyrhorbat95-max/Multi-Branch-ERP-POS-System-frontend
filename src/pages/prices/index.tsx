@@ -16,7 +16,8 @@ import { ConfirmModal } from './ConfirmModal';
 
 const PriceImportPage: React.FC = () => {
   const dispatch = useAppDispatch();
-  const { currentBatch, batchItems, loading } = useAppSelector((state) => state.price);
+  const { currentBatch, batchItems } = useAppSelector((state) => state.price);
+  const loading = useAppSelector((state) => state.ui.loading);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // State

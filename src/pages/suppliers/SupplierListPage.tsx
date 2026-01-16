@@ -12,7 +12,8 @@ const PAGE_SIZE_OPTIONS = [5, 10, 20, 50];
 export const SupplierListPage: React.FC = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
-  const { suppliers, loading } = useAppSelector((state) => state.supplier);
+  const { suppliers } = useAppSelector((state) => state.supplier);
+  const loading = useAppSelector((state) => state.ui.loading);
 
   const [searchTerm, setSearchTerm] = useState('');
   const [showActiveOnly, setShowActiveOnly] = useState(true);

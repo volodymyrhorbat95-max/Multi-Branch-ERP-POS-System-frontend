@@ -1,14 +1,14 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { AppDispatch, RootState } from '../../store';
+import { useAppDispatch, useAppSelector } from '../../store';
 import { fetchBranchComparisonReport } from '../../store/slices/reportsSlice';
 import Pagination, { type PaginationState } from '../../components/ui/Pagination';
 
 const PAGE_SIZE_OPTIONS = [5, 10, 20, 50];
 
 const BranchComparisonReport: React.FC = () => {
-  const dispatch = useDispatch<AppDispatch>();
-  const { branchComparisonReport, loading, error } = useSelector((state: RootState) => state.reports);
+  const dispatch = useAppDispatch();
+  const { branchComparisonReport, error } = useAppSelector((state) => state.reports);
+  const loading = useAppSelector((state) => state.ui.loading);
 
   const [filters, setFilters] = useState({
     start_date: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],

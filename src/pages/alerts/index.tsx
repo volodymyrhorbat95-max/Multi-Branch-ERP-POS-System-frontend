@@ -1,14 +1,14 @@
 import React, { useEffect, useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { AppDispatch, RootState } from '../../store';
+import { useAppDispatch, useAppSelector } from '../../store';
 import { fetchAlerts, fetchUnreadCount, markAlertAsRead, markAllAlertsAsRead } from '../../store/slices/alertsSlice';
 import AlertsList from './AlertsList';
 import AlertFilters from './AlertFilters';
 import UnreadBadge from './UnreadBadge';
 
 const AlertsPage: React.FC = () => {
-  const dispatch = useDispatch<AppDispatch>();
-  const { alerts, unreadCount, loading, error, pagination } = useSelector((state: RootState) => state.alerts);
+  const dispatch = useAppDispatch();
+  const { alerts, unreadCount, error, pagination } = useAppSelector((state) => state.alerts);
+  const loading = useAppSelector((state) => state.ui.loading);
 
   const [filters, setFilters] = useState({
     alert_type: '',

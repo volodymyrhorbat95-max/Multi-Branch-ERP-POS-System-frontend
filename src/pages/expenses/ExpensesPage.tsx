@@ -21,7 +21,8 @@ import type { PaginationState } from '../../components/ui/Pagination';
 
 const ExpensesPage: React.FC = () => {
   const dispatch = useAppDispatch();
-  const { expenses, categories, stats, loading, pagination: reduxPagination } = useAppSelector((state) => state.expense);
+  const { expenses, categories, stats, pagination: reduxPagination } = useAppSelector((state) => state.expense);
+  const loading = useAppSelector((state) => state.ui.loading);
 
   // Map Redux pagination to PaginationState format
   const pagination: PaginationState = useMemo(() => ({

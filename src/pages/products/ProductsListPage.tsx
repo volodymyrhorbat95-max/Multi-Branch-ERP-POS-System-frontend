@@ -42,7 +42,8 @@ const initialFormData: ProductFormData = {
 const ProductsListPage: React.FC = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
-  const { products, categories, units, loading, pagination: reduxPagination } = useAppSelector((state) => state.products);
+  const { products, categories, units, pagination: reduxPagination } = useAppSelector((state) => state.products);
+  const loading = useAppSelector((state) => state.ui.loading);
 
   // Map Redux pagination to PaginationState format
   const pagination: PaginationState = useMemo(() => ({

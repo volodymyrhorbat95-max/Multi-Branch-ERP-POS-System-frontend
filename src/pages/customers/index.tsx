@@ -34,7 +34,8 @@ const initialFormData: CustomerFormData = {
 
 const CustomersPage: React.FC = () => {
   const dispatch = useAppDispatch();
-  const { customers, loading, pagination: reduxPagination } = useAppSelector((state) => state.customers);
+  const { customers, pagination: reduxPagination } = useAppSelector((state) => state.customers);
+  const loading = useAppSelector((state) => state.ui.loading);
 
   // Map Redux pagination to PaginationState format
   const pagination: PaginationState = useMemo(() => ({

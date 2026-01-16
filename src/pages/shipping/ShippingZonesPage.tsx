@@ -25,7 +25,8 @@ const initialFormData: ShippingZoneFormData = {
 
 const ShippingZonesPage: React.FC = () => {
   const dispatch = useAppDispatch();
-  const { zones, neighborhoods, loading } = useAppSelector((state) => state.shipping);
+  const { zones, neighborhoods } = useAppSelector((state) => state.shipping);
+  const loading = useAppSelector((state) => state.ui.loading);
 
   // Local state
   const [showModal, setShowModal] = useState(false);
