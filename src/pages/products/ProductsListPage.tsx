@@ -4,6 +4,7 @@ import { useAppDispatch, useAppSelector } from '../../store';
 import {
   loadProducts,
   loadCategories,
+  loadUnits,
   createProduct,
   updateProduct,
   deleteProduct,
@@ -24,10 +25,11 @@ const initialFormData: ProductFormData = {
   barcode: '',
   description: '',
   category_id: '',
+  unit_id: '',
   cost_price: '',
   sell_price: '',
   tax_rate: '21',
-  unit_type: 'unit',
+  is_tax_included: true,
   is_active: true,
   is_featured: false,
   track_stock: true,
@@ -40,7 +42,7 @@ const initialFormData: ProductFormData = {
 const ProductsListPage: React.FC = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
-  const { products, categories, loading, pagination: reduxPagination } = useAppSelector((state) => state.products);
+  const { products, categories, units, loading, pagination: reduxPagination } = useAppSelector((state) => state.products);
 
   // Map Redux pagination to PaginationState format
   const pagination: PaginationState = useMemo(() => ({
@@ -57,9 +59,10 @@ const ProductsListPage: React.FC = () => {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [formData, setFormData] = useState<ProductFormData>(initialFormData);
 
-  // Load categories on mount
+  // Load categories and units on mount
   useEffect(() => {
     dispatch(loadCategories());
+    dispatch(loadUnits());
   }, [dispatch]);
 
   // Load products when pagination or filters change
@@ -106,14 +109,15 @@ const ProductsListPage: React.FC = () => {
       barcode: product.barcode || '',
       description: product.description || '',
       category_id: product.category_id || '',
+      unit_id: product.unit_id || '',
       cost_price: product.cost_price?.toString() || '',
       sell_price: product.selling_price?.toString() || '',
       tax_rate: product.tax_rate?.toString() || '21',
-      unit_type: 'unit',
+      is_tax_included: product.is_tax_included ?? true,
       is_active: product.is_active ?? true,
       is_featured: product.is_featured ?? false,
-      track_stock: true,
-      min_stock: '5',
+      track_stock: product.track_stock ?? true,
+      min_stock: product.minimum_stock?.toString() || '5',
       is_weighable: product.is_weighable ?? false,
       scale_plu: product.scale_plu?.toString() || '',
       export_to_scale: product.export_to_scale ?? false,
@@ -131,9 +135,11 @@ const ProductsListPage: React.FC = () => {
       barcode: formData.barcode || undefined,
       description: formData.description || undefined,
       category_id: formData.category_id || undefined,
+      unit_id: formData.unit_id,
       cost_price: formData.cost_price || '0',
       selling_price: formData.sell_price || '0',
       tax_rate: formData.tax_rate || '21',
+      is_tax_included: formData.is_tax_included,
       is_active: formData.is_active,
       is_featured: formData.is_featured,
       track_stock: formData.track_stock,
@@ -259,6 +265,7 @@ const ProductsListPage: React.FC = () => {
         onChange={handleFormChange}
         editingProduct={editingProduct}
         categories={categories}
+        units={units}
         loading={loading}
       />
     </>

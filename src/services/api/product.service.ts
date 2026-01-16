@@ -28,6 +28,18 @@ export const productService = {
   },
 
   /**
+   * Get all units of measure
+   */
+  getUnits: (): Promise<ApiResponse<Array<{
+    id: string;
+    code: string;
+    name: string;
+    is_fractional: boolean;
+  }>>> => {
+    return get('/products/units');
+  },
+
+  /**
    * Get product by barcode
    */
   getByBarcode: (barcode: string): Promise<ApiResponse<Product>> => {

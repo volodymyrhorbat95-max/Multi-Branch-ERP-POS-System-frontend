@@ -9,10 +9,11 @@ export interface ProductFormData {
   barcode: string;
   description: string;
   category_id: string;
+  unit_id: string;
   cost_price: string;
   sell_price: string;
   tax_rate: string;
-  unit_type: string;
+  is_tax_included: boolean;
   is_active: boolean;
   is_featured: boolean;
   track_stock: boolean;
@@ -20,6 +21,13 @@ export interface ProductFormData {
   is_weighable: boolean;
   scale_plu: string;
   export_to_scale: boolean;
+}
+
+export interface UnitOfMeasure {
+  id: string;
+  code: string;
+  name: string;
+  is_fractional: boolean;
 }
 
 interface ProductFormModalProps {
@@ -30,6 +38,7 @@ interface ProductFormModalProps {
   onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => void;
   editingProduct: Product | null;
   categories: Category[];
+  units: UnitOfMeasure[];
   loading: boolean;
 }
 
@@ -41,6 +50,7 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
   onChange,
   editingProduct,
   categories,
+  units,
   loading,
 }) => {
   return (
@@ -132,19 +142,21 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
           </div>
           <div className="animate-fade-left duration-light-slow">
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Tipo de Unidad
+              Unidad de Medida *
             </label>
             <select
-              name="unit_type"
-              value={formData.unit_type}
+              name="unit_id"
+              value={formData.unit_id}
               onChange={onChange}
+              required
               className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             >
-              <option value="unit">Unidad</option>
-              <option value="kg">Kilogramo</option>
-              <option value="g">Gramo</option>
-              <option value="l">Litro</option>
-              <option value="ml">Mililitro</option>
+              <option value="">Seleccionar unidad</option>
+              {units.map((unit) => (
+                <option key={unit.id} value={unit.id}>
+                  {unit.name} ({unit.code})
+                </option>
+              ))}
             </select>
           </div>
           <div className="animate-zoom-in duration-slow">
@@ -205,6 +217,16 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
               className="w-4 h-4 text-primary-500 border-gray-300 rounded focus:ring-primary-500"
             />
             <span className="text-sm text-gray-700 dark:text-gray-300">Controlar Stock</span>
+          </label>
+          <label className="flex items-center gap-2 animate-fade-up duration-normal">
+            <input
+              type="checkbox"
+              name="is_tax_included"
+              checked={formData.is_tax_included}
+              onChange={onChange}
+              className="w-4 h-4 text-primary-500 border-gray-300 rounded focus:ring-primary-500"
+            />
+            <span className="text-sm text-gray-700 dark:text-gray-300">IVA Incluido</span>
           </label>
           <label className="flex items-center gap-2 animate-fade-up duration-normal">
             <input

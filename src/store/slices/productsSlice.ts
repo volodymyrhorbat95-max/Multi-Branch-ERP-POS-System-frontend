@@ -4,6 +4,13 @@ import { productService, categoryService } from '../../services/api';
 import { startLoading, stopLoading, showToast } from './uiSlice';
 import { getCachedProducts } from '../../services/offline/syncService';
 
+interface UnitOfMeasure {
+  id: string;
+  code: string;
+  name: string;
+  is_fractional: boolean;
+}
+
 interface ProductsState {
   // Products list
   products: Product[];
@@ -21,6 +28,9 @@ interface ProductsState {
   categories: Category[];
   categoryTree: Category[];
   selectedCategory: UUID | null;
+
+  // Units of measure
+  units: UnitOfMeasure[];
 
   // Search and filter
   searchQuery: string;
@@ -49,6 +59,7 @@ const initialState: ProductsState = {
   categories: [],
   categoryTree: [],
   selectedCategory: null,
+  units: [],
   searchQuery: '',
   filters: {},
   loading: false,
@@ -227,6 +238,23 @@ export const loadCategoryTree = createAsyncThunk<Category[], void, { rejectValue
   }
 );
 
+export const loadUnits = createAsyncThunk<UnitOfMeasure[], void, { rejectValue: string }>(
+  'products/loadUnits',
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await productService.getUnits();
+
+      if (!response.success) {
+        throw new Error('Failed to load units');
+      }
+
+      return response.data;
+    } catch (error) {
+      return rejectWithValue('Error loading units');
+    }
+  }
+);
+
 export const createProduct = createAsyncThunk<
   Product,
   Partial<Product>,
@@ -399,6 +427,11 @@ const productsSlice = createSlice({
     // Load Category Tree
     builder.addCase(loadCategoryTree.fulfilled, (state, action) => {
       state.categoryTree = action.payload;
+    });
+
+    // Load Units
+    builder.addCase(loadUnits.fulfilled, (state, action) => {
+      state.units = action.payload;
     });
 
     // Create Product
