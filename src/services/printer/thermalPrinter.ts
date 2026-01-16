@@ -108,7 +108,7 @@ const generatePrintHTML = (data: ReceiptData['structuredData']): string => {
 
       <div class="separator"></div>
 
-      <div><strong>Ticket:</strong> ${sale.ticket_number || sale.sale_number}</div>
+      <div><strong>Ticket:</strong> ${sale.sale_number}</div>
       <div><strong>Fecha:</strong> ${formatDate(saleDate)}</div>
       <div><strong>Hora:</strong> ${formatTime(saleDate)}</div>
 
@@ -134,7 +134,7 @@ const generatePrintHTML = (data: ReceiptData['structuredData']): string => {
             </tr>
             <tr class="item-detail">
               <td>${parseFloat(String(item.quantity))} x ${formatMoney(item.unit_price)}</td>
-              <td colspan="2" class="right">${formatMoney(item.line_total)}</td>
+              <td colspan="2" class="right">${formatMoney(item.subtotal)}</td>
             </tr>
             ${parseFloat(String(item.discount_amount)) > 0 ? `
               <tr class="item-detail">
@@ -201,7 +201,7 @@ const generatePrintHTML = (data: ReceiptData['structuredData']): string => {
         <div class="separator"></div>
         <div class="center bold">FACTURA ${invoice.invoice_type} ${invoice.invoice_number}</div>
         <div class="center">CAE: ${invoice.cae}</div>
-        <div class="center">Vencimiento CAE: ${formatDate(new Date(invoice.cae_expiration))}</div>
+        <div class="center">Vencimiento CAE: ${invoice.cae_expiration_date ? formatDate(new Date(invoice.cae_expiration_date)) : '-'}</div>
       ` : ''}
 
       <div class="separator"></div>

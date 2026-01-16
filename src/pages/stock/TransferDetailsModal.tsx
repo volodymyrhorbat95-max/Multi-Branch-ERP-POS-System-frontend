@@ -76,8 +76,8 @@ const TransferDetailsModal: React.FC<TransferDetailsModalProps> = ({
     const items = transfer.items?.map(item => ({
       id: item.id,
       shipped_quantity: shippedQuantities[item.id]
-        ? parseFloat(shippedQuantities[item.id])
-        : item.requested_quantity
+        ? Number(shippedQuantities[item.id])
+        : Number(item.requested_quantity)
     })) || [];
 
     onApprove(transfer.id, items);
@@ -91,8 +91,8 @@ const TransferDetailsModal: React.FC<TransferDetailsModalProps> = ({
     const items = transfer.items?.map(item => ({
       item_id: item.id,
       quantity_received: receivedQuantities[item.id]
-        ? parseFloat(receivedQuantities[item.id])
-        : item.requested_quantity
+        ? Number(receivedQuantities[item.id])
+        : Number(item.requested_quantity)
     })) || [];
 
     onReceive(transfer.id, items, receiveNotes || undefined);
@@ -157,7 +157,7 @@ const TransferDetailsModal: React.FC<TransferDetailsModalProps> = ({
             <p className="text-xs text-gray-500 uppercase mb-1">Desde</p>
             <p className="font-medium">{transfer.source_branch?.name || 'Sucursal Origen'}</p>
             {transfer.requester && (
-              <p className="text-sm text-gray-500 mt-1">Por: {transfer.requester.name}</p>
+              <p className="text-sm text-gray-500 mt-1">Por: {transfer.requester.first_name} {transfer.requester.last_name}</p>
             )}
           </div>
           <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-sm">
@@ -174,19 +174,19 @@ const TransferDetailsModal: React.FC<TransferDetailsModalProps> = ({
               {transfer.approved_at && (
                 <p className="text-gray-600 dark:text-gray-400">
                   ✓ Aprobado: {formatDateTime(transfer.approved_at)}
-                  {transfer.approver && ` por ${transfer.approver.name}`}
+                  {transfer.approver && ` por ${transfer.approver.first_name} ${transfer.approver.last_name}`}
                 </p>
               )}
               {transfer.shipped_at && (
                 <p className="text-gray-600 dark:text-gray-400">
                   ✓ Enviado: {formatDateTime(transfer.shipped_at)}
-                  {transfer.shipper && ` por ${transfer.shipper.name}`}
+                  {transfer.shipper && ` por ${transfer.shipper.first_name} ${transfer.shipper.last_name}`}
                 </p>
               )}
               {transfer.received_at && (
                 <p className="text-gray-600 dark:text-gray-400">
                   ✓ Recibido: {formatDateTime(transfer.received_at)}
-                  {transfer.receiver && ` por ${transfer.receiver.name}`}
+                  {transfer.receiver && ` por ${transfer.receiver.first_name} ${transfer.receiver.last_name}`}
                 </p>
               )}
             </div>
@@ -230,25 +230,25 @@ const TransferDetailsModal: React.FC<TransferDetailsModalProps> = ({
                       {item.product?.name || 'Producto'}
                     </td>
                     <td className="px-4 py-3 text-sm text-right text-gray-900 dark:text-white">
-                      {formatNumber(item.requested_quantity)}
+                      {formatNumber(Number(item.requested_quantity))}
                     </td>
                     {transfer.status === 'IN_TRANSIT' && item.shipped_quantity !== null && (
                       <td className="px-4 py-3 text-sm text-right text-gray-900 dark:text-white">
-                        {formatNumber(item.shipped_quantity)}
+                        {formatNumber(Number(item.shipped_quantity))}
                       </td>
                     )}
                     {transfer.status === 'RECEIVED' && (
                       <>
                         <td className="px-4 py-3 text-sm text-right text-gray-600 dark:text-gray-400">
-                          {item.shipped_quantity !== null ? formatNumber(item.shipped_quantity) : '-'}
+                          {item.shipped_quantity !== null ? formatNumber(Number(item.shipped_quantity)) : '-'}
                         </td>
                         <td className="px-4 py-3 text-sm text-right">
                           <span className={
-                            item.received_quantity !== null && item.received_quantity !== item.requested_quantity
+                            item.received_quantity !== null && Number(item.received_quantity) !== Number(item.requested_quantity)
                               ? 'text-warning-600 dark:text-warning-400 font-medium'
                               : 'text-gray-900 dark:text-white'
                           }>
-                            {item.received_quantity !== null ? formatNumber(item.received_quantity) : '-'}
+                            {item.received_quantity !== null ? formatNumber(Number(item.received_quantity)) : '-'}
                           </span>
                         </td>
                       </>
@@ -283,7 +283,7 @@ const TransferDetailsModal: React.FC<TransferDetailsModalProps> = ({
                 <div className="flex-1">
                   <p className="text-sm font-medium">{item.product?.name}</p>
                   <p className="text-xs text-gray-500">
-                    Solicitado: {formatNumber(item.requested_quantity)}
+                    Solicitado: {formatNumber(Number(item.requested_quantity))}
                   </p>
                 </div>
                 <div className="w-32">
@@ -291,7 +291,7 @@ const TransferDetailsModal: React.FC<TransferDetailsModalProps> = ({
                     type="number"
                     min="0"
                     step="0.001"
-                    value={shippedQuantities[item.id] || item.requested_quantity}
+                    value={shippedQuantities[item.id] || String(item.requested_quantity)}
                     onChange={(e) => setShippedQuantities({
                       ...shippedQuantities,
                       [item.id]: e.target.value
@@ -313,8 +313,8 @@ const TransferDetailsModal: React.FC<TransferDetailsModalProps> = ({
                 <div className="flex-1">
                   <p className="text-sm font-medium">{item.product?.name}</p>
                   <p className="text-xs text-gray-500">
-                    Solicitado: {formatNumber(item.requested_quantity)}
-                    {item.shipped_quantity !== null && ` | Enviado: ${formatNumber(item.shipped_quantity)}`}
+                    Solicitado: {formatNumber(Number(item.requested_quantity))}
+                    {item.shipped_quantity !== null && ` | Enviado: ${formatNumber(Number(item.shipped_quantity))}`}
                   </p>
                 </div>
                 <div className="w-32">
@@ -322,7 +322,7 @@ const TransferDetailsModal: React.FC<TransferDetailsModalProps> = ({
                     type="number"
                     min="0"
                     step="0.001"
-                    value={receivedQuantities[item.id] || item.requested_quantity}
+                    value={receivedQuantities[item.id] || String(item.requested_quantity)}
                     onChange={(e) => setReceivedQuantities({
                       ...receivedQuantities,
                       [item.id]: e.target.value

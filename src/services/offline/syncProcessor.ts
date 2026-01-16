@@ -8,7 +8,7 @@
  * IndexedDB sync queue → syncProcessor → API → Backend → Database
  */
 
-import { db, LocalSyncQueueItem } from '../db';
+import { db } from '../db';
 import syncService from '../api/sync.service';
 import type { UUID } from '../../types';
 

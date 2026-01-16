@@ -4,7 +4,6 @@ import type {
   PaginatedResponse,
   UUID,
   StockTransfer,
-  StockTransferItem,
   StockTransferStatus
 } from '../../types';
 

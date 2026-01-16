@@ -7,7 +7,7 @@ import { retryFailedSync } from '../../services/offline/syncProcessor';
 import { useAppSelector } from '../../store';
 import { showToast } from '../../store/slices/uiSlice';
 import { useAppDispatch } from '../../store';
-import type { UUID } from '../../types';
+// UUID type imported but used in type annotations elsewhere
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
@@ -74,10 +74,10 @@ const FailedSyncModal: React.FC<FailedSyncModalProps> = ({
       await db.syncQueue
         .where('id')
         .equals(itemId)
-        .modify({
-          status: 'PENDING',
-          retry_count: 0,
-          error_message: null,
+        .modify((item) => {
+          item.status = 'PENDING';
+          item.retry_count = 0;
+          item.error_message = undefined;
         });
 
       // Retry sync for this specific item
@@ -138,10 +138,10 @@ const FailedSyncModal: React.FC<FailedSyncModalProps> = ({
       await db.syncQueue
         .where('status')
         .equals('FAILED')
-        .modify({
-          status: 'PENDING',
-          retry_count: 0,
-          error_message: null,
+        .modify((item) => {
+          item.status = 'PENDING';
+          item.retry_count = 0;
+          item.error_message = undefined;
         });
 
       // Retry sync with max 3 attempts

@@ -1,5 +1,5 @@
 // Printer types for thermal receipt printing
-import { UUID, ISODateString, Decimal } from './index';
+import { UUID, ISODateString } from './index';
 import type { Sale, SaleItem, SalePayment, Customer, Branch, Invoice } from './index';
 
 export interface PrinterConfig {

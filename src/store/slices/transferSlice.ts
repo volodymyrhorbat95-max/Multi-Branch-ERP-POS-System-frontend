@@ -1,4 +1,4 @@
-import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
+import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import type { UUID, StockTransfer, StockTransferStatus } from '../../types';
 import { stockService } from '../../services/api/stock.service';
 import { startLoading, stopLoading, showToast } from './uiSlice';

@@ -9,7 +9,7 @@ interface WithdrawalModalProps {
   sessionId: string;
 }
 
-const WithdrawalModal: React.FC<WithdrawalModalProps> = ({ isOpen, onClose, onSubmit, sessionId }) => {
+const WithdrawalModal: React.FC<WithdrawalModalProps> = ({ isOpen, onClose, onSubmit, sessionId: _sessionId }) => {
   const [amount, setAmount] = useState('');
   const [withdrawalType, setWithdrawalType] = useState<WithdrawalType>('SUPPLIER_PAYMENT');
   const [recipientName, setRecipientName] = useState('');

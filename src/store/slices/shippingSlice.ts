@@ -428,7 +428,7 @@ export const loadShipments = createAsyncThunk<
   async (filters, { dispatch, rejectWithValue }) => {
     try {
       dispatch(startLoading());
-      const response = await shippingService.getAllShipments(filters);
+      const response = await shippingService.getAllShipments(filters || undefined);
 
       if (!response.success) {
         throw new Error(response.error || 'Failed to load shipments');

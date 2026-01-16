@@ -1,4 +1,4 @@
-import { get } from './base';
+import { get } from './client';
 import type { ApiResponse, UUID } from '../../types';
 
 export interface AuditLog {

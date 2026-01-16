@@ -21,6 +21,7 @@ const initialFormData: ShippingZoneFormData = {
   weight_surcharge_per_kg: 0,
   express_surcharge: 0,
   estimated_delivery_hours: 24,
+  is_active: true,
 };
 
 const ShippingZonesPage: React.FC = () => {
@@ -67,6 +68,7 @@ const ShippingZonesPage: React.FC = () => {
       weight_surcharge_per_kg: zone.weight_surcharge_per_kg ? Number(zone.weight_surcharge_per_kg) : 0,
       express_surcharge: zone.express_surcharge ? Number(zone.express_surcharge) : 0,
       estimated_delivery_hours: zone.estimated_delivery_hours || 24,
+      is_active: zone.is_active ?? true,
     });
     setShowModal(true);
   };

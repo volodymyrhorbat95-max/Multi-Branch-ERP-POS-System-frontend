@@ -110,8 +110,8 @@ export const PurchaseOrderFormModal: React.FC<PurchaseOrderFormModalProps> = ({
       product_name: product.name,
       product_sku: product.sku,
       quantity: 1,
-      unit_price: product.cost_price,
-      total_price: product.cost_price,
+      unit_price: Number(product.cost_price),
+      total_price: Number(product.cost_price),
     };
 
     setItems([...items, newItem]);
@@ -271,7 +271,7 @@ export const PurchaseOrderFormModal: React.FC<PurchaseOrderFormModalProps> = ({
                             {product.name}
                           </p>
                           <p className="text-xs text-gray-500">
-                            SKU: {product.sku} • Costo: ${product.cost_price.toFixed(2)}
+                            SKU: {product.sku} • Costo: ${Number(product.cost_price).toFixed(2)}
                           </p>
                         </button>
                       ))}

@@ -24,7 +24,7 @@ export const NeighborhoodMappingFormModal: React.FC<NeighborhoodMappingFormModal
 }) => {
   return (
     <Modal
-      show={show}
+      isOpen={show}
       onClose={onClose}
       title={isEditing ? 'Editar Mapeo de Barrio' : 'Nuevo Mapeo de Barrio'}
       size="md"

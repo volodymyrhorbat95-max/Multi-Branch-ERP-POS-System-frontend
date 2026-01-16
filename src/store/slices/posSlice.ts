@@ -49,14 +49,14 @@ interface POSState {
 
 const emptyCart: Cart = {
   items: [],
-  subtotal: 0,
+  subtotal: '0',
   discount_type: undefined,
   discount_value: 0,
-  discount_amount: 0,
+  discount_amount: '0',
   discount_reason: undefined,
   discount_approved_by_pin: undefined,
-  tax_amount: 0,
-  total: 0,
+  tax_amount: '0',
+  total: '0',
 };
 
 const initialState: POSState = {
@@ -101,10 +101,10 @@ const calculateCartTotals = (cart: Cart): Cart => {
 
   return {
     ...cart,
-    subtotal,
-    discount_amount: discountAmount,
-    tax_amount: taxAmount,
-    total: Math.max(0, total),
+    subtotal: String(subtotal),
+    discount_amount: String(discountAmount),
+    tax_amount: String(taxAmount),
+    total: String(Math.max(0, total)),
   };
 };
 
@@ -133,13 +133,13 @@ const calculateItemTotals = (
 
   return {
     quantity,
-    unit_price: unitPrice,
+    unit_price: String(unitPrice),
     discount_percent: discountPercent,
-    discount_amount: discountAmount,
-    tax_rate: Number(product.tax_rate) || 0,
-    tax_amount: taxAmount,
-    subtotal,
-    total: afterDiscount + (product.is_tax_included ? 0 : taxAmount), // Add tax only if not included
+    discount_amount: String(discountAmount),
+    tax_rate: String(Number(product.tax_rate) || 0),
+    tax_amount: String(taxAmount),
+    subtotal: String(subtotal),
+    total: String(afterDiscount + (product.is_tax_included ? 0 : taxAmount)), // Add tax only if not included
   };
 };
 
@@ -678,7 +678,7 @@ const posSlice = createSlice({
       action: PayloadAction<{ index: number; amount: number }>
     ) => {
       if (state.payments[action.payload.index]) {
-        state.payments[action.payload.index].amount = action.payload.amount;
+        state.payments[action.payload.index].amount = String(action.payload.amount);
       }
     },
 

@@ -89,7 +89,7 @@ class SocketService {
       store.dispatch(addAlert(alert));
 
       // Could show toast notification for critical alerts
-      if (alert.severity === 'CRITICAL' || alert.severity === 'ERROR') {
+      if (alert.severity === 'CRITICAL' || alert.severity === 'HIGH') {
         // Toast notification is handled by the alerts slice
       }
     });

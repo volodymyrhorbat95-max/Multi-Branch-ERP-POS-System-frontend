@@ -1,7 +1,7 @@
 import React from 'react';
 import { useAppDispatch, useAppSelector } from '../../store';
 import { deactivateUser, unlockUser, resetUserPassword } from '../../store/slices/usersSlice';
-import { Button, Pagination } from '../../components/ui';
+import { Pagination } from '../../components/ui';
 import type { PaginationState } from '../../components/ui/Pagination';
 import type { User } from '../../types';
 import { MdGroup, MdLock, MdEdit, MdLockOpen, MdKey, MdBlock } from 'react-icons/md';

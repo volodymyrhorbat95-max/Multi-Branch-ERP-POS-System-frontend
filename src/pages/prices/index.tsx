@@ -117,23 +117,28 @@ const PriceImportPage: React.FC = () => {
             <PricePreviewTable
               preview={{
                 items: batchItems.map(item => ({
-                  status: item.match_status === 'MATCHED' ? 'matched' :
-                         item.match_status === 'SUGGESTED' ? 'suggested' : 'unmatched',
-                  matched_product_id: item.matched_product_id,
-                  supplier_code: item.supplier_code,
-                  description: item.description,
-                  unit_price: item.cost_price,
-                  product_name: item.matched_product_name || '',
-                  current_price: item.current_cost_price || 0,
-                  suggested_price: item.suggested_sell_price,
+                  row_number: item.row_number,
+                  extracted_code: item.extracted_code,
+                  extracted_description: item.extracted_description,
+                  extracted_price: item.extracted_price,
+                  product_id: item.product_id,
+                  product: item.product,
+                  match_type: item.match_type,
+                  match_confidence: item.match_confidence,
+                  current_cost_price: item.current_cost_price,
+                  current_selling_price: item.current_selling_price,
+                  new_cost_price: item.new_cost_price,
+                  new_selling_price: item.new_selling_price,
+                  price_change_percent: item.price_change_percent,
+                  status: item.status,
                 })),
-                total_items: batchItems.length,
-                matched_count: batchItems.filter(i => i.match_status === 'MATCHED').length,
-                unmatched_count: batchItems.filter(i => i.match_status === 'NOT_FOUND').length,
+                total_rows_extracted: batchItems.length,
+                rows_matched: batchItems.filter(i => i.match_type !== 'UNMATCHED').length,
+                rows_unmatched: batchItems.filter(i => i.match_type === 'UNMATCHED').length,
               }}
               selectedItems={new Set(
                 batchItems
-                  .map((item, index) => item.is_selected ? index : -1)
+                  .map((item, index) => item.status === 'APPROVED' ? index : -1)
                   .filter(i => i >= 0)
               )}
               marginPercent={marginPercent}
@@ -143,20 +148,19 @@ const PriceImportPage: React.FC = () => {
                 if (item?.id) {
                   dispatch(toggleItemSelection({
                     itemId: item.id,
-                    selected: !item.is_selected,
+                    selected: item.status !== 'APPROVED',
                   }));
                 }
               }}
               onToggleAllMatched={() => {
                 if (currentBatch?.id) {
                   const allMatchedSelected = batchItems
-                    .filter(i => i.match_status === 'MATCHED')
-                    .every(i => i.is_selected);
+                    .filter(i => i.match_type !== 'UNMATCHED')
+                    .every(i => i.status === 'APPROVED');
 
                   dispatch(selectAllItems({
                     batchId: currentBatch.id,
                     selected: !allMatchedSelected,
-                    match_status: 'MATCHED',
                   })).then(() => {
                     // Reload items after selection
                     if (currentBatch?.id) {
@@ -190,7 +194,7 @@ const PriceImportPage: React.FC = () => {
         isOpen={showConfirmModal}
         onClose={() => setShowConfirmModal(false)}
         onConfirm={handleApplyPrices}
-        selectedCount={batchItems.filter(i => i.is_selected).length}
+        selectedCount={batchItems.filter(i => i.status === 'APPROVED').length}
         marginPercent={marginPercent}
         roundingRule={roundingRule}
         loading={loading}

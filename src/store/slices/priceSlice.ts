@@ -270,13 +270,13 @@ export const toggleItemSelection = createAsyncThunk<
 
 export const selectAllItems = createAsyncThunk<
   number,
-  { batchId: UUID; selected: boolean; match_status?: string },
+  { batchId: UUID; selected: boolean; match_type?: string },
   { rejectValue: string }
 >(
   'price/selectAllItems',
-  async ({ batchId, selected, match_status }, { rejectWithValue }) => {
+  async ({ batchId, selected, match_type }, { rejectWithValue }) => {
     try {
-      const response = await priceService.selectAllItems(batchId, selected, { match_status });
+      const response = await priceService.selectAllItems(batchId, selected, { match_type });
 
       if (!response.success) {
         throw new Error('Failed to select all');

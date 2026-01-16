@@ -21,7 +21,7 @@ export const ShippingZoneFormModal: React.FC<ShippingZoneFormModalProps> = ({
 }) => {
   return (
     <Modal
-      show={show}
+      isOpen={show}
       onClose={onClose}
       title={isEditing ? 'Editar Zona de Envío' : 'Nueva Zona de Envío'}
       size="lg"
