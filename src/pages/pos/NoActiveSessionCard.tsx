@@ -12,8 +12,8 @@ const NoActiveSessionCard: React.FC<NoActiveSessionCardProps> = ({
   onNavigateToSessions
 }) => {
   return (
-    <div className="min-h-screen bg-gray-100 dark:bg-gray-900 flex items-center justify-center p-4 animate-fade-up duration-fast">
-      <Card className="max-w-md w-full p-8 text-center animate-zoom-in duration-normal">
+    <div className="fixed inset-0 z-[100] bg-gray-100 dark:bg-gray-900 flex items-center justify-center p-4 animate-fade-up duration-fast">
+      <Card className="max-w-md w-full p-8 text-center animate-zoom-in duration-normal relative z-10">
         <div className="w-16 h-16 bg-warning-100 dark:bg-warning-900/20 rounded-full mx-auto mb-4 flex items-center justify-center animate-flip-down duration-light-slow">
           <MdWarning className="w-8 h-8 text-warning-500" />
         </div>

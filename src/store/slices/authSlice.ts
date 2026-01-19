@@ -307,7 +307,7 @@ const authSlice = createSlice({
         state.user = action.payload.user;
         state.token = action.payload.token;
         state.isAuthenticated = true;
-        state.availableBranches = action.payload.branches;
+        state.availableBranches = action.payload.branches || [];
         state.loginType = 'full';
         state.error = null;
 
@@ -371,7 +371,7 @@ const authSlice = createSlice({
       .addCase(getCurrentUser.fulfilled, (state, action) => {
         state.user = action.payload.user;
         state.isAuthenticated = true;
-        state.availableBranches = action.payload.branches;
+        state.availableBranches = action.payload.branches || [];
 
         if (action.payload.branches && action.payload.branches.length > 0 && !state.currentBranch) {
           const primaryBranch = action.payload.branches.find(

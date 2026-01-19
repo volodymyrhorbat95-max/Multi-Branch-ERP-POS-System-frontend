@@ -161,12 +161,18 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
       >
         {/* Mobile Header with Close Button */}
         <div className="lg:hidden flex items-center justify-between p-4 border-b border-primary-600/30 bg-primary-600/50 backdrop-blur-sm">
-          <div className="flex items-center gap-3">
+          <button
+            onClick={() => {
+              goTo('/dashboard');
+              onClose();
+            }}
+            className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity"
+          >
             <div className="w-10 h-10 bg-white/20 rounded-md flex items-center justify-center backdrop-blur-sm">
               <MdStore className="w-6 h-6 text-white" />
             </div>
             <span className="font-bold text-white text-lg">POS Multi</span>
-          </div>
+          </button>
           <button
             onClick={onClose}
             className="p-2 text-white/90 hover:text-white hover:bg-white/10 rounded-md"
@@ -177,7 +183,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
         </div>
 
         {/* Branch Selector (for owners) */}
-        {canAccessAllBranches && availableBranches.length > 1 && (
+        {canAccessAllBranches && availableBranches && availableBranches.length > 1 && (
           <div className="px-4 py-3 border-b border-primary-600/30">
             <div className="relative" ref={branchDropdownRef}>
               <button

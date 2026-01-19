@@ -19,12 +19,15 @@ const Header: React.FC<{ onMenuClick: () => void }> = ({ onMenuClick }) => {
         </button>
 
         {/* Logo - visible on desktop when sidebar is fixed */}
-        <div className="hidden lg:flex items-center gap-3">
+        <button
+          onClick={() => goTo('/dashboard')}
+          className="hidden lg:flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity"
+        >
           <div className="w-10 h-10 bg-white/20 rounded-sm flex items-center justify-center backdrop-blur-sm">
             <MdStore className="w-6 h-6 text-white" />
           </div>
           <span className="font-bold text-white">POS Multi</span>
-        </div>
+        </button>
       </div>
 
       <div className="flex-1 lg:flex-none">

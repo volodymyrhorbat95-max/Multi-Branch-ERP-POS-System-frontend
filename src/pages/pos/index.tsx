@@ -507,7 +507,7 @@ const POSPage: React.FC = () => {
   }
 
   return (
-    <div className="h-screen flex flex-col bg-gray-100 dark:bg-gray-900 overflow-hidden animate-fade-up duration-fast">
+    <div className="fixed inset-0 z-[100] flex flex-col bg-gray-100 dark:bg-gray-900 overflow-hidden animate-fade-up duration-fast">
       <TopBar
         branchName={currentBranch?.name}
         registerName={activeSession?.register?.name}
