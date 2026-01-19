@@ -445,14 +445,15 @@ export interface RegisterSession {
   opening_cash: Decimal;
   opening_notes?: string;
 
-  // Opening denomination breakdown
+  // Opening denomination breakdown (Argentina 2024 bills)
+  opening_bills_20000?: number;
+  opening_bills_10000?: number;
+  opening_bills_2000?: number;
   opening_bills_1000?: number;
   opening_bills_500?: number;
   opening_bills_200?: number;
   opening_bills_100?: number;
   opening_bills_50?: number;
-  opening_bills_20?: number;
-  opening_bills_10?: number;
   opening_coins?: Decimal;
 
   // Closing
@@ -465,14 +466,15 @@ export interface RegisterSession {
   declared_qr?: Decimal;
   declared_transfer?: Decimal;
 
-  // Closing denomination breakdown
+  // Closing denomination breakdown (Argentina 2024 bills)
+  closing_bills_20000?: number;
+  closing_bills_10000?: number;
+  closing_bills_2000?: number;
   closing_bills_1000?: number;
   closing_bills_500?: number;
   closing_bills_200?: number;
   closing_bills_100?: number;
   closing_bills_50?: number;
-  closing_bills_20?: number;
-  closing_bills_10?: number;
   closing_coins?: Decimal;
 
   // System calculated amounts
@@ -507,15 +509,16 @@ export interface RegisterSession {
   reopener?: User;
 }
 
-// Denomination breakdown for cash counting
+// Denomination breakdown for cash counting (Argentina 2024 bills)
 export interface DenominationBreakdown {
+  bills_20000: number;
+  bills_10000: number;
+  bills_2000: number;
   bills_1000: number;
   bills_500: number;
   bills_200: number;
   bills_100: number;
   bills_50: number;
-  bills_20: number;
-  bills_10: number;
   coins: number;
 }
 

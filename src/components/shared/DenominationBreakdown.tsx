@@ -23,25 +23,28 @@ const DenominationBreakdown: React.FC<DenominationBreakdownProps> = ({
 
   const calculateTotal = useMemo(() => {
     return (
+      values.bills_20000 * 20000 +
+      values.bills_10000 * 10000 +
+      values.bills_2000 * 2000 +
       values.bills_1000 * 1000 +
       values.bills_500 * 500 +
       values.bills_200 * 200 +
       values.bills_100 * 100 +
       values.bills_50 * 50 +
-      values.bills_20 * 20 +
-      values.bills_10 * 10 +
       values.coins
     );
   }, [values]);
 
+  // Argentina 2024 bill denominations
   const denominations = [
-    { field: 'bills_1000' as const, label: '$1000', value: 1000 },
+    { field: 'bills_20000' as const, label: '$20.000', value: 20000 },
+    { field: 'bills_10000' as const, label: '$10.000', value: 10000 },
+    { field: 'bills_2000' as const, label: '$2.000', value: 2000 },
+    { field: 'bills_1000' as const, label: '$1.000', value: 1000 },
     { field: 'bills_500' as const, label: '$500', value: 500 },
     { field: 'bills_200' as const, label: '$200', value: 200 },
     { field: 'bills_100' as const, label: '$100', value: 100 },
-    { field: 'bills_50' as const, label: '$50', value: 50 },
-    { field: 'bills_20' as const, label: '$20', value: 20 },
-    { field: 'bills_10' as const, label: '$10', value: 10 }
+    { field: 'bills_50' as const, label: '$50', value: 50 }
   ];
 
   return (

@@ -21,29 +21,31 @@ const OpenSessionModal: React.FC<OpenSessionModalProps> = ({ isOpen, onClose }) 
   const [notes, setNotes] = useState('');
   const [useDenominations, setUseDenominations] = useState(true);
   const [denominations, setDenominations] = useState<DenominationValues>({
+    bills_20000: 0,
+    bills_10000: 0,
+    bills_2000: 0,
     bills_1000: 0,
     bills_500: 0,
     bills_200: 0,
     bills_100: 0,
     bills_50: 0,
-    bills_20: 0,
-    bills_10: 0,
     coins: 0
   });
 
   // Auto-detect shift type based on current time and branch closing times
   const detectedShiftType = currentBranch ? detectShiftType(currentBranch) : 'FULL_DAY';
 
-  // Calculate total from denominations
+  // Calculate total from denominations (Argentina 2024 bills)
   const denominationTotal = useMemo(() => {
     return (
+      denominations.bills_20000 * 20000 +
+      denominations.bills_10000 * 10000 +
+      denominations.bills_2000 * 2000 +
       denominations.bills_1000 * 1000 +
       denominations.bills_500 * 500 +
       denominations.bills_200 * 200 +
       denominations.bills_100 * 100 +
       denominations.bills_50 * 50 +
-      denominations.bills_20 * 20 +
-      denominations.bills_10 * 10 +
       denominations.coins
     );
   }, [denominations]);
@@ -62,13 +64,14 @@ const OpenSessionModal: React.FC<OpenSessionModalProps> = ({ isOpen, onClose }) 
       setOpeningAmount('');
       setNotes('');
       setDenominations({
+        bills_20000: 0,
+        bills_10000: 0,
+        bills_2000: 0,
         bills_1000: 0,
         bills_500: 0,
         bills_200: 0,
         bills_100: 0,
         bills_50: 0,
-        bills_20: 0,
-        bills_10: 0,
         coins: 0
       });
     }

@@ -21,26 +21,28 @@ const CloseSessionModal: React.FC<CloseSessionModalProps> = ({ isOpen, onClose, 
   const [closingNotes, setClosingNotes] = useState('');
   const [useDenominations, setUseDenominations] = useState(true);
   const [closingDenominations, setClosingDenominations] = useState<DenominationValues>({
+    bills_20000: 0,
+    bills_10000: 0,
+    bills_2000: 0,
     bills_1000: 0,
     bills_500: 0,
     bills_200: 0,
     bills_100: 0,
     bills_50: 0,
-    bills_20: 0,
-    bills_10: 0,
     coins: 0
   });
 
-  // Calculate total from denominations
+  // Calculate total from denominations (Argentina 2024 bills)
   const denominationTotal = useMemo(() => {
     return (
+      closingDenominations.bills_20000 * 20000 +
+      closingDenominations.bills_10000 * 10000 +
+      closingDenominations.bills_2000 * 2000 +
       closingDenominations.bills_1000 * 1000 +
       closingDenominations.bills_500 * 500 +
       closingDenominations.bills_200 * 200 +
       closingDenominations.bills_100 * 100 +
       closingDenominations.bills_50 * 50 +
-      closingDenominations.bills_20 * 20 +
-      closingDenominations.bills_10 * 10 +
       closingDenominations.coins
     );
   }, [closingDenominations]);
@@ -54,13 +56,14 @@ const CloseSessionModal: React.FC<CloseSessionModalProps> = ({ isOpen, onClose, 
       setDeclaredTransfer('');
       setClosingNotes('');
       setClosingDenominations({
+        bills_20000: 0,
+        bills_10000: 0,
+        bills_2000: 0,
         bills_1000: 0,
         bills_500: 0,
         bills_200: 0,
         bills_100: 0,
         bills_50: 0,
-        bills_20: 0,
-        bills_10: 0,
         coins: 0
       });
     }
