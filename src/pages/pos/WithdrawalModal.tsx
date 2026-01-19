@@ -64,7 +64,7 @@ const WithdrawalModal: React.FC<WithdrawalModalProps> = ({ isOpen, onClose, onSu
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 animate-fade-up duration-fast">
+    <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/50 animate-fade-up duration-fast">
       <div className="bg-white dark:bg-gray-800 rounded-sm shadow-xl max-w-md w-full p-6 animate-zoom-in duration-normal">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-bold text-gray-900 dark:text-white">

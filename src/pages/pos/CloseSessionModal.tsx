@@ -108,7 +108,7 @@ const CloseSessionModal: React.FC<CloseSessionModalProps> = ({ isOpen, onClose, 
   if (!isOpen || !session) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 animate-fade-up duration-fast overflow-y-auto">
+    <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/50 animate-fade-up duration-fast overflow-y-auto">
       <div className="bg-white dark:bg-gray-800 rounded-sm shadow-xl max-w-3xl w-full p-6 my-8 animate-zoom-in duration-normal max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-6">
           <div>

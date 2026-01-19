@@ -58,7 +58,7 @@ const ReopenSessionModal: React.FC<ReopenSessionModalProps> = ({ isOpen, onClose
   if (!isOpen || !session) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 animate-fade-up duration-fast">
+    <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/50 animate-fade-up duration-fast">
       <div className="bg-white dark:bg-gray-800 rounded-sm shadow-xl max-w-md w-full p-6 animate-zoom-in duration-normal">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-bold text-warning-600 dark:text-warning-400">

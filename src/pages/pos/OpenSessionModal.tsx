@@ -114,8 +114,8 @@ const OpenSessionModal: React.FC<OpenSessionModalProps> = ({ isOpen, onClose }) 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 animate-fade-up duration-fast">
-      <div className="bg-white dark:bg-gray-800 rounded-sm shadow-xl max-w-md w-full p-6 animate-zoom-in duration-normal">
+    <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/50 animate-fade-up duration-fast">
+      <div className="bg-white dark:bg-gray-800 rounded-sm shadow-xl w-[90vw] max-w-2xl p-6 animate-zoom-in duration-normal max-h-[70vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-bold text-gray-900 dark:text-white">
             Abrir Caja
