@@ -150,9 +150,16 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
       <div className="space-y-6">
         {/* Invoice Type Selection */}
         <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-sm border border-blue-200 dark:border-blue-800 animate-fade-down duration-normal">
-          <h3 className="font-medium text-gray-900 dark:text-white mb-3">
+          <h3 className="font-medium text-gray-900 dark:text-white mb-2">
             Tipo de Factura
           </h3>
+
+          {/* Manual Invoicing Notice */}
+          <div className="mb-3 p-2 bg-amber-50 dark:bg-amber-900/20 border border-amber-300 dark:border-amber-700 rounded-sm">
+            <p className="text-xs text-amber-800 dark:text-amber-300">
+              La factura debe emitirse manualmente en FactuHoy despues de completar la venta.
+            </p>
+          </div>
 
           <div className="grid grid-cols-3 gap-3 mb-3">
             {['A', 'B', 'C'].map((type) => (

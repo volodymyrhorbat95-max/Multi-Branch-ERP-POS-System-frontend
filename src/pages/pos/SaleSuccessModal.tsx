@@ -218,9 +218,12 @@ const SaleSuccessModal: React.FC<SaleSuccessModalProps> = ({
           )}
 
           {!loadingInvoice && !invoiceError && !invoice && (
-            <div className="p-4 bg-info-50 dark:bg-info-900/20 border border-info-200 dark:border-info-800 rounded-sm animate-fade-up duration-normal">
-              <p className="text-sm text-info-700 dark:text-info-300">
-                No se generó factura para esta venta
+            <div className="p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-sm animate-fade-up duration-normal">
+              <p className="text-sm text-amber-700 dark:text-amber-300 font-medium mb-1">
+                Factura pendiente de emision manual
+              </p>
+              <p className="text-xs text-amber-600 dark:text-amber-400">
+                Recuerde emitir la factura en FactuHoy para esta venta.
               </p>
             </div>
           )}
